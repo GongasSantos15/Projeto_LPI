@@ -94,12 +94,9 @@
 
 // Funções criadas por mim
 function carregarDistritos() {
-    console.log("JS carregado");
-
     fetch('/lpi/Projeto_LPI/distritos.php')
         .then(response => response.text())
         .then(data => {
-            console.log("Dados recebidos:", data); // <== aqui
             document.getElementById('origem').innerHTML = data;
             document.getElementById('destino').innerHTML = data;
         })

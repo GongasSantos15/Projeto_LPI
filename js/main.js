@@ -107,4 +107,32 @@ function carregarDistritos() {
 
 window.onload = carregarDistritos;
 
+// Função para editar o nome do utilizador
+document.addEventListener('DOMContentLoaded', function() {
+    const editIcon = document.getElementById('editIcon');
+    const nameInput = document.getElementById('nome');
+    const saveButton = document.getElementById('saveButton');
 
+    // Make the edit icon toggle the input and button visibility/state
+    editIcon.addEventListener('click', function() {
+        if (nameInput.disabled) {
+            // Enable input
+            nameInput.disabled = false;
+            // Show save button
+            saveButton.style.display = 'block';
+            // Hide edit icon (optional, can change icon too)
+            editIcon.style.display = 'none'; // or editIcon.classList.add('d-none');
+            // Set focus to the input field
+            nameInput.focus();
+        }
+    });
+});
+
+document.getElementById('editIcon').addEventListener('click', function() {
+    // Habilita o campo de input do nome
+    document.getElementById('nome').disabled = false;
+    // Mostra o botão de guardar
+    document.getElementById('saveButton').style.display = 'block';
+    // Opcional: Foca no campo de input para facilitar a edição
+    document.getElementById('nome').focus();
+});

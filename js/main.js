@@ -1,3 +1,4 @@
+/*** Template JS ***/
 (function ($) {
     "use strict";
 
@@ -92,7 +93,8 @@
     
 })(jQuery);
 
-// Funções criadas por mim
+// FUNÇÕES CRIADAS POR MIM
+// Função para carregar os distritos
 function carregarDistritos() {
     fetch('/lpi/Projeto_LPI/distritos.php')
         .then(response => response.text())
@@ -109,30 +111,37 @@ window.onload = carregarDistritos;
 
 // Função para editar o nome do utilizador
 document.addEventListener('DOMContentLoaded', function() {
-    const editIcon = document.getElementById('editIcon');
+    // Seleciona TODOS os elementos com a classe 'edit-icon'
+    const editIcons = document.querySelectorAll('.edit-icon');
+    // Seleciona os campos de input que queremos tornar editáveis
     const nameInput = document.getElementById('nome');
+    const firstNameInput = document.getElementById('nomeProprio');
+    // Seleciona o botão de guardar
     const saveButton = document.getElementById('saveButton');
 
-    // Make the edit icon toggle the input and button visibility/state
-    editIcon.addEventListener('click', function() {
-        if (nameInput.disabled) {
-            // Enable input
-            nameInput.disabled = false;
-            // Show save button
-            saveButton.style.display = 'block';
-            // Hide edit icon (optional, can change icon too)
-            editIcon.style.display = 'none'; // or editIcon.classList.add('d-none');
-            // Set focus to the input field
-            nameInput.focus();
-        }
-    });
-});
+    // Adiciona um listener de clique a CADA ícone de edição
+    editIcons.forEach(function(icon) {
+        icon.addEventListener('click', function() {
+            // Verifica se os campos estão desativados (estado inicial)
+            if (nameInput.disabled && firstNameInput.disabled) {
+                // Habilita AMBOS os campos de input
+                nameInput.disabled = false;
+                firstNameInput.disabled = false;
 
-document.getElementById('editIcon').addEventListener('click', function() {
-    // Habilita o campo de input do nome
-    document.getElementById('nome').disabled = false;
-    // Mostra o botão de guardar
-    document.getElementById('saveButton').style.display = 'block';
-    // Opcional: Foca no campo de input para facilitar a edição
-    document.getElementById('nome').focus();
+                // Mostra o botão de guardar
+                saveButton.style.display = 'block';
+
+                // Opcional: Oculta todos os ícones de edição depois de habilitar os campos
+                editIcons.forEach(function(editIcon) {
+                    editIcon.style.display = 'none';
+                });
+
+                // Opcional: Foca no primeiro campo de input para facilitar a edição
+                nameInput.focus();
+            }
+        });
+    });
+
+    // Pode adicionar aqui lógica adicional se quiser,
+    // como desabilitar os campos novamente se o utilizador cancelar a edição.
 });

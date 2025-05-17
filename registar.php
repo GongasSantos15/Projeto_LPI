@@ -84,6 +84,10 @@
         <h3 class="text-center text-white mb-4">Registar</h3>
         <form action="registar.php" method="POST">
             <div class="mb-3">
+                <label for="user-fullname" class="form-label">Nome Próprio:</label>
+                <input name="nome-completo" id="user-fullname" type="text" class="form-control text-dark" required />
+            </div>
+            <div class="mb-3">
                 <label for="user" class="form-label">Nome de Utilizador:</label>
                 <input name="nome" id="user" type="text" class="form-control text-dark" required />
             </div>

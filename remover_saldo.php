@@ -107,23 +107,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // --- END: Check current balance ---
 
             // Close the database connection if it's still open
-            if ($conn) {
-                 $conn->close();
-            }
+            //if ($conn) {
+            //     $conn->close();
+            //}
         } else {
             // Handle connection error (if not handled in basedados.h)
             $message = 'Erro: Falha na conexão com a base de dados.';
             $message_type = 'danger';
             error_log("Database connection failed when removing funds.");
         }
-    }
 
-    // Store message in session and redirect to avoid form resubmission
-    $_SESSION['message-add'] = $message;
-    $_SESSION['message_type-add'] = $message_type;
-    // Redirect back to this page to show the message
-    header('Location: index.php');
-    exit();
+        // --- Adicione ESTE código AQUI para guardar a mensagem na sessão ---
+        if (!empty($message)) { // Só guarda se uma mensagem foi definida
+            $_SESSION['message-add'] = $message;
+            $_SESSION['message_type-add'] = $message_type;
+        }
+    }
+    //exit();
 }
 
 // If not a POST request, just show the form

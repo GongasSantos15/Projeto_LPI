@@ -171,8 +171,8 @@ function isUserLoggedIn() {
             <div class="container py-5">
                 <div class="row justify-content-center py-5">
                     <div class="col-lg-10 pt-lg-5 mt-lg-5 text-center">
-                        <h1 class="display-3 text-white mb-3 animated slideInDown">A tua próxima viagem começa aqui!</h1>
-                        <p class="fs-4 text-white mb-4 animated slideInDown">Viaja com a FelixBus e descobre novos destinos em Portugal!</p>
+                        <h1 class="display-3 text-white mb-3 animated slideInDown">A sua próxima viagem começa aqui!</h1>
+                        <p class="fs-4 text-white mb-4 animated slideInDown">Viaje com a FelixBus e descubra novos destinos em Portugal!</p>
                         <div class="bg-gradient position-relative w-75 mx-auto mt-5 animated slideInDown">
                             <form method="POST" class="d-flex flex-wrap p-4 rounded text-light justify-content-center" style="gap: 2rem 0.5rem;">
                                 <div class="me-4">

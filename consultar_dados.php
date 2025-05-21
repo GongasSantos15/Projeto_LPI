@@ -1,89 +1,62 @@
 <?php
-// Garante que a sessão é iniciada antes de qualquer output HTML
-session_start();
+    // Inicia a sessão
+    session_start();
 
-// Inclui os detalhes da conexão com a base de dados
-// Certifique-se que este caminho está correto e basedados.h define a variável $conn
-// Ex: C:\xampp\htdocs\lpi\Projeto_LPI\basedados\basedados.h
-include 'C:\xampp\htdocs\lpi\Projeto_LPI\basedados\basedados.h';
+    // Include da base de dados
+    include 'C:\xampp\htdocs\lpi\Projeto_LPI\basedados\basedados.h';
 
-// Variáveis para armazenar os dados do utilizador, inicializadas como vazias
-$current_user_name = '';
-$current_user_firstname = ''; // Variável para 'nome_proprio'
-$user_id = null; // Inicializa o user_id
+    // Variáveis para armazenar os dados do utilizador, inicializadas como vazias
+    $nome_utilizador_atual = '';
+    $nome_atual = '';
+    $id_utilizador = null;
 
-// Verifica se o utilizador NÃO está logado
-if (!isset($_SESSION['user_id'])) {
-    // Redireciona para a página de login se não estiver logado
-    header('Location: entrar.php');
-    exit(); // Para a execução do script após o redirecionamento
-}
-
-// Se chegou aqui, o utilizador ESTÁ logado
-$user_id = $_SESSION['user_id']; // Obtém o ID do utilizador da sessão
-
-// --- Buscar dados do utilizador usando o user_id ---
-
-// Variável para armazenar mensagens de erro PHP (conexão, query, etc.)
-$error_message = '';
-
-// Verifica se a conexão com a base de dados é válida
-if ($conn) {
-    // SQL para buscar o nome e nome_proprio do utilizador
-    // Assumindo tabela 'user' e colunas 'nome', 'nome_proprio'
-    $sql = "SELECT nome, nome_proprio FROM user WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-
-    if ($stmt) { // Verifica se a preparação da query foi bem-sucedida
-        // Liga o parâmetro (id do utilizador) à query
-        // "i" indica que o parâmetro é um inteiro
-        $stmt->bind_param("i", $user_id);
-
-        // Executa a query
-        $stmt->execute();
-
-        // Obtém o resultado da query
-        $result = $stmt->get_result();
-
-        // Verifica se encontrou o utilizador
-        if ($result && $result->num_rows > 0) {
-            // Obtém a linha de resultado como um array associativo
-            $row = $result->fetch_assoc();
-            // Atribui os nomes às variáveis, sanitizando a saída para evitar problemas de segurança
-            $current_user_name = htmlspecialchars($row['nome']);
-            $current_user_firstname = htmlspecialchars($row['nome_proprio']);
-        } else {
-            // Opcional: Lidar com o caso em que o user ID está na sessão, mas não na DB
-            error_log("User ID {$user_id} not found in database but in session.");
-            // Se o utilizador não for encontrado na DB, pode ser um erro grave.
-            // Dependendo da lógica de segurança, pode ser necessário limpar a sessão e redirecionar para login.
-            // session_unset();
-            // session_destroy();
-            // header('Location: entrar.php?error=user_data_missing'); exit();
-             $error_message = "Os dados do utilizador não foram encontrados na base de dados.";
-        }
-
-        // Fecha o statement
-        $stmt->close();
-    } else {
-        // Lidar com erro na preparação da query
-        error_log("Database prepare error: " . $conn->error);
-        $error_message = "Ocorreu um erro ao preparar a consulta de dados.";
+    // Verifica se o utilizador não efetuou o login, se não redireciona-o para a página de login
+    if (!isset($_SESSION['id_utilizador'])) {
+        header('Location: entrar.php');
+        exit();
     }
 
-    // A conexão será fechada no final do script se $conn for válida
-    // Não fechar aqui se precisar dela para outras coisas mais abaixo
-    // $conn->close();
-} else {
-    // Lidar com falha na conexão (se não for tratada em basedados.h)
-    error_log("Database connection failed.");
-    $error_message = "Não foi possível conectar à base de dados.";
-}
+    // Se chegou até aqui, o utilizador tem sessão iniciada
+    $id_utilizador = $_SESSION['id_utilizador'];
 
-// Certifica-se que a conexão é fechada se tiver sido aberta e ainda não o foi
-if (isset($conn) && $conn) {
+    // Variável para armazenar mensagens de erro PHP (conexão, query, etc.)
+    $mensagem_erro = '';
+
+    // Verifica se a conexão com a base de dados é válida
+    if ($conn) {
+        // SQL para procurar o nome e nome_proprio do utilizador
+        $sql = "SELECT nome, nome_proprio FROM user WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+
+        if ($stmt) { // Verifica se a preparação da query foi bem-sucedida e liga o pârametro à query ("i" indica que o parâmetro é um inteiro)
+            $stmt->bind_param("i", $id_utilizador);
+
+            // Executa a query
+            $stmt->execute();
+
+            // Obtém o resultado da query
+            $result = $stmt->get_result();
+
+            // Verifica se encontrou o utilizador, se sim obtém a linha de resultado como um array associativo e atribui o resultado às variáveis corretas
+            if ($result && $result->num_rows > 0) {
+                $row = $result->fetch_assoc();
+
+                // htmlspecialchars serve para evitar problemas de segurança ao ir buscar os dados à BD, senão exibe uma mensagem de erro
+                $nome_utilizador_atual = htmlspecialchars($row['nome']);
+                $nome_atual = htmlspecialchars($row['nome_proprio']);
+            } else {
+                $mensagem_erro = "Os dados do utilizador não foram encontrados na base de dados.";
+            }
+
+            // Fecha o statement
+            $stmt->close();
+        } else {
+            // Lida com o erro na preparação da query
+            $mensagem_erro = "Ocorreu um erro ao preparar a consulta de dados.";
+        }
+    }
+    // Fecha a conexão com a BD
     $conn->close();
-}
 
 ?>
 
@@ -115,13 +88,13 @@ if (isset($conn) && $conn) {
     <link href="css/style.css" rel="stylesheet">
 
     <style>
-        /* Hide the save button initially */
-        #saveButton {
+        /* Esconde o botão inicialmente */
+        #botaoGuardar {
             display: none;
         }
-        /* Optional: Style for the edit button */
-        #startEditButton {
-            margin-bottom: 15px; /* Space below the button */
+        /* Estilo para o botão de edição */
+        #botao-edicao {
+            margin-bottom: 15px;
         }
     </style>
 
@@ -139,51 +112,51 @@ if (isset($conn) && $conn) {
             <h3 class="text-center text-white mb-4">Consultar e Editar Dados</h3>
 
             <?php
-                if (!empty($error_message)) {
-                    echo '<div class="alert alert-danger">' . htmlspecialchars($error_message) . '</div>';
+                if (!empty($mensagem_erro)) {
+                    echo '<div class="alert alert-danger">' . htmlspecialchars($mensagem_erro) . '</div>';
                 }
             ?>
 
-            <button type="button" id="startEditButton" class="btn btn-primary rounded-pill py-2 px-5 mb-4"><i class="fas fa-edit me-2"></i> Editar Dados</button>
+            <button type="button" id="botao-edicao" class="btn btn-primary rounded-pill py-2 px-5 mb-4"><i class="fas fa-edit me-2"></i> Editar Dados</button>
 
 
             <form id="profileEditForm" action="editar_dados.php" method="POST">
 
-                <input type="hidden" name="user_id" value="<?php echo htmlspecialchars($user_id); ?>">
+                <input type="hidden" name="id_utilizador" value="<?php echo htmlspecialchars($id_utilizador); ?>">
 
                 <div class="mb-3">
                     <label for="nomeProprio" class="form-label text-white">Nome Próprio:</label>
                     <div class="input-group">
-                         <input name="nome-completo" id="nomeProprio" type="text" class="form-control text-dark" value="<?php echo $current_user_firstname; ?>" disabled required />
+                         <input name="nome-completo" id="nome-proprio" type="text" class="form-control text-dark" value="<?php echo $nome_atual; ?>" disabled required />
                     </div>
                 </div>
 
                 <div class="mb-3">
                     <label for="nome" class="form-label text-white">Nome:</label>
                     <div class="input-group">
-                         <input name="nome" id="nome" type="text" class="form-control text-dark" value="<?php echo $current_user_name; ?>" disabled required />
+                         <input name="nome" id="nome" type="text" class="form-control text-dark" value="<?php echo $nome_utilizador_atual; ?>" disabled required />
                     </div>
                 </div>
 
                 <div class="d-flex mt-5 justify-content-center">
-                <input type="submit" id="saveButton" value="Guardar Alterações" class="btn btn-primary rounded-pill py-2 px-5">
+                <input type="submit" id="botao-guardar" value="Guardar Alterações" class="btn btn-primary rounded-pill py-2 px-5">
             </div>
 
                 <div id="messageArea" class="mt-3 text-center">
                     <?php
                         // Display messages if redirected back after update
-                        if (isset($_GET['status'])) {
-                            if ($_GET['status'] === 'success') {
-                                echo '<div class="alert alert-success">Dados atualizados com sucesso! Redirecionando...</div>';
+                        //if (isset($_GET['status'])) {
+                            //if ($_GET['status'] === 'success') {
+                                //echo '<div class="alert alert-success">Dados atualizados com sucesso! Redirecionando...</div>';
                                 // Redirect after 2 seconds to index.php as per original logic
-                                header("refresh:2; url = index.php");
-                                exit(); // Stop further execution after setting refresh header
-                            } else if ($_GET['status'] === 'error') {
+                                //header("refresh:2; url = index.php");
+                                //exit(); // Stop further execution after setting refresh header
+                            //} else if ($_GET['status'] === 'error') {
                                 // Use message from GET if available, otherwise a generic one
-                                $errorMessage = isset($_GET['message']) ? htmlspecialchars($_GET['message']) : 'Erro ao atualizar dados. Por favor, tente novamente.';
-                                echo '<div class="alert alert-danger">' . $errorMessage . '</div>';
-                            }
-                        }
+                                //$errorMessage = isset($_GET['message']) ? htmlspecialchars($_GET['message']) : 'Erro ao atualizar dados. Por favor, tente novamente.';
+                                //echo '<div class="alert alert-danger">' . $errorMessage . '</div>';
+                            //}
+                        //}
                     ?>
                 </div>
 
@@ -204,37 +177,29 @@ if (isset($conn) && $conn) {
     <script src="js/main.js"></script>
 
     <script>
-        // Espera que o DOM esteja completamente carregado antes de executar o script
+        // Seleciona os botões de edição e de input pelo ID, assim como o botão de guardar os dados e verifica se todos os elementos necessários foram encontrados
+        // Adiciona um listener de clique no botão de edilção
+        // Habilita os campos de input
+        // Mostra o botão guardar
+        // Oculta o botão "Editar Dados", depois de clicar nele
+        // Foca o primeiro input
         document.addEventListener('DOMContentLoaded', function() {
-            // Seleciona o novo botão de edição pelo seu ID
-            const startEditButton = document.getElementById('startEditButton');
-            // Seleciona os campos de input que queremos tornar editáveis pelos seus IDs
-            const nameInput = document.getElementById('nome');
-            const firstNameInput = document.getElementById('nomeProprio');
-            // Seleciona o botão de guardar pelo seu ID
-            const saveButton = document.getElementById('saveButton');
+            const botaoEdicao = document.getElementById('botao-edicao');
+            const campoNome = document.getElementById('nome');
+            const campoNomeProprio = document.getElementById('nome-proprio');
+            const botaoGuardar = document.getElementById('botaoGuardar');
 
-            // Verifica se todos os elementos necessários foram encontrados
-            if (startEditButton && nameInput && firstNameInput && saveButton) {
+            if (botaoEdicao && campoNome && campoNomeProprio && botaoGuardar) {
 
-                // Adiciona um listener de clique ao botão de edição
-                startEditButton.addEventListener('click', function() {
-                    // Habilita AMBOS os campos de input
-                    nameInput.disabled = false;
-                    firstNameInput.disabled = false;
+                botaoEdicao.addEventListener('click', function() {
+                    campoNome.disabled = false;
+                    campoNomeProprio.disabled = false;
 
-                    // Mostra o botão de guardar
-                    saveButton.style.display = 'block';
+                    botaoGuardar.style.display = 'block';
+                    botaoEdicao.style.display = 'none';
 
-                    // Oculta o botão "Editar Dados" depois de clicar nele
-                    startEditButton.style.display = 'none';
-
-                    // Opcional: Foca no primeiro campo de input para facilitar a edição
-                    nameInput.focus();
+                    campoNome.focus();
                 });
-            } else {
-                // Logar um erro se os elementos não forem encontrados (útil para depuração)
-                console.error('Um ou mais elementos JS necessários não foram encontrados (startEditButton, nome, nomeProprio, saveButton).');
             }
         });
     </script>

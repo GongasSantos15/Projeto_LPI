@@ -7,30 +7,32 @@
     session_start();
 
     // Verificar se algum dos campos está vazio
-    if(isset($_POST['nome']) && isset($_POST['password']) && $_POST['password'] === $_POST['confirm-pass']) {
+    // Se sim exibe um alerta ao utilizador
+    if(isset($_POST['nome']) && isset($_POST['palavra_passe']) && $_POST['palavra_passe'] === $_POST['confirmar-palavra-passe']) {
         
         // Dados recebidos do formulário
-        $user = $_POST['nome'];
-        $pass = $_POST['password'];
-        $tipo_user = CLIENTE;
+        $nome_utilizador = $_POST['nome'];
+        $palavra_passe = $_POST['palavra_passe'];
+        $tipo_nome_utilizador = CLIENTE;
 
-        $sql = "INSERT INTO user (nome, password, tipo_user) VALUES ('$user', '$pass', '$tipo_user')";
+        // Query SQL para inserir na BD os dados do utilizador (nome próprio, nome de utilizador e tipo)
+        $sql = "INSERT INTO nome_utilizador (nome, palavra_passe, tipo_nome_utilizador) VALUES ('$nome_utilizador', '$palavra_passe', '$tipo_nome_utilizador')";
         $res = mysqli_query($conn, $sql);
 
+        // Se existe resultado, exibe uma alerta ao utilizador e redireciona para a página de login
+        // Senão exibe uma mensagem de erro (alerta)
         if ($res) {
             echo "<script>alert('Utilizador registado com sucesso!');</script>";
             header("refresh:0; url=entrar.php");
         } else {
-            // Erro na query
             echo "<script>alert('Erro ao registar utilizador: " . mysqli_error($conn) . "');</script>";
         }
     
     } else {
-        // Erro na validação do formulário
         echo
         "<script>
-            alert('Erro: Os campos estão vazios ou as passwords não coincidem.');
-            window.location.href = 'registar.php'; // ou o nome da sua página de registo
+            alert('Erro: Os campos estão vazios ou as palavras passe não coincidem.');
+            window.location.href = 'registar.php';
         </script>";
     }
 ?>
@@ -53,24 +55,24 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Icon Font Stylesheet -->
+    <!-- Estilos de Fonte -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
 
-    <!-- Libraries Stylesheet -->
+    <!-- Bibliotecas -->
     <link href="lib/animate/animate.min.css" rel="stylesheet">
     <link href="lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
     <link href="lib/tempusdominus/css/tempusdominus-bootstrap-4.min.css" rel="stylesheet" />
 
-    <!-- Customized Bootstrap Stylesheet -->
+    <!-- Bootstrap -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Template Stylesheet -->
+    <!-- Template -->
     <link href="css/style.css" rel="stylesheet">
 </head>
 
 <body>
-    <!-- Spinner Start -->
+    <!-- Roda de Carregamento -->
     <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
             <span class="sr-only">Loading...</span>
@@ -78,26 +80,26 @@
     </div>
     <!-- Spinner End -->
 
-<!-- Start Login Section -->
+<!-- Secção de Registo -->
 <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
     <div class="p-5 rounded shadow" style="max-width: 700px; width: 100%;">
         <h3 class="text-center text-white mb-4">Registar</h3>
         <form action="registar.php" method="POST">
             <div class="mb-3">
-                <label for="user-fullname" class="form-label">Nome Próprio:</label>
-                <input name="nome-completo" id="user-fullname" type="text" class="form-control text-dark" required />
+                <label for="nome_utilizador" class="form-label">Nome Próprio:</label>
+                <input name="nome-completo" id="nome_utilizador" type="text" class="form-control text-dark" required />
             </div>
             <div class="mb-3">
-                <label for="user" class="form-label">Nome de Utilizador:</label>
-                <input name="nome" id="user" type="text" class="form-control text-dark" required />
+                <label for="nome_utilizador" class="form-label">Nome de Utilizador:</label>
+                <input name="nome" id="nome_utilizador" type="text" class="form-control text-dark" required />
             </div>
             <div class="mb-3">
-                <label for="pass" class="form-label">Palavra-Passe:</label>
-                <input name="password" id="pass" type="password" class="form-control text-dark" required />
+                <label for="palavra-passe" class="form-label">Palavra Passe:</label>
+                <input name="palavra-passe" id="palavra-passe" type="password" class="form-control text-dark" required />
             </div>
             <div class="mb-3">
-                <label for="confirm-pass" class="form-label">Confirmar Palavra-Passe:</label>
-                <input name="confirm-pass" id="confirm-pass" type="password" class="form-control text-dark" required />
+                <label for="confirmar-palavra-passe" class="form-label">Confirmar Palavra Passe:</label>
+                <input name="confirmar-palavra-passe" id="confirmar-palavra-passe" type="palavra-password" class="form-control text-dark" required />
             </div>
             <div class="d-flex mt-5 justify-content-center">
                 <input type="submit" value="Registar" class="btn btn-primary rounded-pill py-2 px-5">
@@ -105,9 +107,9 @@
         </form>
     </div>
 </div>
-<!-- End Login Section -->
+<!-- Fim da Secção de Registo -->
 
-    <!-- JavaScript Libraries -->
+    <!-- Bibliotecas JavaScript -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="lib/wow/wow.min.js"></script>

@@ -1,90 +1,68 @@
 <?php
-
-    // Inclui a conexão com a base de dados
-    // Certifique-se que basedados.h define a variável $conn
+    // Include base de dados
     include 'C:\xampp\htdocs\lpi\Projeto_LPI\basedados\basedados.h';
-    // Inclui as constantes de utilizadores (se necessário para CLIENTE_APAGADO)
+    
+    // Include às constantes de utilizadores 
     include 'constUtilizadores.php';
 
-    // Iniciar ou retomar a sessão
+    // Iniciar Sessão
     session_start();
 
-    $errorMessage = ''; // Variável para guardar mensagens de erro a serem exibidas na página
+    $mensagem_erro = ''; 
 
     // --- PROCESSAMENTO DO LOGIN (APENAS EM POST) ---
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Verificar se os campos não estão vazios (redundante com 'required' no HTML, mas seguro)
-        if (isset($_POST["nome"]) && isset($_POST["password"])) {
+        if (isset($_POST["nome"]) && isset($_POST["palavra-passe"])) {
 
             // Dados do formulário (obtidos de forma segura)
-            $user = $_POST["nome"];
-            $password = $_POST["password"]; // ATENÇÃO: Passwords devem ser hashed, não guardadas em texto simples!
+            $nome_utilizador = $_POST["nome"];
+            $palavra_passe = $_POST["palavra-passe"];
 
-            // --- USANDO PREPARED STATEMENT PARA SEGURANÇA CONTRA SQL INJECTION ---
-
-            // Prepara a query com placeholders (?)
-            // A consulta original é boa para evitar login de tipos 'apagados'
-            $sql = "SELECT id, nome, tipo_user FROM user WHERE nome = ? AND password = ? AND tipo_user != ?";
+            // Prepara a query SQL
+            $sql = "SELECT id, nome, tipo_nome_utilizador FROM nome_utilizador WHERE nome = ? AND palavra-passe = ? AND tipo_nome_utilizador != ?";
             $stmt = mysqli_prepare($conn, $sql);
 
-            // Verifica se a preparação da query falhou
+            // Verifica se a preparação da query falhou, se falhar mostra uma mensagem de erro
+            // Senão liga os parâmetros (dados do formulário) às variáveis corretas ("ssi" indica que existem 2 strings e 1 inteiro)
             if ($stmt === false) {
-                // Em ambiente de produção, mostre uma mensagem genérica ao utilizador e logue o erro real
-                $errorMessage = 'Erro interno na base de dados. Tente novamente mais tarde.';
-                error_log('Erro na preparação da query: ' . mysqli_error($conn)); // Loga o erro real
+                $mensagem_erro = 'Erro interno na base de dados. Tente novamente mais tarde.';
             } else {
-                // Liga os parâmetros (dados do formulário) aos placeholders
-                // "ssi" indica que são 2 strings (nome, password) e 1 inteiro (tipo_user)
-                $cliente_apagado = CLIENTE_APAGADO; // Define a variável para o binding
-                mysqli_stmt_bind_param($stmt, "ssi", $user, $password, $cliente_apagado);
+                $cliente_apagado = CLIENTE_APAGADO;
+                mysqli_stmt_bind_param($stmt, "ssi", $nome_utilizador, $palavra_passe, $cliente_apagado);
 
                 // Executa a query
                 mysqli_stmt_execute($stmt);
 
                 // Obtém o resultado da query
-                $result = mysqli_stmt_get_result($stmt);
+                $resultado = mysqli_stmt_get_resultado($stmt);
 
-                // Verifica se encontrou exatamente 1 utilizador (login válido)
-                if ($result && mysqli_num_rows($result) == 1) {
+                // Verifica se encontrou exatamente 1 utilizador, obtém os dados do mesmo, guarda nas variáveis de sessão e redireciona para a página inicial se tudo correr bem
+                if ($resultado && mysqli_num_rows($resultado) == 1) {
                     // Obtém os dados do utilizador
-                    $row = mysqli_fetch_assoc($result);
+                    $row = mysqli_fetch_assoc($resultado);
 
                     // Autenticação bem-sucedida! Guarda os dados na sessão.
-                    $_SESSION['user_id'] = $row['id'];
-                    $_SESSION['nome'] = $row['nome'];
-                    $_SESSION['tipo'] = $row['tipo_user'];
+                    $_SESSION['nome_utilizador_id'] = $row['id'];
+                    $_SESSION['nome_utilizador'] = $row['nome_utilizador'];
+                    $_SESSION['tipo'] = $row['tipo_nome_utilizador'];
 
-                    mysqli_free_result($result); // Libertar memória do resultado
-                    mysqli_stmt_close($stmt); // Fecha o statement
-                    // Fechar a conexão com a base de dados (se aberta e não fechada antes)
-                    // if (isset($conn)) { mysqli_close($conn); } // Depende de como basedados.h gere a conexão
+                    $stmt->close();
 
-                    // Redireciona para a página inicial
                     header("Location: index.php");
-                    exit(); // Termina a execução do script após o redirecionamento
+                    exit();
 
                 } else {
-                    // Login falhou (utilizador não encontrado ou password incorreta ou tipo apagado)
-                    $errorMessage = 'Utilizador ou password incorretos.';
-                    mysqli_free_result($result); // Libertar memória
+                    $mensagem_erro = 'Utilizador ou palavra-passe incorretos.';
                 }
 
-                mysqli_stmt_close($stmt); // Fecha o statement (se não redirecionou)
+                $stmt->close();
             }
 
-        } else {
-             // Campos não preenchidos no POST (embora 'required' no HTML minimize isso)
-            $errorMessage = 'Erro: Por favor, preencha o nome e a password.';
         }
 
-         // Fechar a conexão com a base de dados se ela foi aberta e não será mais usada nesta requisição
-         // if (isset($conn)) { mysqli_close($conn); } // Depende de como basedados.h gere a conexão
-
-    } // --- FIM DO PROCESSAMENTO POST ---
-
-    // Se a requisição não foi POST, ou se o POST falhou, o código continua e exibe o HTML abaixo.
-    // A variável $errorMessage conterá a mensagem de erro, se houver.
+    }
 
 ?>
 
@@ -127,20 +105,20 @@
         <h3 class="text-center text-white mb-4">Entrar</h3>
 
         <?php
-        // Exibe a mensagem de erro se ela estiver definida (após um POST falhado)
-        if ($errorMessage) {
-            echo '<div class="alert alert-danger" role="alert">' . htmlspecialchars($errorMessage) . '</div>';
+        // Exibe a mensagem de erro
+        if ($mensagem_erro) {
+            echo '<div class="alert alert-danger" role="alert">' . htmlspecialchars($mensagem_erro) . '</div>';
         }
         ?>
 
         <form action="entrar.php" method="POST">
             <div class="mb-3">
-                <label for="username" class="form-label">Nome de Utilizador:</label>
-                <input name="nome" id="username" type="text" class="form-control text-dark" required />
+                <label for="nome_utilizador" class="form-label">Nome de Utilizador:</label>
+                <input name="nome" id="nome_utilizado" type="text" class="form-control text-dark" required />
             </div>
             <div class="mb-3">
                 <label for="pass" class="form-label">Palavra-Passe:</label>
-                <input name="password" id="pass" type="password" class="form-control text-dark" required />
+                <input name="palavra-passe" id="palavra-passe" type="password" class="form-control text-dark" required />
             </div>
             <div class="d-flex justify-content-center">
                 <input type="submit" value="Entrar" class="btn btn-primary rounded-pill py-2 px-5">

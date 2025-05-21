@@ -6,28 +6,28 @@
     session_start();
 
     // Verifica se o user já iniciou sessão, senão redireciona para a página de login
-    if (!isset($_SESSION['user_id'])) {
+    if (!isset($_SESSION['id_utilizador'])) {
         header('Location: entrar.php');
         exit();
     }
 
     // Obtém o ID do utilizador
-    $user_id = $_SESSION['user_id'];
+    $id_utilizador = $_SESSION['id_utilizador'];
 
     // Variáveis de mensagens que vão ser apresentadas ao utilizador e o seu tipo (warning, danger, success)
-    $message = '';
-    $message_type = '';
+    $mensagem = '';
+    $tipo_mensagem = '';
 
     // Processa a submissão do formulário para adicionar saldo
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         // Obtém o valor que o utilizador quer adicionar através do método POST e valida-o como número decimal
-        $amount = filter_input(INPUT_POST, 'amount', FILTER_VALIDATE_FLOAT);
+        $valor = filter_input(INPUT_POST, 'valor', FILTER_VALIDATE_FLOAT);
 
         // Verifica se o valor que o utilizador quer adicionar se é um número válido e positivo e exibe uma mensage de erro ao utilizador caso não seja
-        if ($amount === false || $amount <= 0) {
-            $message = 'Por favor, insira um valor positivo válido.';
-            $message_type = 'warning';
+        if ($valor === false || $valor <= 0) {
+            $mensagem = 'Por favor, insira um valor positivo válido.';
+            $tipo_mensagem = 'warning';
         } else {
             // Se o valor introduzido pelo utilizador for válido
             if ($conn) {
@@ -37,39 +37,39 @@
 
                 if ($stmt) {
                     // Associar os parâmetros: 'd' para double (float), 'i' para integer
-                    $stmt->bind_param("di", $amount, $user_id);
+                    $stmt->bind_param("di", $valor, $id_utilizador);
 
                     // Executar o statement
                     if ($stmt->execute()) {
                         // Verifica se alguma linha foi afetada, se sim o saldo do utilizador foi atualizado e é exibida uma mensagem de sucesso
                         if ($stmt->affected_rows > 0) {
-                            $message = 'Fundos adicionados com sucesso!';
-                            $message_type = 'success';
+                            $mensagem = 'Fundos adicionados com sucesso!';
+                            $tipo_mensagem = 'success';
                         } else {
                             // Se o utilizador não existir na base de dados, exibir uma mensagem de erro
-                            $message = 'Erro: Utilizador não encontrado ou saldo não atualizado.';
-                            $message_type = 'warning';
+                            $mensagem = 'Erro: Utilizador não encontrado ou saldo não atualizado.';
+                            $tipo_mensagem = 'warning';
                         }
                     } else { 
                         // Tratar do caso de erro do statement, exibir uma mensagem de erro
-                        $message = 'Erro ao adicionar fundos na base de dados.';
-                        $message_type = 'danger';
+                        $mensagem = 'Erro ao adicionar fundos na base de dados.';
+                        $tipo_mensagem = 'danger';
                     }
 
                     // Fechar o statement
                     $stmt->close();
                 } else {
                     // Tratar do caso de erro do statement (preparar a query), exibir uma mensagem de erro
-                    $message = 'Erro interno ao preparar a query.';
-                    $message_type = 'danger';
+                    $mensagem = 'Erro interno ao preparar a query.';
+                    $tipo_mensagem = 'danger';
                 }
 
                 // Fechar a conexão com a base de dados
                 $conn->close();
             } else {
                 // Se não possível executar a conexão com a base de dados, exibir uma mensagem de erro
-                $message = 'Erro: Falha na conexão com a base de dados.';
-                $message_type = 'danger';
+                $mensagem = 'Erro: Falha na conexão com a base de dados.';
+                $tipo_mensagem = 'danger';
             }
         }
 
@@ -119,24 +119,24 @@
 
                 <?php
                 // Apresenta mensagem se existir
-                if (isset($_SESSION['message'])): ?>
-                    <div class="alert alert-<?php echo $_SESSION['message_type']; ?> alert-dismissible fade show" role="alert">
-                        <?php echo $_SESSION['message']; ?>
+                if (isset($_SESSION['mensagem'])): ?>
+                    <div class="alert alert-<?php echo $_SESSION['tipo_mensagem']; ?> alert-dismissible fade show" role="alert">
+                        <?php echo $_SESSION['mensagem']; ?>
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                     <?php
                     
                     // Remover as variáveis de sessão depois de apresentadas
-                    unset($_SESSION['message']);
-                    unset($_SESSION['message_type']);
+                    unset($_SESSION['mensagem']);
+                    unset($_SESSION['tipo_mensagem']);
                 endif;
                 ?>
 
                 <!-- FORMULÁRIO -->
                 <form action="adicionar_saldo.php" method="POST">
                     <div class="mb-3">
-                        <label for="amount" class="form-label">Quanto dinheiro (€) pretende adicionar?</label>
-                        <input name="amount" id="amount" type="number" step="0.01" min="0.01" class="form-control text-dark" required/>
+                        <label for="valor" class="form-label">Quanto dinheiro (€) pretende adicionar?</label>
+                        <input name="valor" id="valor" type="number" step="0.01" min="0.01" class="form-control text-dark" required/>
                     </div>
                     <div class="d-flex justify-content-center">
                         <input type="submit" value="Adicionar Saldo" class="btn btn-primary rounded-pill py-2 px-5">

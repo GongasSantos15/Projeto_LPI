@@ -1,88 +1,60 @@
 <?php
-    include 'C:\xampp\htdocs\lpi\Projeto_LPI\basedados\basedados.h'; // *** Adjust path as needed ***
+    // Include BD
+    include 'C:\xampp\htdocs\lpi\Projeto_LPI\basedados\basedados.h';
     
-    // Start the session at the very beginning of the PHP file
-    if (session_status() == PHP_SESSION_NONE) {
-        session_start();
-    }
+    // Inicia a sessão
+    session_start();
 
-    // Check login status using $_SESSION['user_id']
-    $isLoggedIn = isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
+    // Verifica o estado d login usando $SESSION['id_utilizador']
+    $temLogin = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']);
 
-    // If logged in, get user name (assuming it's stored in session,
-    // otherwise, you'd query your database using $_SESSION['user_id'] here)
-    $username = $isLoggedIn ? ($_SESSION['nome'] ?? 'Utilizador') : ''; // Uses $_SESSION['user_name'] if available
+    // If logged in, get user name (assuming it's stored in session), senão exibe ''
+    $nome_utilizador = $temLogin ? ($_SESSION['nome_utilizador'] ?? 'Utilizador') : '';
 
-    // Variável para armazenar o saldo da carteira, inicializada como 0.00
-$wallet_balance = 0.00;
-$user_id = null; // Inicializa o user_id
+    // Variáveis para o valor da carteira (inicializada a 0.00) e o id_utilizador (null)
+    $valor_carteira = 0.00;
+    $id_utilizador = null;
 
-// Verifica se o utilizador NÃO está logado
-if (!isset($_SESSION['user_id'])) {
-    // Redireciona para a página de login se não estiver logado
-    // Depending on your site structure, you might want to show a different navbar for logged out users
-    // or just not show the wallet part. For this example, we'll assume a logged-in state is required.
-    // header('Location: entrar.php'); // Uncomment if you want to force login for any page using this include
-    // exit();
-    // If not logged in, balance remains 0.00 or you could set it to null and handle display accordingly.
-    // For now, we'll proceed with 0.00 and maybe hide the options later via CSS/JS if desired.
-} else {
-    // Se chegou aqui, o utilizador ESTÁ logado
-    $user_id = $_SESSION['user_id']; // Obtém o ID do utilizador da sessão
+    // Verifica se o utilizador não tem login feito, redireciona para a página de login
+    if (!isset($_SESSION['id_utilizador'])) {
+        header('Location: entrar.php');
+        exit();
+    } else {
+       
+        // Obtém o ID do utilizador da sessão
+        $id_utilizador = $_SESSION['id_utilizador'];
 
-    // --- Buscar saldo da carteira usando o user_id ---
+        // Verifica se a conexão com a base de dados é válida
+        if ($conn) {
+            
+            // Query SQL para selecionar o saldo da carteira
+            $sql = "SELECT carteira FROM user WHERE id = ?";
+            $stmt = $conn->prepare($sql);
 
-    // Verifica se a conexão com a base de dados é válida
-    if ($conn) {
-        // SQL para buscar o saldo da carteira
-        // Assumindo tabela 'user' e coluna 'wallet_balance'
-        $sql = "SELECT carteira FROM user WHERE id = ?";
-        $stmt = $conn->prepare($sql);
+            // Verifica se a preparação da query foi bem-sucedida, liga o parâmetro à query ("i" indica que o parâmetro é um inteiro)
+            if ($stmt) {
+                $stmt->bind_param("i", $id_utilizador);
 
-        if ($stmt) { // Verifica se a preparação da query foi bem-sucedida
-            // Liga o parâmetro (id do utilizador) à query
-            // "i" indica que o parâmetro é um inteiro
-            $stmt->bind_param("i", $user_id);
+                // Executa a query
+                $stmt->execute();
 
-            // Executa a query
-            $stmt->execute();
+                // Obtém o resultado da query
+                $result = $stmt->get_result();
 
-            // Obtém o resultado da query
-            $result = $stmt->get_result();
+                // Verifica se encontrou o utilizador, se sim obtém a linha do resultado como um array associativo e atribui o saldo à variável
+                if ($result && $result->num_rows > 0) {
+                    $row = $result->fetch_assoc();
+                    $valor_carteira = number_format($row['carteira'], 2, ',', '.');
+                }
 
-            // Verifica se encontrou o utilizador
-            if ($result && $result->num_rows > 0) {
-                // Obtém a linha de resultado como um array associativo
-                $row = $result->fetch_assoc();
-                // Atribui o saldo à variável, formatando-o
-                $wallet_balance = number_format($row['carteira'], 2, ',', '.'); // Format as currency
-            } else {
-                // Opcional: Lidar com o caso em que o user ID está na sessão, mas não na DB
-                error_log("User ID {$user_id} not found in database when fetching wallet.");
-                // The balance will remain 0.00 as initialized.
+                // Fecha o statement
+                $stmt->close();
             }
 
             // Fecha o statement
-            $stmt->close();
-        } else {
-            // Lidar com erro na preparação da query
-            error_log("Database prepare error (wallet): " . $conn->error);
-            // The balance will remain 0.00.
+            $conn->close();
         }
-
-        // Fecha a conexão com a base de dados no final
-        $conn->close();
-    } else {
-        // Lidar com falha na conexão (se não for tratada em basedados.h)
-        error_log("Database connection failed when fetching wallet.");
-        // The balance will remain 0.00.
     }
-}
-
-// Helper function to check if user is logged in for conditional display in HTML
-function isUserLoggedIn() {
-    return isset($_SESSION['user_id']);
-}
 ?>
 
 
@@ -141,10 +113,10 @@ function isUserLoggedIn() {
                     <a href="index.php" class="nav-item nav-link">Home</a>
                 </div>
 
-                <?php if ($isLoggedIn): ?>
+                <?php if ($temLogin): ?>
                     <div class="nav-item dropdown">
                     <a href="#" class="nav-link dropdown-toggle" id="walletDropdownLink" role="button" aria-expanded="false">
-                            <i class="fa fa-wallet"></i> <?php echo $wallet_balance; ?> €
+                            <i class="fa fa-wallet"></i> <?php echo $valor_carteira; ?> €
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="walletDropdownLink">
                             <li><a class="dropdown-item" href="adicionar_saldo.php"><i class="fas fa-plus-circle"></i> 💰 Adicionar</a></li>
@@ -154,7 +126,7 @@ function isUserLoggedIn() {
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fa fa-user-circle fa-2x me-2"></i>
-                            <span><?php echo htmlspecialchars($username); ?></span>
+                            <span><?php echo htmlspecialchars($nome); ?></span>
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="userDropdown">
                             <li><a class="dropdown-item" href="consultar_dados.php"><i class="fas fa-user-cog me-2"></i> Consultar Dados</a></li>

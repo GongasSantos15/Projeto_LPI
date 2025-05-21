@@ -1,132 +1,118 @@
 <?php
-// Start the session at the very beginning
-if (session_status() == PHP_SESSION_NONE) {
+    // Inicia a sessão
     session_start();
-}
 
-// Include the database connection file
-// *** Adjust path as needed ***
-include 'C:\xampp\htdocs\lpi\Projeto_LPI\basedados\basedados.h';
 
-// Check if the user is logged in
-if (!isset($_SESSION['user_id'])) {
-    // If not logged in, redirect to the login page
-    $_SESSION['message-add'] = 'Precisa de estar autenticado para remover fundos.';
-    $_SESSION['message_type-add'] = 'danger'; // Use a message type for styling
-    header('Location: entrar.php');
-    exit();
-}
+    // Include BD
+    include 'C:\xampp\htdocs\lpi\Projeto_LPI\basedados\basedados.h';
 
-// Get the logged-in user's ID
-$user_id = $_SESSION['user_id'];
-$message = ''; // Initialize message variable
-$message_type = ''; // Initialize message type variable
+    // Verifica se o utilizador tem a sessão iniciada, inicia as variáveis de sessão para os alertas e redireciona para a página de login
+    if (!isset($_SESSION['id_utilizador'])) {
+        $_SESSION['adicionar-mensagem'] = 'Precisa de estar autenticado para remover fundos.';
+        $_SESSION['tipo-mensagem-add'] = 'danger';
+        header('Location: entrar.php');
+        exit();
+    }
 
-// Process the form submission for removing funds
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Validate and sanitize the input amount
-    $amount = filter_input(INPUT_POST, 'amount', FILTER_VALIDATE_FLOAT);
+    // Variáveis para o id de utilizador, mensagem e tipo de mensagem
+    $id_utilizador = $_SESSION['id_utilizador'];
+    $mensagem = '';
+    $tipo_mensagem = '';
 
-    // Check if the amount is valid (a positive float)
-    if ($amount === false || $amount <= 0) {
-        $message = 'Por favor, insira um valor positivo válido.';
-        $message_type = 'warning';
-    } else {
-        // Amount is valid, proceed with checks and database update
-        if ($conn) {
-            // --- START: Check current balance ---
-            $sql_check_balance = "SELECT carteira FROM user WHERE id = ?";
-            $stmt_check = $conn->prepare($sql_check_balance);
+    // Processa o formulário para remover o saldo indicado pelo utilizador
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        
+        // Validar o valor do input (valor)
+        $valor = filter_input(INPUT_POST, 'valor', FILTER_VALIDATE_FLOAT);
 
-            if ($stmt_check) {
-                $stmt_check->bind_param("i", $user_id);
-                $stmt_check->execute();
-                $result_check = $stmt_check->get_result();
+        // Verifica se o valor é inválido ou negativo e exibe uma mensagem de erro
+        if ($valor === false || $valor <= 0) {
+            $mensagem = 'Por favor, insira um valor positivo válido.';
+            $tipo_mensagem = 'warning';
+        } else {
+            
+            // Se for efetuada a conexão à base de dados
+            if ($conn) {
+                $verificar_saldo_sql = "SELECT carteira FROM user WHERE id = ?";
+                $stmt = $conn->prepare($verificar_saldo_sql);
 
-                if ($result_check && $result_check->num_rows > 0) {
-                    $row_check = $result_check->fetch_assoc();
-                    $current_balance = $row_check['carteira'];
+                if ($stmt) {
+                    $stmt->bind_param("i", $id_utilizador);
+                    $stmt->execute();
+                    $res = $stmt->get_result();
 
-                    // Check if current balance is sufficient
-                    if ($current_balance >= $amount) {
-                        // Balance is sufficient, proceed with removal
-                        $stmt_check->close(); // Close the check statement
+                    if ($res && $res->num_linhas > 0) {
+                        $linhas = $res->fetch_assoc();
+                        $valor_carteira = $linhas['carteira'];
 
-                        // --- START: Proceed with fund removal ---
-                        $sql_remove = "UPDATE user SET carteira = carteira - ? WHERE id = ?";
-                        $stmt_remove = $conn->prepare($sql_remove);
+                        // Verifica se o valor atual na carteira é suficiente
+                        if ($valor_carteira >= $valor) {
+                            // Saldo é suficiente, remover o saldo
+                            $stmt->close();
 
-                        if ($stmt_remove) {
-                            $stmt_remove->bind_param("di", $amount, $user_id);
+                            // SQL para remoção do valor e respetivo statement
+                            $remover_sql = "UPDATE user SET carteira = carteira - ? WHERE id = ?";
+                            $stmt_remover = $conn->prepare($remover_sql);
 
-                            if ($stmt_remove->execute()) {
-                                if ($stmt_remove->affected_rows > 0) {
-                                    $message = 'Fundos removidos com sucesso!';
-                                    $message_type = 'success';
-                                    header("refresh:2; url = index.php");
+                            // Atribuir os valores aos respetivos parâmetros
+                            if ($stmt_remover) {
+                                $stmt_remover->bind_param("di", $valor, $id_utilizador);
+
+                                // Executar a query SQL
+                                if ($stmt_remover->execute()) {
+                                    if ($stmt_remover->linhas_afetadas > 0) {
+                                        $mensagem = 'Fundos removidos com sucesso!';
+                                        $tipo_mensagem = 'success';
+                                        header("refresh:2; url = index.php");
+                                    } else {
+                                        $mensagem = 'Erro: Utilizador não encontrado ou saldo não atualizado.';
+                                        $tipo_mensagem = 'warning';
+                                    }
                                 } else {
-                                    $message = 'Erro: Utilizador não encontrado ou saldo não atualizado.';
-                                    $message_type = 'warning';
-                                    error_log("Attempted to remove funds for non-existent user ID or zero affected rows: " . $user_id);
+                                    $mensagem = 'Erro ao remover fundos na base de dados.';
+                                    $tipo_mensagem = 'danger';
                                 }
+                                $stmt_remover->close();
+
                             } else {
-                                $message = 'Erro ao remover fundos na base de dados.';
-                                $message_type = 'danger';
-                                error_log("Database execute error (remove funds): " . $stmt_remove->error);
+                                $mensagem = 'Erro interno ao preparar a query de remoção.';
+                                $tipo_mensagem = 'danger';
                             }
-                            $stmt_remove->close(); // Close the remove statement
 
                         } else {
-                            $message = 'Erro interno ao preparar a query de remoção.';
-                            $message_type = 'danger';
-                            error_log("Database prepare error (remove funds): " . $conn->error);
+                            // O saldo é insuficiente, exibir mensagem de erro
+                            $mensagem = 'Saldo insuficiente. Não pode remover mais do que tem na carteira.';
+                            $tipo_mensagem = 'warning';
+                            $stmt->close(); // Close the check statement
                         }
-                        // --- END: Proceed with fund removal ---
 
                     } else {
-                        // Balance is insufficient
-                        $message = 'Saldo insuficiente. Não pode remover mais do que tem na carteira.';
-                        $message_type = 'warning';
-                        $stmt_check->close(); // Close the check statement
+                        $mensagem = 'Erro: Não foi possível verificar o seu saldo atual.';
+                        $tipo_mensagem = 'danger';
+                        if ($stmt) $stmt->close();
                     }
 
                 } else {
-                    // User not found during balance check (shouldn't happen if user_id is valid)
-                    $message = 'Erro: Não foi possível verificar o seu saldo atual.';
-                    $message_type = 'danger';
-                     error_log("Could not fetch balance for user ID: " . $user_id);
-                     if ($stmt_check) $stmt_check->close();
+                    $mensagem = 'Erro interno ao preparar a query de verificação de saldo.';
+                    $tipo_mensagem = 'danger';
                 }
 
+                // Close the database connection if it's still open
+                //if ($conn) {
+                //     $conn->close();
+                //}
             } else {
-                // Handle prepare error for balance check
-                $message = 'Erro interno ao preparar a query de verificação de saldo.';
-                $message_type = 'danger';
-                error_log("Database prepare error (check balance): " . $conn->error);
+                $mensagem = 'Erro: Falha na conexão com a base de dados.';
+                $tipo_mensagem = 'danger';
             }
-            // --- END: Check current balance ---
 
-            // Close the database connection if it's still open
-            //if ($conn) {
-            //     $conn->close();
-            //}
-        } else {
-            // Handle connection error (if not handled in basedados.h)
-            $message = 'Erro: Falha na conexão com a base de dados.';
-            $message_type = 'danger';
-            error_log("Database connection failed when removing funds.");
+            if (!empty($mensagem)) {
+                $_SESSION['mensagem-add'] = $mensagem;
+                $_SESSION['tipo_mensagem-add'] = $tipo_mensagem;
+            }
         }
-
-        // --- Adicione ESTE código AQUI para guardar a mensagem na sessão ---
-        if (!empty($message)) { // Só guarda se uma mensagem foi definida
-            $_SESSION['message-add'] = $message;
-            $_SESSION['message_type-add'] = $message_type;
-        }
+        //exit();
     }
-    //exit();
-}
-
-// If not a POST request, just show the form
 ?>
 
 <!DOCTYPE html>
@@ -134,7 +120,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <head>
     <meta charset="utf-8">
-    <title>FelixBus - Remover Fundos</title>    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>FelixBus - Remover Fundos</title><meta content="width=device-width, initial-scale=1.0" name="viewport">
     <meta content="" name="keywords">
     <meta content="" name="description">
 
@@ -167,23 +153,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <h3 class="text-center text-white mb-4">Remover Saldo</h3>
 
             <?php
-            // Display session message if set
-            if (isset($_SESSION['message-add'])): ?>
-                <div class="alert alert-<?php echo $_SESSION['message_type-add']; ?> alert-dismissible fade show" role="alert">
-                    <?php echo $_SESSION['message-add']; ?>
+            // Mostrar mensagem se a sessão existe
+            if (isset($_SESSION['mensagem-add'])): ?>
+                <div class="alert alert-<?php echo $_SESSION['tipo_mensagem-add']; ?> alert-dismissible fade show" role="alert">
+                    <?php echo $_SESSION['mensagem-add']; ?>
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
                 <?php
-                // Unset the session message after displaying it
-                unset($_SESSION['message-add']);
-                unset($_SESSION['message_type-add']);
+                // Remover as variáveis de sessão depois de ser exibida
+                unset($_SESSION['mensagem-add']);
+                unset($_SESSION['tipo_mensagem-add']);
             endif;
             ?>
 
+            <!-- Formulário para remover o saldo -->
             <form action="remover_saldo.php" method="POST">
                 <div class="mb-3">
-                    <label for="amount" class="form-label">Quanto dinheiro (€) pretende remover?</label>
-                    <input name="amount" id="amount" type="number" step="0.01" min="0.01" class="form-control text-dark" required/>
+                    <label for="valor" class="form-label">Quanto dinheiro (€) pretende remover?</label>
+                    <input name="valor" id="valor" type="number" step="0.01" min="0.01" class="form-control text-dark" required/>
                 </div>
                 <div class="d-flex justify-content-center">
                     <input type="submit" value="Remover Saldo" class="btn btn-primary rounded-pill py-2 px-5">

@@ -1,17 +1,37 @@
 <?php
+    session_start();
+
     // Include conexão à BD
     include("basedados\basedados.h");
 
+    // Verifica se o utilizador tem sessão iniciada, senão tiver redireciona para a página de login
+    if (!isset($_SESSION['id_utilizador'])) {
+        header("Location: entrar.php");
+        exit();
+    }   
+
+    // Variável para armazenar mensagens de erro PHP (conexão, query, etc.)
+    $mensagem_erro = '';
+    $mensagem_sucesso = '';
+
+    // Verifica se há uma mensagem de sucesso na sessão
+    if (isset($_SESSION['mensagem_sucesso'])) {
+        $mensagem_sucesso = $_SESSION['mensagem_sucesso'];
+        // Limpa a variável de sessão para não exibir a mensagem novamente em carregamentos futuros
+        unset($_SESSION['mensagem_sucesso']);
+    }
+
     // Verifica se o formulário foi submetido
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        // Obtém os dados do formulário
-        $origem = isset($_GET['origem']) ? $_GET['origem'] : '';
-        $destino = isset($_GET['destino']) ? $_GET['destino'] : '';
-        $data_viagem = isset($_GET['data']) ? $_GET['data'] : '';
+        // Obtém os dados do formulário ou da sessão
+        $origem = isset($_GET['origem']) ? $_GET['origem'] : (isset($_SESSION['origem']) ? $_SESSION['origem'] : '');
+        $destino = isset($_GET['destino']) ? $_GET['destino'] : (isset($_SESSION['destino']) ? $_SESSION['destino'] : '');
+        $data_viagem = isset($_GET['data']) ? $_GET['data'] : (isset($_SESSION['data_viagem']) ? $_SESSION['data_viagem'] : '');
 
         $resultados = [];
 
-        if ($conn) {
+        // Só executa a consulta se tiver os parâmetros necessários e não houver mensagem de sucesso
+        if ($conn && !empty($origem) && !empty($destino) && !empty($data_viagem) && empty($mensagem_sucesso)) {
             // Consulta SQL para encontrar as viagens correspondentes
             $sql = "SELECT
                         v.id AS id_viagem,
@@ -35,6 +55,11 @@
                 if($stmt->execute()) {
                     $resultado = $stmt->get_result();
                     $resultados = $resultado->fetch_all(MYSQLI_ASSOC);
+
+                    if (!empty($resultados)) {
+                        $_SESSION['id_viagem'] = $resultados[0]['id_viagem'];
+                    }
+
                     $_SESSION['origem'] = $origem;
                     $_SESSION['destino'] = $destino;
                     $_SESSION['data_viagem'] = $data_viagem;
@@ -44,7 +69,9 @@
             }
         }
         
-        $conn->close();
+        if ($conn) {
+            $conn->close();
+        }
     }
 
 ?>
@@ -85,9 +112,25 @@
     </div>
     <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
     <div class="p-5 rounded shadow" style="max-width: 700px; width: 100%;">
-        <h3 class="text-center text-white mb-4">Viagens Encontradas</h3>
+        <h3 class="text-center text-white mb-4">Viagens</h3>
 
-        <?php if (!empty($resultados)): ?>
+        <?php
+            if (!empty($mensagem_erro)) {
+                echo '<div class="alert alert-danger">' . htmlspecialchars($mensagem_erro) . '</div>';
+            }
+            if (!empty($mensagem_sucesso)) {
+                echo '<div class="alert alert-success">' . htmlspecialchars($mensagem_sucesso) . '</div>';
+                echo '<script>
+                    setTimeout(function() {
+                        window.location.href = "index.php";
+                    }, 2000);
+                </script>';
+            }
+        ?>
+
+        <?php if (!empty($mensagem_sucesso)): ?>
+            <!-- Se há mensagem de sucesso, não mostra mais nada -->
+        <?php elseif (!empty($resultados)): ?>
             <div class="row g-3">
                 <?php foreach ($resultados as $viagem): ?>
                     <div class="col-12">
@@ -100,17 +143,16 @@
                                     <p class="card-text"><strong>Data e Hora:</strong> <?php echo htmlspecialchars(date('d/m/Y H:i', strtotime($viagem['data_hora']))); ?></p>
                                 </div>
                                 <div>
-                                    <a href="comprar_bilhetes.php" class="btn btn-primary text-light px-5 py-2 rounded-pill">Comprar</a> 
+                                    <a href="comprar_bilhete.php?id_viagem=<?php echo htmlspecialchars($viagem['id_viagem']); ?>" class="btn btn-primary text-light px-5 py-2 rounded-pill">Comprar</a>
                                 </div>
                             </div>
                         </div>
                     </div>
                 <?php endforeach; ?>
             </div>
-        <?php else: ?>
+        <?php elseif (!empty($origem) && !empty($destino) && !empty($data_viagem)): ?>
             <p class="text-center text-white">Nenhuma viagem encontrada para os critérios selecionados.</p>
         <?php endif; ?>
-
     </div>
 </div>
 <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>

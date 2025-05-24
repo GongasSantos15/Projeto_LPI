@@ -1,39 +1,43 @@
 <?php
-    // Include
     include 'C:\xampp\htdocs\lpi\Projeto_LPI\basedados\basedados.h';
     include 'constUtilizadores.php';
 
-    // Iniciar a sessão
     session_start();
 
-    // Verificar se algum dos campos está vazio
-    // Se sim exibe um alerta ao utilizador
-    if(isset($_POST['nome']) && isset($_POST['palavra_passe']) && $_POST['palavra_passe'] === $_POST['confirmar-palavra-passe']) {
-        
-        // Dados recebidos do formulário
-        $nome_utilizador = $_POST['nome'];
-        $palavra_passe = $_POST['palavra_passe'];
-        $tipo_nome_utilizador = CLIENTE;
+    $mensagem_erro = '';
+    $mensagem_sucesso = '';
 
-        // Query SQL para inserir na BD os dados do utilizador (nome próprio, nome de utilizador e tipo)
-        $sql = "INSERT INTO nome_utilizador (nome, palavra_passe, tipo_nome_utilizador) VALUES ('$nome_utilizador', '$palavra_passe', '$tipo_nome_utilizador')";
-        $res = mysqli_query($conn, $sql);
+    if($_SERVER['REQUEST_METHOD'] == 'POST') {
+        // Verifique os nomes dos campos exatamente como estão no formulário HTML
+        if(!empty($_POST['nome_utilizador']) && !empty($_POST['nome_proprio']) && !empty($_POST['palavra_passe']) && !empty($_POST['confirmar_palavra_passe'])) {
+            
+            // Use o mesmo nome que está no formulário (com underscore)
+            if($_POST['palavra_passe'] === $_POST['confirmar_palavra_passe']) {
+                $nome_utilizador = mysqli_real_escape_string($conn, $_POST['nome_utilizador']);
+                $nome_proprio = mysqli_real_escape_string($conn, $_POST['nome_proprio']);
+                $palavra_passe_encriptada = md5($_POST['palavra_passe']);
+                $tipo_nome_utilizador = CLIENTE;
 
-        // Se existe resultado, exibe uma alerta ao utilizador e redireciona para a página de login
-        // Senão exibe uma mensagem de erro (alerta)
-        if ($res) {
-            echo "<script>alert('Utilizador registado com sucesso!');</script>";
-            header("refresh:0; url=entrar.php");
-        } else {
-            echo "<script>alert('Erro ao registar utilizador: " . mysqli_error($conn) . "');</script>";
+                $sql = "INSERT INTO utilizador (nome_utilizador, nome_proprio, palavra_passe, tipo_utilizador) VALUES (?, ?, ?, ?)";
+                $stmt = $conn->prepare($sql);
+                
+                if (!$stmt) {
+                    $mensagem_erro = "Erro ao preparar a consulta.";
+                } else {
+                    mysqli_stmt_bind_param($stmt, "sssi", $nome_utilizador, $nome_proprio, $palavra_passe_encriptada, $tipo_nome_utilizador);
+
+                    if ($stmt->execute()){
+                        $mensagem_sucesso = "Utilizador registado com sucesso";
+                        header("Location: entrar.php");
+                        exit();
+                    } else {
+                        $mensagem_erro = "Erro ao registar utilizador: " . mysqli_error($conn);
+                    }
+                }
+            } else {
+                $mensagem_erro = "As palavras passe não coincidem.";
+            }
         }
-    
-    } else {
-        echo
-        "<script>
-            alert('Erro: Os campos estão vazios ou as palavras passe não coincidem.');
-            window.location.href = 'registar.php';
-        </script>";
     }
 ?>
 
@@ -84,30 +88,81 @@
 <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
     <div class="p-5 rounded shadow" style="max-width: 700px; width: 100%;">
         <h3 class="text-center text-white mb-4">Registar</h3>
+
         <form action="registar.php" method="POST">
             <div class="mb-3">
-                <label for="nome_utilizador" class="form-label">Nome Próprio:</label>
-                <input name="nome-completo" id="nome_utilizador" type="text" class="form-control text-dark" required />
+                <label for="nome_proprio" class="form-label">Nome Próprio:</label>
+                <input name="nome_proprio" id="nome_proprio" type="text" class="form-control text-dark" required />
             </div>
             <div class="mb-3">
                 <label for="nome_utilizador" class="form-label">Nome de Utilizador:</label>
-                <input name="nome" id="nome_utilizador" type="text" class="form-control text-dark" required />
+                <input name="nome_utilizador" id="nome_utilizador" type="text" class="form-control text-dark" required />
             </div>
             <div class="mb-3">
-                <label for="palavra-passe" class="form-label">Palavra Passe:</label>
-                <input name="palavra-passe" id="palavra-passe" type="password" class="form-control text-dark" required />
+                <label for="palavra_passe" class="form-label">Palavra-passe:</label>
+                <div class="input-group">
+                    <input name="palavra_passe" id="palavra_passe" type="password" class="form-control text-dark" required />
+                    <button class="btn btn-outline-light border-start-0" type="button" id="mostraPalavraPasse">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
             </div>
             <div class="mb-3">
-                <label for="confirmar-palavra-passe" class="form-label">Confirmar Palavra Passe:</label>
-                <input name="confirmar-palavra-passe" id="confirmar-palavra-passe" type="palavra-password" class="form-control text-dark" required />
+                <label for="confirmar_palavra_passe" class="form-label">Palavra-passe:</label>
+                <div class="input-group">
+                    <input name="confirmar_palavra_passe" id="confirmar_palavra_passe" type="password" class="form-control text-dark" required />
+                    <button class="btn btn-outline-light border-start-0" type="button" id="mostraConfirmarPalavraPasse">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
             </div>
             <div class="d-flex mt-5 justify-content-center">
                 <input type="submit" value="Registar" class="btn btn-primary rounded-pill py-2 px-5">
             </div>
         </form>
+        <div class="text-center mt-5">
+            <span>Já tem conta? <a href="entrar.php" class="text-info"> Inicie sessão aqui</a></span>
+        </div>
     </div>
 </div>
-<!-- Fim da Secção de Registo -->
+<!-- Fim da Secção de Registo -->~
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ativarMostrarPalavraPasse = document.querySelector('#mostraPalavraPasse');
+            const ativarMostrarConfirmarPalavraPasse = document.querySelector("#mostraConfirmarPalavraPasse");
+            const palavra_passe = document.querySelector('#palavra_passe');
+            const confirmar_palavra_passe = document.querySelector('#confirmar_palavra_passe');
+            
+            ativarMostrarPalavraPasse.addEventListener('click', function(e) {
+                e.preventDefault();
+                const tipo = palavra_passe.getAttribute('type') === 'password' ? 'text' : 'password';
+                palavra_passe.setAttribute('type', tipo);
+                
+                // Alterna o ícone
+                const icone = this.querySelector('i');
+                icone.classList.toggle('fa-eye');
+                icone.classList.toggle('fa-eye-slash');
+                
+                // Mantém o foco no campo de password
+                palavra_passe.focus();
+            });
+
+            ativarMostrarConfirmarPalavraPasse.addEventListener('click', function(e) {
+                e.preventDefault();
+                const tipo = confirmar_palavra_passe.getAttribute('type') === 'password' ? 'text' : 'password';
+                confirmar_palavra_passe.setAttribute('type', tipo);
+                
+                // Alterna o ícone
+                const icone2 = this.querySelector('i');
+                icone2.classList.toggle('fa-eye');
+                icone2.classList.toggle('fa-eye-slash');
+                
+                // Mantém o foco no campo de password
+                confirmar_palavra_passe.focus();
+            });
+        });
+    </script>
 
     <!-- Bibliotecas JavaScript -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>

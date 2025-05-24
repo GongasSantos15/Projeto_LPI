@@ -151,11 +151,17 @@
                                                     <?php echo number_format($bilhete['preco'], 2, ',', '.'); ?> €
                                                 </span>
                                             </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-4">
+                                        <div class="col-sm-6 d-flex justify-content-center">
                                             <div class="mb-3">
                                                 <button type="button" class="btn btn-warning rounded-pill py-2 px-4 botao-edicao" data-bilhete-id="<?php echo $bilhete['id_bilhete']; ?>">
                                                     <i class="fas fa-edit me-2"></i>Editar
                                                 </button>
                                             </div>
+                                        </div>
+                                        <div class="col-sm-6 d-flex justify-content-center">
                                             <div class="mb-3">
                                                 <button type="button" class="btn btn-danger rounded-pill py-2 px-4 botao-anular" data-bilhete-id="<?php echo $bilhete['id_bilhete']; ?>">
                                                     <i class="fas fa-times me-2"></i>Anular

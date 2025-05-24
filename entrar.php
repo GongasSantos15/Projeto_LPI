@@ -19,7 +19,7 @@
 
             // Dados do formulário (obtidos de forma segura)
             $nome_utilizador = $_POST["nome_utilizador"];
-            $palavra_passe = $_POST["palavra_passe"];
+            $palavra_passe_encriptada = md5($_POST['palavra_passe']);
 
             // Prepara a query SQL
             $sql = "SELECT id, nome_utilizador, tipo_utilizador FROM utilizador WHERE nome_utilizador = ? AND palavra_passe = ?";
@@ -30,7 +30,7 @@
             if ($stmt === false) {
                 $mensagem_erro = 'Erro interno na base de dados. Tente novamente mais tarde.';
             } else {
-                $stmt->bind_param("ss", $nome_utilizador, $palavra_passe);
+                $stmt->bind_param("ss", $nome_utilizador, $palavra_passe_encriptada);
 
                 // Executa a query
                 $stmt->execute();
@@ -92,6 +92,37 @@
     <link href="css/bootstrap.min.css" rel="stylesheet">
 
     <link href="css/style.css" rel="stylesheet">
+
+    <style>
+        /* Remove o outline e ajusta a borda do botão */
+        #togglePassword:focus {
+            outline: none;
+            box-shadow: none;
+            border-color: #ced4da;
+        }
+
+        .input-group button {
+            border-left: none;
+        }
+        .input-group button:hover {
+            background-color: #e9ecef;
+        }
+
+        /* Melhora a aparência do input group */
+        .input-group > .form-control:not(:first-child),
+        .input-group > .form-select:not(:first-child) {
+            border-left: 0;
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+
+        .input-group > .btn {
+            border-top-right-radius: 0.25rem;
+            border-bottom-right-radius: 0.25rem;
+            transition: none;
+        }
+    </style>
+    
 </head>
 
 <body>
@@ -104,12 +135,18 @@
     <div class="p-5 rounded shadow" style="max-width: 700px; width: 100%;">
         <h3 class="text-center text-white mb-4">Entrar</h3>
 
-        <?php
-        // Exibe a mensagem de erro
-        if ($mensagem_erro) {
-            echo '<div class="alert alert-danger" role="alert">' . htmlspecialchars($mensagem_erro) . '</div>';
-        }
-        ?>
+        <!-- Div para mensagens de erro -->
+        <?php if (!empty($mensagem_erro)): ?>
+            <div class="alert alert-danger alert-dismissible fade show" id="mensagem_erro" role="alert">
+                <?php echo htmlspecialchars($mensagem_erro); ?>
+            </div>
+            <script>
+                // Esconde a mensagem de sucesso após 2 segundos
+                setTimeout(function() {
+                        document.getElementById('mensagem_erro').style.display = 'none';
+                    }, 2000);
+            </script>
+        <?php endif; ?>
 
         <form action="entrar.php" method="POST">
             <div class="mb-3">
@@ -117,18 +154,45 @@
                 <input name="nome_utilizador" id="nome_utilizador" type="text" class="form-control text-dark" required />
             </div>
             <div class="mb-3">
-                <label for="palavra_passe" class="form-label">Palavra-Passe:</label>
-                <input name="palavra_passe" id="palavra_passe" type="password" class="form-control text-dark" required />
+                <label for="palavra_passe" class="form-label">Palavra-passe:</label>
+                <div class="input-group">
+                    <input name="palavra_passe" id="palavra_passe" type="password" class="form-control text-dark" required />
+                    <button class="btn btn-outline-light border-start-0" type="button" id="mostraPalavraPasse">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
             </div>
-            <div class="d-flex justify-content-center">
+            <div class="d-flex mt-5 justify-content-center">
                 <input type="submit" value="Entrar" class="btn btn-primary rounded-pill py-2 px-5">
             </div>
         </form>
         <div class="text-center mt-5">
-            <span>Não tem conta? <a href="registar.php" class="text-info">Registe-se aqui</a></span>
+            <span>Não tem conta? <a href="registar.php" class="text-info"> Registe-se aqui</a></span>
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ativarMostrarPalavraPasse = document.querySelector('#mostraPalavraPasse');
+        const palavra_passe = document.querySelector('#palavra_passe');
+        
+        ativarMostrarPalavraPasse.addEventListener('click', function(e) {
+            e.preventDefault();
+            const tipo = palavra_passe.getAttribute('type') === 'password' ? 'text' : 'password';
+            palavra_passe.setAttribute('type', tipo);
+            
+            // Alterna o ícone
+            const icone = this.querySelector('i');
+            icone.classList.toggle('fa-eye');
+            icone.classList.toggle('fa-eye-slash');
+            
+            // Mantém o foco no campo de password
+            palavra_passe.focus();
+        });
+    });
+</script>
+
 <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="lib/wow/wow.min.js"></script>

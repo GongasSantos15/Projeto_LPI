@@ -144,8 +144,6 @@
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="ticketsDropdownLink">
                             <li><a class="dropdown-item" href="consultar_bilhetes.php"><i class="fas fa-eye"></i>Consultar Bilhetes</a></li>
-                            <li><a class="dropdown-item" href="alterar_bilhetes.php"><i class="fas fa-edit"></i>Alterar Bilhetes</a></li>
-                            <li><a class="dropdown-item" href="anular_bilhetes.php"><i class="fas fa-times-circle"></i>Anular Bilhetes</a></li>
                         </ul>
                     </div>
 

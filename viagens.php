@@ -14,6 +14,13 @@
     $mensagem_erro = '';
     $mensagem_sucesso = '';
 
+    // Verifica se há uma mensagem de erro na sessão
+    if (isset($_SESSION['mensagem_erro'])) {
+        $mensagem_erro = $_SESSION['mensagem_erro'];
+        // Limpa a variável de sessão para não exibir a mensagem novamente em carregamentos futuros
+        unset($_SESSION['mensagem_erro']);
+    }
+
     // Verifica se há uma mensagem de sucesso na sessão
     if (isset($_SESSION['mensagem_sucesso'])) {
         $mensagem_sucesso = $_SESSION['mensagem_sucesso'];
@@ -112,11 +119,21 @@
     </div>
     <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
     <div class="p-5 rounded shadow" style="max-width: 700px; width: 100%;">
-        <h3 class="text-center text-white mb-4">Viagens</h3>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="text-white m-0">Consultar e Editar Dados</h3>
+            <a href="index.php" class="btn btn-outline-light btn-sm">
+                <i class="fas fa-arrow-left me-2"></i>Voltar ao Início
+            </a>
+        </div>
 
         <?php
             if (!empty($mensagem_erro)) {
                 echo '<div class="alert alert-danger">' . htmlspecialchars($mensagem_erro) . '</div>';
+                echo '<script>
+                    setTimeout(function() {
+                        window.location.href = "index.php";
+                    }, 4000);
+                </script>';
             }
             if (!empty($mensagem_sucesso)) {
                 echo '<div class="alert alert-success">' . htmlspecialchars($mensagem_sucesso) . '</div>';

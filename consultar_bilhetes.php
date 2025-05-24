@@ -167,9 +167,6 @@
                         <i class="fas fa-ticket-alt text-light" style="font-size: 4rem; opacity: 0.5;"></i>
                     </div>
                     <p class="text-center text-white fs-5 mb-4">Ainda não possui bilhetes comprados.</p>
-                    <a href="index.php" class="btn btn-primary px-4 py-2 rounded-pill">
-                        <i class="fas fa-search me-2"></i>Procurar Viagens
-                    </a>
                 </div>
             <?php endif; ?>
         </div>

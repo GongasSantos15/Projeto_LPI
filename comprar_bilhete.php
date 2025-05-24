@@ -75,15 +75,17 @@
             if ($saldo_atual < $preco_viagem) {
                 $_SESSION['mensagem_erro'] = "Saldo insuficiente. Saldo atual: €" . number_format($saldo_atual, 2) . 
                                                 ", Preço da viagem: €" . number_format($preco_viagem, 2);
+                header('Location: viagens.php');
+                exit();
             }
 
             // 3. Comprar o bilhete (retirar dinheiro da carteira do utilizador)
             $novo_saldo = $saldo_atual - $preco_viagem;
-            $sql_atualizar_saldo = "UPDATE carteira SET saldo = ?";
+            $sql_atualizar_saldo = "UPDATE carteira SET saldo = ? WHERE id_carteira = ?";
             $stmt_atualizar_saldo = $conn->prepare($sql_atualizar_saldo);
             
             if ($stmt_atualizar_saldo) {
-                $stmt_atualizar_saldo->bind_param("d", $novo_saldo);
+                $stmt_atualizar_saldo->bind_param("di", $novo_saldo, $id_carteira);
                 $stmt_atualizar_saldo->execute();
             }
 

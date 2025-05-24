@@ -43,10 +43,6 @@
                 $stmt = $conn->prepare($sql);
 
                 if ($stmt) { // Verifica se a preparação da query foi bem-sucedida
-                    // Liga os parâmetros à query
-                    // "s" indica que o parâmetro é uma string (nome)
-                    // "s" indica que o parâmetro é uma string (nome_proprio)
-                    // "i" indica que o parâmetro é um inteiro (id_utilizador)
                     $stmt->bind_param("ssi", $novo_nome, $novo_nome_proprio, $id_utilizador);
 
                     // Executa a query

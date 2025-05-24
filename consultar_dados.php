@@ -103,6 +103,12 @@
                 }
                 if (!empty($mensagem_sucesso)) {
                     echo '<div class="alert alert-success">' . htmlspecialchars($mensagem_sucesso) . '</div>';
+                    echo '<div class="alert alert-success">' . htmlspecialchars($mensagem_sucesso) . '</div>';
+                        echo '<script>
+                            setTimeout(function() {
+                                window.location.href = "index.php";
+                            }, 2000);
+                        </script>';
                 }
             ?>
 
@@ -125,7 +131,7 @@
                                     </div>
                                     
                                     <div class="col-md-4 text-md-end">
-                                        <button type="button" id="botao-edicao" class="btn btn-success rounded-pill py-2 px-4">
+                                        <button type="button" id="botao-edicao" class="btn btn-warning rounded-pill py-2 px-4">
                                             <i class="fas fa-edit me-2"></i>Editar Dados
                                         </button>
                                     </div>
@@ -163,10 +169,10 @@
                                         </div>
                                         
                                         <div class="d-flex justify-content-end gap-2 mt-3">
-                                            <button type="button" id="botao-cancelar" class="btn btn-outline-light">
+                                            <button type="button" id="botao-cancelar" class="btn btn-outline-danger rounded-pill">
                                                 <i class="fas fa-times me-2"></i>Cancelar
                                             </button>
-                                            <button type="submit" class="btn btn-success">
+                                            <button type="submit" class="btn btn-success rounded-pill">
                                                 <i class="fas fa-save me-2"></i>Guardar Alterações
                                             </button>
                                         </div>

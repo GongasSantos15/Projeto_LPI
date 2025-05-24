@@ -5,17 +5,13 @@
 	define("PASS_BD", "");
 	define("NOME_BD", "projeto_lpi");
 	$hostname_conn = "localhost";
-	
-	// Conexão ao servidor MySQL
-	if(!($conn = mysqli_connect($hostname_conn, USER_BD, PASS_BD))) 
-	{
-	   echo "Erro ao conectar ao MySQL.";
-	   exit;
-	}
-	// Seleção à base de dados MySQL
-	if(!($con = mysqli_select_db($conn, NOME_BD))) 
-	{
-	   echo "Erro ao selecionar ao MySQL.";
-	   exit;
+
+	// Conexão orientada a objetos
+	$conn = new mysqli($hostname_conn, USER_BD, PASS_BD, NOME_BD);
+
+	// Verifica conexão
+	if ($conn->connect_error) {
+		echo "Erro na conexão: " . $conn->connect_error;
+		exit();
 	}
 ?>

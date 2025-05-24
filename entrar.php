@@ -30,13 +30,13 @@
             if ($stmt === false) {
                 $mensagem_erro = 'Erro interno na base de dados. Tente novamente mais tarde.';
             } else {
-                $stmt->bind_param($stmt, "ss", $nome_utilizador, $palavra_passe);
+                $stmt->bind_param("ss", $nome_utilizador, $palavra_passe);
 
                 // Executa a query
-                $stmt->execute($stmt);
+                $stmt->execute();
 
                 // Obtém o resultado da query
-                $result = $stmt->get_result();
+                $resultado = $stmt->get_result();
 
                 // Verifica se encontrou exatamente 1 utilizador, obtém os dados do mesmo, guarda nas variáveis de sessão e redireciona para a página inicial se tudo correr bem
                 if ($resultado && mysqli_num_rows($resultado) == 1) {

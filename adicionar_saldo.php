@@ -1,7 +1,7 @@
 <?php
 
     include 'C:\xampp\htdocs\lpi\Projeto_LPI\basedados\basedados.h';
-    
+
     // Inicia a sessão
     session_start();
 
@@ -14,68 +14,70 @@
     // Obtém o ID do utilizador
     $id_utilizador = $_SESSION['id_utilizador'];
 
-    // Variáveis de mensagens que vão ser apresentadas ao utilizador e o seu tipo (warning, danger, success)
-    $mensagem = '';
-    $tipo_mensagem = '';
+    // Variáveis de mensagens que vão ser apresentadas ao utilizador
+    $mensagem_erro = '';
+    $mensagem_sucesso = '';
 
     // Processa a submissão do formulário para adicionar saldo
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        
+
         // Obtém o valor que o utilizador quer adicionar através do método POST e valida-o como número decimal
         $valor = filter_input(INPUT_POST, 'valor', FILTER_VALIDATE_FLOAT);
 
         // Verifica se o valor que o utilizador quer adicionar se é um número válido e positivo e exibe uma mensage de erro ao utilizador caso não seja
         if ($valor === false || $valor <= 0) {
-            $mensagem = 'Por favor, insira um valor positivo válido.';
-            $tipo_mensagem = 'warning';
+            $mensagem_erro = 'Por favor, insira um valor positivo válido.';
         } else {
             // Se o valor introduzido pelo utilizador for válido
             if ($conn) {
-                // Preparar a query de SQL para adicionar saldo
-                $sql = "UPDATE user SET carteira = carteira + ? WHERE id = ?";
+                // 1º Passo - Selecionar o utilizador com a carteira
+                $sql = "SELECT id_carteira FROM utilizador WHERE id = ?";
                 $stmt = $conn->prepare($sql);
 
-                if ($stmt) {
-                    // Associar os parâmetros: 'd' para double (float), 'i' para integer
-                    $stmt->bind_param("di", $valor, $id_utilizador);
+                if($stmt) {
+                    $stmt->bind_param("i", $id_utilizador);
+                    $stmt->execute();
+                    $resultado = $stmt->get_result();
 
-                    // Executar o statement
-                    if ($stmt->execute()) {
-                        // Verifica se alguma linha foi afetada, se sim o saldo do utilizador foi atualizado e é exibida uma mensagem de sucesso
-                        if ($stmt->affected_rows > 0) {
-                            $mensagem = 'Fundos adicionados com sucesso!';
-                            $tipo_mensagem = 'success';
+                    if ($resultado && $resultado->num_rows > 0) {
+                        $linha = $resultado->fetch_assoc();
+                        $id_carteira = $linha['id_carteira'];
+
+                        // 2º Passo - Selecionar o valor da carteira correspondente ao utilizador
+                        $sql_carteira = "UPDATE carteira SET saldo = saldo + ? WHERE id_carteira = ?";
+                        $stmt_carteira = $conn->prepare($sql_carteira);
+
+                        if ($stmt_carteira) {
+                            $stmt_carteira->bind_param("di", $valor, $id_carteira); // "d" para double (float), "i" para integer
+                            $stmt_carteira->execute();
+
+                            if ($stmt_carteira->affected_rows > 0) {
+                                $mensagem_sucesso = 'Saldo atualizado com sucesso!';
+                            } else {
+                                $mensagem_erro = 'Erro ao atualizar o saldo.';
+                            }
+
+                            $stmt_carteira->close();
                         } else {
-                            // Se o utilizador não existir na base de dados, exibir uma mensagem de erro
-                            $mensagem = 'Erro: Utilizador não encontrado ou saldo não atualizado.';
-                            $tipo_mensagem = 'warning';
+                            $mensagem_erro = 'Erro ao preparar a query de atualização do saldo.';
                         }
-                    } else { 
-                        // Tratar do caso de erro do statement, exibir uma mensagem de erro
-                        $mensagem = 'Erro ao adicionar fundos na base de dados.';
-                        $tipo_mensagem = 'danger';
+                    } else {
+                        $mensagem_erro = 'Utilizador não encontrado.';
                     }
-
-                    // Fechar o statement
                     $stmt->close();
                 } else {
-                    // Tratar do caso de erro do statement (preparar a query), exibir uma mensagem de erro
-                    $mensagem = 'Erro interno ao preparar a query.';
-                    $tipo_mensagem = 'danger';
+                    // Se não possível preparar a query, exibir uma mensagem de erro
+                    $mensagem_erro = 'Erro ao preparar a query para obter a carteira.';
                 }
 
                 // Fechar a conexão com a base de dados
                 $conn->close();
+
             } else {
                 // Se não possível executar a conexão com a base de dados, exibir uma mensagem de erro
-                $mensagem = 'Erro: Falha na conexão com a base de dados.';
-                $tipo_mensagem = 'danger';
+                $mensagem_erro = 'Erro: Falha na conexão com a base de dados.';
             }
         }
-
-        // Quando o saldo tiver atualizado com sucesso, redirecionar para a página principal 
-        header('Location: index.php');
-        exit();
     }
 ?>
 
@@ -84,7 +86,7 @@
 
     <head>
         <meta charset="utf-8">
-        <title>FelixBus - Entrar</title>
+        <title>FelixBus - Adicionar Saldo</title>
         <meta content="width=device-width, initial-scale=1.0" name="viewport">
         <meta content="" name="keywords">
         <meta content="" name="description">
@@ -115,34 +117,32 @@
         </div>
         <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
         <div class="p-5 rounded shadow" style="max-width: 700px; width: 100%;">
-                <h3 class="text-center text-white mb-4">Adicionar Saldo</h3>
+                    <h3 class="text-center text-white mb-4">Adicionar Saldo</h3>
 
-                <?php
-                // Apresenta mensagem se existir
-                if (isset($_SESSION['mensagem'])): ?>
-                    <div class="alert alert-<?php echo $_SESSION['tipo_mensagem']; ?> alert-dismissible fade show" role="alert">
-                        <?php echo $_SESSION['mensagem']; ?>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
                     <?php
-                    
-                    // Remover as variáveis de sessão depois de apresentadas
-                    unset($_SESSION['mensagem']);
-                    unset($_SESSION['tipo_mensagem']);
-                endif;
-                ?>
+                        if (!empty($mensagem_erro)) {
+                            echo '<div class="alert alert-danger">' . htmlspecialchars($mensagem_erro) . '</div>';
+                        }
+                        if (!empty($mensagem_sucesso)) {
+                            echo '<div class="alert alert-success">' . htmlspecialchars($mensagem_sucesso) . '</div>';
+                            echo '<script>
+                                setTimeout(function() {
+                                    window.location.href = "index.php";
+                                }, 2000);
+                            </script>';
+                        }
+                    ?>
 
-                <!-- FORMULÁRIO -->
-                <form action="adicionar_saldo.php" method="POST">
-                    <div class="mb-3">
-                        <label for="valor" class="form-label">Quanto dinheiro (€) pretende adicionar?</label>
-                        <input name="valor" id="valor" type="number" step="0.01" min="0.01" class="form-control text-dark" required/>
-                    </div>
-                    <div class="d-flex justify-content-center">
-                        <input type="submit" value="Adicionar Saldo" class="btn btn-primary rounded-pill py-2 px-5">
-                    </div>
-                </form>
-            </div>
+                    <form action="adicionar_saldo.php" method="POST">
+                        <div class="mb-3">
+                            <label for="valor" class="form-label">Quanto dinheiro (€) pretende adicionar?</label>
+                            <input name="valor" id="valor" type="number" step="0.01" min="0.01" class="form-control text-dark" required/>
+                        </div>
+                        <div class="d-flex justify-content-center">
+                            <input type="submit" value="Adicionar Saldo" class="btn btn-primary rounded-pill py-2 px-5">
+                        </div>
+                    </form>
+                </div>
         </div>
             <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
             <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>

@@ -111,37 +111,18 @@ window.onload = carregarDistritos;
 
 // Função para editar o nome do utilizador
 document.addEventListener('DOMContentLoaded', function() {
-    // Seleciona TODOS os elementos com a classe 'edit-icon'
-    const editIcons = document.querySelectorAll('.edit-icon');
-    // Seleciona os campos de input que queremos tornar editáveis
+    const botaoEdicao = document.getElementById('botao-edicao');
     const nameInput = document.getElementById('nome');
-    const firstNameInput = document.getElementById('nomeProprio');
-    // Seleciona o botão de guardar
-    const saveButton = document.getElementById('saveButton');
+    const firstNameInput = document.getElementById('nome-proprio');
+    const saveButton = document.getElementById('botao-guardar');
 
-    // Adiciona um listener de clique a CADA ícone de edição
-    editIcons.forEach(function(icon) {
-        icon.addEventListener('click', function() {
-            // Verifica se os campos estão desativados (estado inicial)
-            if (nameInput.disabled && firstNameInput.disabled) {
-                // Habilita AMBOS os campos de input
-                nameInput.disabled = false;
-                firstNameInput.disabled = false;
-
-                // Mostra o botão de guardar
-                saveButton.style.display = 'block';
-
-                // Opcional: Oculta todos os ícones de edição depois de habilitar os campos
-                editIcons.forEach(function(editIcon) {
-                    editIcon.style.display = 'none';
-                });
-
-                // Opcional: Foca no primeiro campo de input para facilitar a edição
-                nameInput.focus();
-            }
+    if (botaoEdicao) {
+        botaoEdicao.addEventListener('click', function() {
+            nameInput.disabled = false;
+            firstNameInput.disabled = false;
+            saveButton.style.display = 'block';
+            botaoEdicao.style.display = 'none';
+            nameInput.focus();
         });
-    });
-
-    // Pode adicionar aqui lógica adicional se quiser,
-    // como desabilitar os campos novamente se o utilizador cancelar a edição.
+    }
 });

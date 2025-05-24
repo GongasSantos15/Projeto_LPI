@@ -6,8 +6,8 @@
     include 'C:\xampp\htdocs\lpi\Projeto_LPI\basedados\basedados.h';
 
     // Variáveis para armazenar os dados do utilizador, inicializadas como vazias
-    $nome_utilizador_atual = '';
-    $nome_atual = '';
+    $nome_utilizador = '';
+    $nome_proprio = '';
     $id_utilizador = null;
 
     // Verifica se o utilizador não efetuou o login, se não redireciona-o para a página de login
@@ -21,11 +21,19 @@
 
     // Variável para armazenar mensagens de erro PHP (conexão, query, etc.)
     $mensagem_erro = '';
+    $mensagem_sucesso = '';
+
+    // Verifica se há uma mensagem de sucesso na sessão
+    if (isset($_SESSION['mensagem_sucesso'])) {
+        $mensagem_sucesso = $_SESSION['mensagem_sucesso'];
+        // Limpa a variável de sessão para não exibir a mensagem novamente em carregamentos futuros
+        unset($_SESSION['mensagem_sucesso']);
+    }
 
     // Verifica se a conexão com a base de dados é válida
     if ($conn) {
         // SQL para procurar o nome e nome_proprio do utilizador
-        $sql = "SELECT nome, nome_proprio FROM user WHERE id = ?";
+        $sql = "SELECT nome_utilizador, nome_proprio FROM utilizador WHERE id = ?";
         $stmt = $conn->prepare($sql);
 
         if ($stmt) { // Verifica se a preparação da query foi bem-sucedida e liga o pârametro à query ("i" indica que o parâmetro é um inteiro)
@@ -35,15 +43,15 @@
             $stmt->execute();
 
             // Obtém o resultado da query
-            $result = $stmt->get_result();
+            $resultado = $stmt->get_result();
 
             // Verifica se encontrou o utilizador, se sim obtém a linha de resultado como um array associativo e atribui o resultado às variáveis corretas
-            if ($result && $result->num_rows > 0) {
-                $row = $result->fetch_assoc();
+            if ($resultado && $resultado->num_rows > 0) {
+                $linha = $resultado->fetch_assoc();
 
                 // htmlspecialchars serve para evitar problemas de segurança ao ir buscar os dados à BD, senão exibe uma mensagem de erro
-                $nome_utilizador_atual = htmlspecialchars($row['nome']);
-                $nome_atual = htmlspecialchars($row['nome_proprio']);
+                $nome_utilizador = htmlspecialchars($linha['nome_utilizador']);
+                $nome_proprio = htmlspecialchars($linha['nome_proprio']);
             } else {
                 $mensagem_erro = "Os dados do utilizador não foram encontrados na base de dados.";
             }
@@ -115,6 +123,14 @@
                 if (!empty($mensagem_erro)) {
                     echo '<div class="alert alert-danger">' . htmlspecialchars($mensagem_erro) . '</div>';
                 }
+                if (!empty($mensagem_sucesso)) {
+                    echo '<div class="alert alert-success">' . htmlspecialchars($mensagem_sucesso) . '</div>';
+                    echo '<script>
+                        setTimeout(function() {
+                            window.location.href = "index.php";
+                        }, 2000);
+                    </script>';
+                }
             ?>
 
             <button type="button" id="botao-edicao" class="btn btn-primary rounded-pill py-2 px-5 mb-4"><i class="fas fa-edit me-2"></i> Editar Dados</button>
@@ -125,40 +141,22 @@
                 <input type="hidden" name="id_utilizador" value="<?php echo htmlspecialchars($id_utilizador); ?>">
 
                 <div class="mb-3">
-                    <label for="nomeProprio" class="form-label text-white">Nome Próprio:</label>
+                    <label for="nome-proprio" class="form-label text-white">Nome Próprio:</label>
                     <div class="input-group">
-                         <input name="nome-completo" id="nome-proprio" type="text" class="form-control text-dark" value="<?php echo $nome_atual; ?>" disabled required />
+                         <input name="nome-proprio" id="nome-proprio" type="text" class="form-control text-dark" value="<?php echo $nome_proprio; ?>" disabled required />
                     </div>
                 </div>
 
                 <div class="mb-3">
                     <label for="nome" class="form-label text-white">Nome:</label>
                     <div class="input-group">
-                         <input name="nome" id="nome" type="text" class="form-control text-dark" value="<?php echo $nome_utilizador_atual; ?>" disabled required />
+                         <input name="nome" id="nome" type="text" class="form-control text-dark" value="<?php echo $nome_utilizador; ?>" disabled required />
                     </div>
                 </div>
 
                 <div class="d-flex mt-5 justify-content-center">
                 <input type="submit" id="botao-guardar" value="Guardar Alterações" class="btn btn-primary rounded-pill py-2 px-5">
             </div>
-
-                <div id="messageArea" class="mt-3 text-center">
-                    <?php
-                        // Display messages if redirected back after update
-                        //if (isset($_GET['status'])) {
-                            //if ($_GET['status'] === 'success') {
-                                //echo '<div class="alert alert-success">Dados atualizados com sucesso! Redirecionando...</div>';
-                                // Redirect after 2 seconds to index.php as per original logic
-                                //header("refresh:2; url = index.php");
-                                //exit(); // Stop further execution after setting refresh header
-                            //} else if ($_GET['status'] === 'error') {
-                                // Use message from GET if available, otherwise a generic one
-                                //$errorMessage = isset($_GET['message']) ? htmlspecialchars($_GET['message']) : 'Erro ao atualizar dados. Por favor, tente novamente.';
-                                //echo '<div class="alert alert-danger">' . $errorMessage . '</div>';
-                            //}
-                        //}
-                    ?>
-                </div>
 
             </form>
         </div>
@@ -174,35 +172,7 @@
     <script src="lib/tempusdominus/js/moment-timezone.min.js"></script>
     <script src="lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js"></script>
 
-    <script src="js/main.js"></script>
-
-    <script>
-        // Seleciona os botões de edição e de input pelo ID, assim como o botão de guardar os dados e verifica se todos os elementos necessários foram encontrados
-        // Adiciona um listener de clique no botão de edilção
-        // Habilita os campos de input
-        // Mostra o botão guardar
-        // Oculta o botão "Editar Dados", depois de clicar nele
-        // Foca o primeiro input
-        document.addEventListener('DOMContentLoaded', function() {
-            const botaoEdicao = document.getElementById('botao-edicao');
-            const campoNome = document.getElementById('nome');
-            const campoNomeProprio = document.getElementById('nome-proprio');
-            const botaoGuardar = document.getElementById('botaoGuardar');
-
-            if (botaoEdicao && campoNome && campoNomeProprio && botaoGuardar) {
-
-                botaoEdicao.addEventListener('click', function() {
-                    campoNome.disabled = false;
-                    campoNomeProprio.disabled = false;
-
-                    botaoGuardar.style.display = 'block';
-                    botaoEdicao.style.display = 'none';
-
-                    campoNome.focus();
-                });
-            }
-        });
-    </script>
+    <script src="js\main.js"></script>
 
 </body>
 

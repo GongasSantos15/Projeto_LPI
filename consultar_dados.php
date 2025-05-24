@@ -116,7 +116,7 @@
     </div>
 
     <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
-        <div class="p-5 rounded shadow" style="max-width: 700px; width: 100%; background-color: rgba(0, 0, 0, 0.6);">
+        <div class="p-5 rounded shadow bg-gradient" style="max-width: 700px; width: 100%;">
             <h3 class="text-center text-white mb-4">Consultar e Editar Dados</h3>
 
             <?php

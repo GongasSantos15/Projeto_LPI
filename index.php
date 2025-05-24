@@ -139,24 +139,24 @@
                          <h1 class="display-3 text-white mb-3 animated slideInDown">A sua próxima viagem começa aqui!</h1>
                         <p class="fs-4 text-white mb-4 animated slideInDown">Viaje com a FelixBus e descubra novos destinos em Portugal!</p>
                         <div class="bg-gradient position-relative w-75 mx-auto mt-5 animated slideInDown">
-                            <form method="POST" class="d-flex flex-wrap p-4 rounded text-light justify-content-center" style="gap: 2rem 0.5rem;">
+                            <form method="GET" action="viagens.php" class="d-flex flex-wrap p-4 rounded text-light justify-content-center" style="gap: 2rem 0.5rem;">
                                 <div class="me-4">
                                     <label class="form-label">Origem:</label>
-                                    <select name="origem" id="origem" class="form-select bg-dark text-light border-primary">
+                                    <select name="origem" id="origem" class="form-select bg-dark text-light border-primary" required>
                                         <option>A carregar...</option>
                                     </select>
                                 </div>
 
                                 <div class="me-4">
                                     <label class="form-label">Destino:</label>
-                                    <select name="destino"  id="destino" class="form-select bg-dark text-light border-primary">
+                                    <select name="destino"  id="destino" class="form-select bg-dark text-light border-primary" required>
                                         <option>A carregar...</option>
                                     </select>
                                 </div>
 
                                 <div class="me-4">
                                     <label class="form-label">Data de viagem:</label>
-                                    <input name="data" id="data" type="date" class="form-control bg-dark text-light border-primary" autocomplete="off" />
+                                    <input name="data" id="data" type="date" class="form-control bg-dark text-light border-primary" autocomplete="off" required/>
                                 </div>
 
                                 <div class="w-100 text-center mt-2">

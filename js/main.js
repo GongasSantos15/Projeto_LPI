@@ -96,7 +96,7 @@
 // FUNÇÕES CRIADAS POR MIM
 // Função para carregar os distritos
 function carregarDistritos() {
-    fetch('/lpi/Projeto_LPI/distritos.php')
+    fetch('/lpi/Projeto_LPI/rotas.php')
         .then(response => response.text())
         .then(data => {
             document.getElementById('origem').innerHTML = data;

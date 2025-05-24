@@ -164,7 +164,7 @@
             </div>
         </nav>
 
-        <div class="container-fluid bg-primary py-5 mb-5 hero-header">
+        <div class="container-fluid bg-primary py-5 hero-header">
             <div class="container py-5">
                 <div class="row justify-content-center py-5">
                     <div class="col-lg-10 pt-lg-5 mt-lg-5 text-center">
@@ -202,6 +202,21 @@
             </div>
         </div>
     </div>
+
+     <!-- Footer Start -->
+    <div class="container-fluid bg-dark d-flex justify-content-center text-light footer pt-5 wow fadeIn" data-wow-delay="0.1s">
+        <div class="container py-5">
+            <div class="row">
+                <div class="col-lg-12">
+                    <h4 class="text-white mb-3">Contactos</h4>
+                    <p class="mb-2"><i class="fa fa-map-marker-alt me-3"></i>Rua 123, Lisboa, Portugal</p>
+                    <p class="mb-2"><i class="fa fa-phone-alt me-3"></i>+351 928 955 822</p>
+                    <p class="mb-2"><i class="fa fa-envelope me-3"></i>felixbus@gmail.com</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Footer End -->
 
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>

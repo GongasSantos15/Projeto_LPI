@@ -108,21 +108,3 @@ function carregarDistritos() {
 }
 
 window.onload = carregarDistritos;
-
-// Função para editar o nome do utilizador
-document.addEventListener('DOMContentLoaded', function() {
-    const botaoEdicao = document.getElementById('botao-edicao');
-    const nameInput = document.getElementById('nome');
-    const firstNameInput = document.getElementById('nome-proprio');
-    const saveButton = document.getElementById('botao-guardar');
-
-    if (botaoEdicao) {
-        botaoEdicao.addEventListener('click', function() {
-            nameInput.disabled = false;
-            firstNameInput.disabled = false;
-            saveButton.style.display = 'block';
-            botaoEdicao.style.display = 'none';
-            nameInput.focus();
-        });
-    }
-});

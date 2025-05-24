@@ -117,7 +117,12 @@
         </div>
         <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
         <div class="p-5 rounded shadow" style="max-width: 700px; width: 100%;">
-                    <h3 class="text-center text-white mb-4">Remover Saldo</h3>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="text-white m-0">Levantar Saldo</h3>
+                <a href="index.php" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-arrow-left me-2"></i>Voltar ao Início
+                </a>
+            </div>
 
                     <?php
                         if (!empty($mensagem_erro)) {
@@ -133,15 +138,17 @@
                         }
                     ?>
 
-                    <form action="remover_saldo.php" method="POST">
+                    <div class="bg-gradient mb-3 p-5 position-relative mx-auto mt-3 animated slideInDown">
+                        <form action="remover_saldo.php" method="POST">
                         <div class="mb-3">
                             <label for="valor" class="form-label">Quanto dinheiro (€) pretende levantar?</label>
                             <input name="valor" id="valor" type="number" step="0.01" min="0.01" class="form-control text-dark" required/>
                         </div>
                         <div class="d-flex justify-content-center">
-                            <input type="submit" value="Levantar Saldo" class="btn btn-primary rounded-pill py-2 px-5">
+                            <input type="submit" value="Levantar Saldo" class="btn btn-success rounded-pill py-2 px-5">
                         </div>
                     </form>
+                    </div>
                 </div>
         </div>
             <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>

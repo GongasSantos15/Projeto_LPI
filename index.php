@@ -10,12 +10,14 @@
     $temLogin = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']);
     $nome_utilizador = $temLogin ? ($_SESSION['nome_utilizador'] ?? 'Utilizador') : '';
     $valor_carteira = 0;
+    $numero_bilhetes = 0;
     $id_utilizador = null;
 
     if ($temLogin) {
         $id_utilizador = $_SESSION['id_utilizador'];
 
         if ($conn) {
+            // Consulta para obter dados da carteira
             $sql = "SELECT id_carteira FROM utilizador WHERE id = ?";
             $stmt = $conn->prepare($sql);
 
@@ -46,6 +48,23 @@
                 }
 
                 $stmt->close();
+            }
+
+            // Consulta para contar os bilhetes do utilizador
+            $sql_bilhetes = "SELECT COUNT(*) as total_bilhetes FROM bilhete WHERE id_utilizador = ?";
+            $stmt_bilhetes = $conn->prepare($sql_bilhetes);
+
+            if ($stmt_bilhetes) {
+                $stmt_bilhetes->bind_param("i", $id_utilizador);
+                $stmt_bilhetes->execute();
+                $resultado_bilhetes = $stmt_bilhetes->get_result();
+
+                if ($resultado_bilhetes && $resultado_bilhetes->num_rows > 0) {
+                    $linha_bilhetes = $resultado_bilhetes->fetch_assoc();
+                    $numero_bilhetes = $linha_bilhetes['total_bilhetes'];
+                }
+
+                $stmt_bilhetes->close();
             }
         }
     }
@@ -107,15 +126,30 @@
                 </div>
 
                 <?php if ($temLogin): ?>
+                    <!-- Dropdown da Carteira -->
                     <div class="nav-item dropdown">
-                    <a href="#" class="nav-link dropdown-toggle" id="walletDropdownLink" role="button" aria-expanded="false">
-                            <i class="fa fa-wallet"></i> <?php echo $valor_carteira; ?> €
+                        <a href="#" class="nav-link dropdown-toggle" id="walletDropdownLink" role="button" aria-expanded="false">
+                            <i class="fa fa-wallet me-2"></i> <?php echo $valor_carteira; ?> €
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="walletDropdownLink">
-                            <li><a class="dropdown-item" href="adicionar_saldo.php"><i class="fas fa-plus-circle"></i> 💰 Adicionar</a></li>
-                            <li><a class="dropdown-item" href="remover_saldo.php"><i class="fas fa-minus-circle"></i> 💸 Remover</a></li>
+                            <li><a class="dropdown-item" href="adicionar_saldo.php"><i class="fas fa-plus-circle"></i>Adicionar</a></li>
+                            <li><a class="dropdown-item" href="remover_saldo.php"><i class="fas fa-minus-circle"></i>Remover</a></li>
                         </ul>
                     </div>
+
+                    <!-- Dropdown dos Bilhetes -->
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle" id="ticketsDropdownLink" role="button" aria-expanded="false">
+                            <i class="fa fa-ticket-alt me-2"></i> <?php echo $numero_bilhetes; ?>
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="ticketsDropdownLink">
+                            <li><a class="dropdown-item" href="consultar_bilhetes.php"><i class="fas fa-eye"></i>Consultar Bilhetes</a></li>
+                            <li><a class="dropdown-item" href="alterar_bilhetes.php"><i class="fas fa-edit"></i>Alterar Bilhetes</a></li>
+                            <li><a class="dropdown-item" href="anular_bilhetes.php"><i class="fas fa-times-circle"></i>Anular Bilhetes</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Dropdown do Utilizador -->
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fa fa-user-circle fa-2x me-2"></i>

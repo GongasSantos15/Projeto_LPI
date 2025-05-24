@@ -1,4 +1,5 @@
 <?php
+
     // Include base de dados
     include 'C:\xampp\htdocs\lpi\Projeto_LPI\basedados\basedados.h';
     
@@ -10,43 +11,42 @@
 
     $mensagem_erro = ''; 
 
-    // --- PROCESSAMENTO DO LOGIN (APENAS EM POST) ---
+    // Se o método for POST
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Verificar se os campos não estão vazios (redundante com 'required' no HTML, mas seguro)
-        if (isset($_POST["nome"]) && isset($_POST["palavra-passe"])) {
+        if (isset($_POST["nome_utilizador"]) && isset($_POST["palavra_passe"])) {
 
             // Dados do formulário (obtidos de forma segura)
-            $nome_utilizador = $_POST["nome"];
-            $palavra_passe = $_POST["palavra-passe"];
+            $nome_utilizador = $_POST["nome_utilizador"];
+            $palavra_passe = $_POST["palavra_passe"];
 
             // Prepara a query SQL
-            $sql = "SELECT id, nome, tipo_nome_utilizador FROM nome_utilizador WHERE nome = ? AND palavra-passe = ? AND tipo_nome_utilizador != ?";
-            $stmt = mysqli_prepare($conn, $sql);
+            $sql = "SELECT id, nome_utilizador, tipo_utilizador FROM utilizador WHERE nome_utilizador = ? AND palavra_passe = ?";
+            $stmt = $conn->prepare($sql);
 
             // Verifica se a preparação da query falhou, se falhar mostra uma mensagem de erro
             // Senão liga os parâmetros (dados do formulário) às variáveis corretas ("ssi" indica que existem 2 strings e 1 inteiro)
             if ($stmt === false) {
                 $mensagem_erro = 'Erro interno na base de dados. Tente novamente mais tarde.';
             } else {
-                $cliente_apagado = CLIENTE_APAGADO;
-                mysqli_stmt_bind_param($stmt, "ssi", $nome_utilizador, $palavra_passe, $cliente_apagado);
+                $stmt->bind_param($stmt, "ss", $nome_utilizador, $palavra_passe);
 
                 // Executa a query
-                mysqli_stmt_execute($stmt);
+                $stmt->execute($stmt);
 
                 // Obtém o resultado da query
-                $resultado = mysqli_stmt_get_resultado($stmt);
+                $result = $stmt->get_result();
 
                 // Verifica se encontrou exatamente 1 utilizador, obtém os dados do mesmo, guarda nas variáveis de sessão e redireciona para a página inicial se tudo correr bem
                 if ($resultado && mysqli_num_rows($resultado) == 1) {
                     // Obtém os dados do utilizador
-                    $row = mysqli_fetch_assoc($resultado);
+                    $linha = mysqli_fetch_assoc($resultado);
 
                     // Autenticação bem-sucedida! Guarda os dados na sessão.
-                    $_SESSION['nome_utilizador_id'] = $row['id'];
-                    $_SESSION['nome_utilizador'] = $row['nome_utilizador'];
-                    $_SESSION['tipo'] = $row['tipo_nome_utilizador'];
+                    $_SESSION['id_utilizador'] = $linha['id'];
+                    $_SESSION['nome_utilizador'] = $linha['nome_utilizador'];
+                    $_SESSION['tipo_utilizador'] = $linha['tipo_utilizador'];
 
                     $stmt->close();
 
@@ -114,11 +114,11 @@
         <form action="entrar.php" method="POST">
             <div class="mb-3">
                 <label for="nome_utilizador" class="form-label">Nome de Utilizador:</label>
-                <input name="nome" id="nome_utilizado" type="text" class="form-control text-dark" required />
+                <input name="nome_utilizador" id="nome_utilizador" type="text" class="form-control text-dark" required />
             </div>
             <div class="mb-3">
-                <label for="pass" class="form-label">Palavra-Passe:</label>
-                <input name="palavra-passe" id="palavra-passe" type="password" class="form-control text-dark" required />
+                <label for="palavra_passe" class="form-label">Palavra-Passe:</label>
+                <input name="palavra_passe" id="palavra_passe" type="password" class="form-control text-dark" required />
             </div>
             <div class="d-flex justify-content-center">
                 <input type="submit" value="Entrar" class="btn btn-primary rounded-pill py-2 px-5">

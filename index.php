@@ -51,7 +51,7 @@
             }
 
             // Consulta para contar os bilhetes do utilizador
-            $sql_bilhetes = "SELECT COUNT(*) as total_bilhetes FROM bilhete WHERE id_utilizador = ?";
+            $sql_bilhetes = "SELECT COUNT(*) as total_bilhetes FROM bilhete WHERE id_utilizador = ? AND estado = 1";
             $stmt_bilhetes = $conn->prepare($sql_bilhetes);
 
             if ($stmt_bilhetes) {

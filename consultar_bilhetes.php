@@ -3,8 +3,6 @@
 
     include("basedados/basedados.h");
 
-
-
     if (!isset($_SESSION['id_utilizador'])) {
         header("Location: entrar.php");
         exit();
@@ -29,7 +27,8 @@
                     v.data_hora,
                     r.origem,
                     r.destino,
-                    v.id AS id_viagem
+                    v.id AS id_viagem,
+                    b.estado
                 FROM
                     bilhete b
                 JOIN
@@ -37,7 +36,7 @@
                 JOIN
                     rota r ON v.id_rota = r.id
                 WHERE
-                    b.id_utilizador = ?
+                    b.id_utilizador = ? AND b.estado = 1
                 ORDER BY
                     b.data_compra ASC";
 
@@ -122,7 +121,7 @@
             <?php if (!empty($bilhetes)): ?>
                 <div class="row g-3">
                     <?php foreach ($bilhetes as $bilhete): ?>
-                        
+                        <?php if ($bilhete['estado'] == 1): ?>
                         <div class="col-12">
                             <div class="bg-gradient mb-3 position-relative mx-auto mt-3 animated slideInDown">
                                 <div class="card-body p-4">
@@ -217,6 +216,7 @@
                                 </div>
                             </div>
                         </div>
+                        <?php endif ?>
                     <?php endforeach; ?>
                 </div>
             <?php else: ?>
@@ -283,6 +283,24 @@
                 $('#formulario-edicao-' + bilheteId + ' .view-mode').show();
                 $('#formulario-edicao-' + bilheteId + ' .edit-mode').hide();
             });
+        });
+        
+        // Botão para anular bilhete
+        $(document).on('click', '.botao-anular', function() {
+            var bilheteId = $(this).data('bilhete-id');
+            if(confirm('Tem certeza que deseja anular este bilhete?')) {
+                $.ajax({
+                    url: 'anular_bilhete.php',
+                    method: 'POST',
+                    data: { id_bilhete: bilheteId },
+                    success: function(response) {
+                        location.reload();
+                    },
+                    error: function() {
+                        alert('Erro ao anular bilhete');
+                    }
+                });
+            }
         });
     </script>
 </body>

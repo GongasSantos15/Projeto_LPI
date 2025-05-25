@@ -1,3 +1,75 @@
+<?php
+
+    // Include BD
+    include("..\basedados\basedados.h");
+
+    // Inicia a sessão
+    session_start();
+
+    // Verifica o estado de login
+    $temLogin = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']);
+    $nome_utilizador = $temLogin ? ($_SESSION['nome_utilizador'] ?? 'Utilizador') : '';
+    $valor_carteira = 0;
+    $numero_bilhetes = 0;
+    $id_utilizador = null;
+
+    if ($temLogin) {
+        $id_utilizador = $_SESSION['id_utilizador'];
+
+        if ($conn) {
+            // Consulta para obter dados da carteira
+            $sql = "SELECT id_carteira FROM utilizador WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+
+            if ($stmt) {
+                $stmt->bind_param("i", $id_utilizador);
+                $stmt->execute();
+                $resultado = $stmt->get_result();  
+
+                if ($resultado && $resultado->num_rows > 0) {
+                    $linha = $resultado->fetch_assoc();
+                    $id_carteira = $linha['id_carteira'];
+
+                    $sql_carteira = "SELECT saldo FROM carteira WHERE id_carteira = ?";
+                    $stmt_carteira = $conn->prepare($sql_carteira);
+
+                    if ($stmt_carteira) {
+                        $stmt_carteira->bind_param("i", $id_carteira);
+                        $stmt_carteira->execute();
+                        $resultado_carteira = $stmt_carteira->get_result();
+
+                        if ($resultado_carteira && $resultado_carteira->num_rows > 0) {
+                            $linha_carteira = $resultado_carteira->fetch_assoc();
+                            $valor_carteira = number_format($linha_carteira['saldo'], 2, ',', '.');
+                        }
+
+                        $stmt_carteira->close();
+                    }
+                }
+
+                $stmt->close();
+            }
+
+            // Consulta para contar os bilhetes do utilizador
+            $sql_bilhetes = "SELECT COUNT(*) as total_bilhetes FROM bilhete WHERE id_utilizador = ? AND estado = 1";
+            $stmt_bilhetes = $conn->prepare($sql_bilhetes);
+
+            if ($stmt_bilhetes) {
+                $stmt_bilhetes->bind_param("i", $id_utilizador);
+                $stmt_bilhetes->execute();
+                $resultado_bilhetes = $stmt_bilhetes->get_result();
+
+                if ($resultado_bilhetes && $resultado_bilhetes->num_rows > 0) {
+                    $linha_bilhetes = $resultado_bilhetes->fetch_assoc();
+                    $numero_bilhetes = $linha_bilhetes['total_bilhetes'];
+                }
+
+                $stmt_bilhetes->close();
+            }
+        }
+    }
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -42,7 +114,7 @@
     </div>
     <div class="container-fluid position-relative p-0">
         <nav class="navbar navbar-expand-lg navbar-light px-5 px-lg-5 py-3 py-lg-3">
-            <a href="index.php" class="navbar-brand p-0">
+            <a href="pagina_inicial_func.php" class="navbar-brand p-0">
                 <h1 class="text-primary m-0"><i class="fa fa-map-marker-alt me-3"></i>FelixBus</h1>
                 </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
@@ -50,9 +122,46 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarCollapse">
                 <div class="navbar-nav ms-auto py-0">
-                    <a href="index.php" class="nav-item nav-link">Home</a>
+                    <a href="pagina_inicial_func.php" class="nav-item nav-link">Home</a>
                 </div>
+
+                <?php if ($temLogin): ?>
+                    <!-- Dropdown da Carteira -->
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle" id="walletDropdownLink" role="button" aria-expanded="false">
+                            <i class="fa fa-wallet me-2"></i> <?php echo $valor_carteira; ?> €
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="walletDropdownLink">
+                            <li><a class="dropdown-item" href="adicionar_saldo.php"><i class="fas fa-plus-circle"></i>Adicionar Saldo</a></li>
+                            <li><a class="dropdown-item" href="remover_saldo.php"><i class="fas fa-minus-circle"></i>Remover Saldo</a></li>
+                            <li><a class="dropdown-item" href="consultar_saldo_clientes.php"><i class="fas fa-user"></i>Consultar Clientes</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Dropdown dos Bilhetes -->
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle" id="ticketsDropdownLink" role="button" aria-expanded="false">
+                            <i class="fa fa-ticket-alt me-2"></i> <?php echo $numero_bilhetes; ?>
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="ticketsDropdownLink">
+                            <li><a class="dropdown-item" href="consultar_bilhetes.php"><i class="fas fa-eye"></i>Consultar Bilhetes</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Dropdown do Utilizador -->
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa fa-user-circle fa-2x me-2"></i>
+                            <span><?php echo htmlspecialchars($nome_utilizador); ?></span>
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="consultar_dados.php"><i class="fas fa-user-cog me-2"></i> Consultar Dados</a></li>
+                            <li><a class="dropdown-item" href="sair.php"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+                        </ul>
+                    </div>
+                <?php else: ?>
                     <a href="entrar.php" class="btn btn-primary rounded-pill py-2 px-4">Entrar</a>
+                <?php endif; ?>
             </div>
         </nav>
 

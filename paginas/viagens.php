@@ -2,17 +2,14 @@
     session_start();
 
     // Include conexão à BD
-    include("../basedados\basedados.h");
-
-    // Verifica se o utilizador tem sessão iniciada, senão tiver redireciona para a página de login
-    if (!isset($_SESSION['id_utilizador'])) {
-        header("Location: entrar.php");
-        exit();
-    }   
+    include("../basedados\basedados.h"); 
 
     // Variável para armazenar mensagens de erro PHP (conexão, query, etc.)
     $mensagem_erro = '';
     $mensagem_sucesso = '';
+
+    // Verifica se o utilizador tem o login feito   
+    $tem_login = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']);   
 
     // Verifica se há uma mensagem de erro na sessão
     if (isset($_SESSION['mensagem_erro'])) {
@@ -160,7 +157,10 @@
                                     <p class="card-text"><strong>Data e Hora:</strong> <?php echo htmlspecialchars(date('d/m/Y H:i', strtotime($viagem['data_hora']))); ?></p>
                                 </div>
                                 <div>
-                                    <a href="comprar_bilhete.php?id_viagem=<?php echo htmlspecialchars($viagem['id_viagem']); ?>" class="btn btn-primary text-light px-5 py-2 rounded-pill">Comprar</a>
+                                    <?php if ($tem_login): ?>
+                                        <a href="comprar_bilhete.php?id_viagem=<?php echo htmlspecialchars($viagem['id_viagem']); ?>" 
+                                        class="btn btn-primary text-light px-5 py-2 rounded-pill">Comprar</a>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>

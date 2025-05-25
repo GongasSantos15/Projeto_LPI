@@ -58,8 +58,16 @@
 
                         $stmt->close();
 
-                        header("Location: index.php");
-                        exit();
+                        if ($linha['tipo_utilizador'] == CLIENTE) {
+                            header("Location: pagina_inicial_cliente.php");
+                            exit();
+                        } else if ($linha['tipo_utilizador'] == FUNCIONARIO) {
+                            header("Location: pagina_inicial_func.php");
+                            exit();
+                        } else {
+                            header("Location: pagina_inicial_admin.php");
+                            exit();
+                        }
                     }
                 } else {
                     $mensagem_erro = 'Utilizador ou palavra-passe incorretos.';

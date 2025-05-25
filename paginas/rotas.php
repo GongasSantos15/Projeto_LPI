@@ -1,7 +1,7 @@
 <?php
 
     // Include da conexão à BD
-    include 'C:\xampp\htdocs\lpi\Projeto_LPI\basedados\basedados.h';
+    include '..\basedados\basedados.h';
 
     // Query SQL para selecionar todos os distritos na BD e executar a mesma
     $sql = "SELECT DISTINCT origem FROM rota ORDER BY origem ASC";

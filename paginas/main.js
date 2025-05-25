@@ -53,20 +53,6 @@
             $dropdown.off("mouseenter mouseleave");
         }
     });
-    
-    
-    // Back to top button
-    $(window).scroll(function () {
-        if ($(this).scrollTop() > 300) {
-            $('.back-to-top').fadeIn('slow');
-        } else {
-            $('.back-to-top').fadeOut('slow');
-        }
-    });
-    $('.back-to-top').click(function () {
-        $('html, body').animate({scrollTop: 0}, 1500, 'easeInOutExpo');
-        return false;
-    });
 
 
     // Testimonials carousel
@@ -96,7 +82,7 @@
 // FUNÇÕES CRIADAS POR MIM
 // Função para carregar os distritos
 function carregarDistritos() {
-    fetch('/lpi/Projeto_LPI/rotas.php')
+    fetch('rotas.php')
         .then(response => response.text())
         .then(data => {
             document.getElementById('origem').innerHTML = data;

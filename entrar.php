@@ -9,7 +9,10 @@
     // Iniciar Sessão
     session_start();
 
-    $mensagem_erro = ''; 
+    $mensagem_erro = '';
+
+    $cliente_apagado = CLIENTE_APAGADO;
+    $cliente_nao_validado = CLIENTE_NAO_VALIDO;
 
     // Se o método for POST
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -43,16 +46,21 @@
                     // Obtém os dados do utilizador
                     $linha = mysqli_fetch_assoc($resultado);
 
-                    // Autenticação bem-sucedida! Guarda os dados na sessão.
-                    $_SESSION['id_utilizador'] = $linha['id'];
-                    $_SESSION['nome_utilizador'] = $linha['nome_utilizador'];
-                    $_SESSION['tipo_utilizador'] = $linha['tipo_utilizador'];
+                    if ($linha['tipo_utilizador'] == $cliente_apagado) {
+                        $mensagem_erro = "Cliente não existe ou foi apagado!";
+                    } else if ($linha['tipo_utilizador'] == $cliente_nao_validado) {
+                        $mensagem_erro = "Cliente não está validado!";
+                    } else {
+                        // Autenticação bem-sucedida! Guarda os dados na sessão.
+                        $_SESSION['id_utilizador'] = $linha['id'];
+                        $_SESSION['nome_utilizador'] = $linha['nome_utilizador'];
+                        $_SESSION['tipo_utilizador'] = $linha['tipo_utilizador'];
 
-                    $stmt->close();
+                        $stmt->close();
 
-                    header("Location: index.php");
-                    exit();
-
+                        header("Location: index.php");
+                        exit();
+                    }
                 } else {
                     $mensagem_erro = 'Utilizador ou palavra-passe incorretos.';
                 }

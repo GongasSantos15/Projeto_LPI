@@ -6,6 +6,7 @@
 
     $mensagem_erro = '';
     $mensagem_sucesso = '';
+    $saldo = 0;
 
     if($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Verifique os nomes dos campos exatamente como estão no formulário HTML
@@ -16,26 +17,54 @@
                 $nome_utilizador = mysqli_real_escape_string($conn, $_POST['nome_utilizador']);
                 $nome_proprio = mysqli_real_escape_string($conn, $_POST['nome_proprio']);
                 $palavra_passe_encriptada = md5($_POST['palavra_passe']);
-                $tipo_nome_utilizador = CLIENTE;
+                $tipo_nome_utilizador = CLIENTE_NAO_VALIDO;
 
-                $sql = "INSERT INTO utilizador (nome_utilizador, nome_proprio, palavra_passe, tipo_utilizador) VALUES (?, ?, ?, ?)";
-                $stmt = $conn->prepare($sql);
+                // 1. Verificar qual é o maior id_carteira existente
+                $sql_max_carteira = "SELECT MAX(id_carteira) AS max_id FROM utilizador";
+                $resultado_max_carteira = $conn->query($sql_max_carteira);
+
+                if ($resultado_max_carteira) {
+                    $linha_max_carteira = $resultado_max_carteira->fetch_assoc();
+                    $novo_id_carteira = $linha_max_carteira['max_id'] + 1;
+                } else {
+                    $mensagem_erro = "Erro ao obter o ID da carteira: " . $connect_error->error();
+                }
+
+                // 2. Query para INSERIR os dados na tabela utilizador
+                $sql_inserir = "INSERT INTO utilizador (nome_utilizador, nome_proprio, palavra_passe, tipo_utilizador, id_carteira) VALUES (?, ?, ?, ?, ?)";
+                $stmt_inserir = $conn->prepare($sql_inserir);
                 
-                if (!$stmt) {
+                if (!$stmt_inserir) {
                     $mensagem_erro = "Erro ao preparar a consulta.";
                 } else {
-                    mysqli_stmt_bind_param($stmt, "sssi", $nome_utilizador, $nome_proprio, $palavra_passe_encriptada, $tipo_nome_utilizador);
+                    $stmt_inserir->bind_param("sssii", $nome_utilizador, $nome_proprio, $palavra_passe_encriptada, $tipo_nome_utilizador, $novo_id_carteira);
 
-                    if ($stmt->execute()){
+                    if ($stmt_inserir->execute()){
                         $mensagem_sucesso = "Utilizador registado com sucesso";
-                        header("Location: entrar.php");
-                        exit();
                     } else {
-                        $mensagem_erro = "Erro ao registar utilizador: " . mysqli_error($conn);
+                        $mensagem_erro = "Erro ao registar utilizador: " . $connect_error->error();
                     }
                 }
             } else {
                 $mensagem_erro = "As palavras passe não coincidem.";
+            }
+
+            // 3. Inserir o novo ID da Carteira na tabela carteira com o saldo = 0;
+            $sql_id_carteira = "INSERT INTO carteira (id_carteira, saldo) VALUES (?, ?)";
+            $stmt_id_carteira = $conn->prepare($sql_id_carteira);
+
+            if (!$stmt_id_carteira) {
+                $mensagem_erro = "Erro ao preparar a consulta para inserir os dados da carteira";
+            } else {
+                $stmt_id_carteira->bind_param("id", $novo_id_carteira, $saldo);
+
+                if($stmt_id_carteira->execute()) {
+                    $mensagem_sucesso = "Carteira do utilizador criada com sucesso!";
+                    header("Location: entrar.php");
+                    exit();
+                } else {
+                    $mensagem_erro = "Erro ao criar a carteira do utilizador: " . $connect_error->error();
+                }
             }
         }
     }

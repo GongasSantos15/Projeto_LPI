@@ -1,9 +1,49 @@
+<?php
+    include "../basedados/basedados.h";
+
+    session_start();
+
+    // Verificar se é admin
+    if (!isset($_SESSION['tipo_utilizador']) || $_SESSION['tipo_utilizador'] != 1) {
+        $_SESSION['mensagem_erro'] = "Acesso não autorizado!";
+        header('Location: consultar_rotas.php');
+        exit();
+    }
+
+    if ($_SERVER["REQUEST_METHOD"] == "GET") {
+        $origem = filter_input(INPUT_GET, 'origem');
+        $destino = filter_input(INPUT_GET, 'destino');
+
+        if (empty($origem) || empty($destino)) {
+            $mensagem_erro = 'Por favor, preencha todos os campos.';
+        } else {
+            // Inserir a rota na base de dados
+            $sql = "INSERT INTO rota (origem, destino, estado) VALUES (?, ?, 1)";
+            $stmt = $conn->prepare($sql);
+
+            if ($stmt) {
+                $stmt->bind_param("ss", $origem, $destino);
+                if ($stmt->execute()) {
+                    $_SESSION['mensagem_sucesso'] = 'Rota adicionada com sucesso!';
+                    header("Location: consultar_rotas.php");
+                } else {
+                    $_SESSION['mensagem_erro'] = 'Erro ao adicionar a rota: ' . $stmt->$connect_error;
+                }
+                $stmt->close();
+            } else {
+                $_SESSION['mensagem_erro'] = 'Erro ao preparar a consulta: ' . $conn->$connect_error;
+            }
+        }
+    }
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="utf-8">
-    <title>FelixBus</title>
+    <title>FelixBus - Adicionar Rota</title>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <meta content="" name="keywords">
     <meta content="" name="description">
@@ -42,7 +82,7 @@
     </div>
     <div class="container-fluid position-relative p-0">
         <nav class="navbar navbar-expand-lg navbar-light px-5 px-lg-5 py-3 py-lg-3">
-            <a href="index.php" class="navbar-brand p-0">
+            <a href="pagina_inicial_admin.php" class="navbar-brand p-0">
                 <h1 class="text-primary m-0"><i class="fa fa-map-marker-alt me-3"></i>FelixBus</h1>
                 </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
@@ -52,50 +92,38 @@
                 <div class="navbar-nav ms-auto py-0">
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                 </div>
-                    <a href="entrar.php" class="btn btn-primary rounded-pill py-2 px-4">Entrar</a>
             </div>
         </nav>
 
-        <div class="container-fluid bg-primary py-5 hero-header">
-            <div class="container py-5">
-                <div class="row justify-content-center py-5">
-                    <div class="col-lg-10 pt-lg-5 mt-lg-5 text-center">
-                         <h1 class="display-3 text-white mb-3 animated slideInDown">A sua próxima viagem começa aqui!</h1>
-                        <p class="fs-4 text-white mb-4 animated slideInDown">Viaje com a FelixBus e descubra novos destinos em Portugal!</p>
-                        <div class="bg-gradient position-relative w-75 mx-auto mt-5 animated slideInDown">
-                            <form method="GET" action="viagens.php" class="d-flex flex-wrap p-4 rounded text-light justify-content-center" style="gap: 2rem 0.5rem;">
-                                <div class="me-4">
-                                    <label class="form-label">Origem:</label>
-                                    <select name="origem" id="origem" class="form-select bg-dark text-light border-primary" required>
-                                        <option>A carregar...</option>
-                                    </select>
-                                </div>
-
-                                <div class="me-4">
-                                    <label class="form-label">Destino:</label>
-                                    <select name="destino"  id="destino" class="form-select bg-dark text-light border-primary" required>
-                                        <option>A carregar...</option>
-                                    </select>
-                                </div>
-
-                                <div class="me-4">
-                                    <label class="form-label">Data de viagem:</label>
-                                    <input name="data" id="data" type="date" class="form-control bg-dark text-light border-primary" autocomplete="off" required/>
-                                </div>
-
-                                <div class="w-100 text-center mt-2">
-                                    <input type="submit" value="Procurar" class="btn btn-primary text-light px-5 py-2 rounded-pill" />
-                                </div>
-                            </form>
+        <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
+            <div class="p-5 rounded shadow" style="max-width: 900px; width: 100%;">
+                <div class="d-flex justify-content-center align-items-center mb-4">
+                    <h3 class="text-white m-0">Adicionar Rotas</h3>
+                </div>
+                <div class="bg-gradient position-relative w-75 mx-auto mt-5 animated slideInDown">
+                    <form method="GET" action="adicionar_rota.php" class="d-flex flex-wrap p-4 rounded text-light justify-content-center" style="gap: 2rem 0.5rem;">
+                        <div class="me-4">
+                            <label class="form-label">Origem:</label>
+                            <input type="text" name="origem" id="origem" class="form-control bg-dark text-light border-primary" placeholder="Insira a origem da rota" required />
                         </div>
 
-                    </div>
+                        <div class="me-4">
+                            <label class="form-label">Destino:</label>
+                                <input type="text" name="destino" id="destino" class="form-control bg-dark text-light border-primary" placeholder="Insira o destino da rota" required />
+
+                        </div>
+
+                        <div class="w-100 text-center mt-2">
+                            <input type="submit" value="Adicionar" class="btn btn-primary text-light px-5 py-2 rounded-pill" />
+                        </div>
+                    </form>
                 </div>
+
             </div>
         </div>
     </div>
 
-     <!-- Footer Start -->
+    <!-- Footer Start -->
     <div class="container-fluid bg-dark d-flex justify-content-center text-light footer pt-5 wow fadeIn" data-wow-delay="0.1s">
         <div class="container py-5">
             <div class="row">

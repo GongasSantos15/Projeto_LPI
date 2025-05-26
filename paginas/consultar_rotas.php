@@ -45,11 +45,10 @@
 
     $rotas = []; // Inicializa a variável rotas
 
-    // CORREÇÃO: Para consultar rotas, não precisamos dos parâmetros de origem/destino/data
     // Só executa a consulta se houver conexão e não houver mensagem de sucesso
-    if ($conn && empty($mensagem_sucesso)) {
+    if ($conn) {
         // Consulta SQL para obter todas as rotas
-        $sql = "SELECT id, origem, destino FROM rota ORDER BY origem, destino";
+        $sql = "SELECT id, origem, destino FROM rota WHERE estado = 1 ORDER BY origem";
 
         $stmt = $conn->prepare($sql);
 
@@ -141,48 +140,122 @@
         </div>
     </div>
     <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
-    <div class="p-5 rounded shadow" style="max-width: 700px; width: 100%;">
+    <div class="p-5 rounded shadow" style="max-width: 900px; width: 100%;">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h3 class="text-white m-0">Consultar Rotas</h3>
             <a href="<?php echo htmlspecialchars($pagina_inicial); ?>" class="btn btn-outline-light btn-sm">
                 <i class="fas fa-arrow-left me-2"></i>Voltar ao Início
             </a>
         </div>
+        <?php if (isset($_SESSION['tipo_utilizador']) && $_SESSION['tipo_utilizador'] == 1): ?>
+            <div class="text-center my-5">
+                <h5 class="text-white">Pretende adicionar uma nova rota? <a href="adicionar_rota.php" class="text-info"> Clique aqui</a></h5>
+            </div>
+        <?php endif; ?>
 
-        <?php
-            if (!empty($mensagem_erro)) {
-                echo '<div class="alert alert-danger">' . htmlspecialchars($mensagem_erro) . '</div>';
-                echo '<script>
-                    setTimeout(function() {
-                        window.location.href = "' . htmlspecialchars($pagina_inicial) . '";
-                    }, 4000);
-                </script>';
-            }
-            if (!empty($mensagem_sucesso)) {
-                echo '<div class="alert alert-success">' . htmlspecialchars($mensagem_sucesso) . '</div>';
-                echo '<script>
-                    setTimeout(function() {
-                        window.location.href = "' . htmlspecialchars($pagina_inicial) . '";
-                    }, 2000);
-                </script>';
-            }
-        ?>
-
+        <?php if (!empty($mensagem_erro)): ?>
+            <div class="alert alert-danger"><?php echo htmlspecialchars($mensagem_erro); ?></div>
+        <?php endif; ?>
+        
         <?php if (!empty($mensagem_sucesso)): ?>
-            <!-- Se há mensagem de sucesso, não mostra mais nada -->
-        <?php elseif (!empty($rotas)): ?>
+            <div class="alert alert-success" id="mensagem-sucesso">
+                <?php echo htmlspecialchars($mensagem_sucesso); ?>
+            </div>
+            <script>
+                // Esconde a mensagem de sucesso após 2 segundos
+                setTimeout(function() {
+                    document.getElementById('mensagem-sucesso').style.display = 'none';
+                }, 2000);
+            </script>
+        <?php endif; ?>
+
+        <?php if (!empty($rotas)): ?>
             <!-- Container com scroll aplicado apenas às rotas -->
             <div class="rotas-scroll-container">
                 <div class="row g-3">
                     <?php foreach ($rotas as $rota): ?>
                         <div class="col-12">
                             <div class="bg-gradient position-relative mx-auto mt-3 animated slideInDown">
-                                <div class="card-body d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h5 class="card-title text-primary">Rota #<?php echo htmlspecialchars($rota['id']); ?></h5> 
-                                        <p class="card-text"><strong>De:</strong> <?php echo htmlspecialchars($rota['origem']); ?> </p>
-                                        <p class="card-text"><strong>Para:</strong> <?php echo htmlspecialchars($rota['destino']); ?></p>
+                                <div class="card-body p-4">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-8">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <i class="fas fa-route text-primary me-2 fa-lg"></i>
+                                                <h5 class="card-title text-primary mb-0">Rota #<?php echo htmlspecialchars($rota['id']); ?></h5>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-6">
+                                                    <p class="card-text mb-1"><strong><i class="fas fa-map-marker-alt text-success me-1"></i>De:</strong> <?php echo htmlspecialchars($rota['origem']); ?></p>
+                                                </div>
+                                                <div class="col-sm-6">
+                                                    <p class="card-text mb-1"><strong><i class="fas fa-map-marker-alt text-info me-1"></i>Para:</strong> <?php echo htmlspecialchars($rota['destino']); ?></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <?php if (isset($_SESSION['tipo_utilizador']) && $_SESSION['tipo_utilizador'] == 1): ?>
+                                        <div class="col-md-4 text-md-end">
+                                            <div class="d-flex flex-column gap-2">
+                                                <button type="button" class="btn btn-warning rounded-pill py-2 px-4 botao-edicao" data-rota-id="<?php echo $rota['id']; ?>">
+                                                    <i class="fas fa-edit me-2"></i>Editar
+                                                </button>
+                                                <button type="button" class="btn btn-danger rounded-pill py-2 px-4 botao-anular" data-rota-id="<?php echo $rota['id']; ?>">
+                                                    <i class="fas fa-times me-2"></i>Anular
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <?php endif; ?>
                                     </div>
+                                    
+                                    <?php if (isset($_SESSION['tipo_utilizador']) && $_SESSION['tipo_utilizador'] == 1): ?>
+                                    <!-- Formulário de edição (inicialmente oculto) -->
+                                    <div id="formulario-edicao-<?php echo $rota['id']; ?>" class="formulario-edicao" style="display: none;">
+                                        <hr class="text-white my-4">
+                                        <form action="editar_rota.php" method="POST">
+                                            <input type="hidden" id="id" name="id" value="<?php echo htmlspecialchars($rota['id']); ?>">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label text-white">
+                                                            <i class="fas fa-map-marker-alt text-success me-1"></i>Origem:
+                                                        </label>
+                                                        <div class="view-mode">
+                                                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($rota['origem']); ?>" readonly>
+                                                        </div>
+                                                        <div class="edit-mode" style="display: none;">
+                                                            <select name="origem" id="origem" class="form-select bg-dark text-light border-primary" required>
+                                                                <option>A carregar...</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label text-white">
+                                                            <i class="fas fa-map-marker-alt text-danger me-1"></i>Destino:
+                                                        </label>
+                                                        <div class="view-mode">
+                                                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($rota['destino']); ?>" readonly>
+                                                        </div>
+                                                        <div class="edit-mode" style="display: none;">
+                                                            <select name="destino"  id="destino" class="form-select bg-dark text-light border-primary" required>
+                                                                <option>A carregar...</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex justify-content-end gap-2 mt-3">
+                                                <button type="button" class="btn btn-outline-danger rounded-pill botao-cancelar" data-rota-id="<?php echo $rota['id']; ?>">
+                                                    <i class="fas fa-times me-2"></i>Cancelar
+                                                </button>
+                                                <button type="submit" class="btn btn-success rounded-pill">
+                                                    <i class="fas fa-save me-2"></i>Guardar Alterações
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
@@ -190,21 +263,89 @@
                 </div>
             </div>
         <?php else: ?>
-            <p class="text-center text-white">Nenhuma rota encontrada.</p>
+            <div class="text-center">
+                <div class="mb-4">
+                    <i class="fas fa-route text-light" style="font-size: 4rem; opacity: 0.5;"></i>
+                </div>
+                <p class="text-center text-white fs-5 mb-4">Nenhuma rota encontrada.</p>
+            </div>
         <?php endif; ?>
     </div>
 </div>
-<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="wow.min.js"></script>
-    <script src="easing.min.js"></script>
-    <script src="waypoints.min.js"></script>
-    <script src="owl.carousel.min.js"></script>
-    <script src="moment.min.js"></script>
-    <script src="moment-timezone.min.js"></script>
-    <script src="tempusdominus-bootstrap-4.min.js"></script>
 
-    <script src="main.js"></script>
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="wow.min.js"></script>
+<script src="easing.min.js"></script>
+<script src="waypoints.min.js"></script>
+<script src="owl.carousel.min.js"></script>
+<script src="moment.min.js"></script>
+<script src="moment-timezone.min.js"></script>
+<script src="tempusdominus-bootstrap-4.min.js"></script>
+<script src="main.js"></script>
+
+<?php if (isset($_SESSION['tipo_utilizador']) && $_SESSION['tipo_utilizador'] == 1): ?>
+    <script>
+        function carregarDistritosRota(rotaId) {
+            fetch('rotas.php')
+                .then(response => response.text())
+                .then(data => {
+                    // Atualiza apenas os selects da rota específica
+                    document.querySelector(`#formulario-edicao-${rotaId} #origem`).innerHTML = data;
+                    document.querySelector(`#formulario-edicao-${rotaId} #destino`).innerHTML = data;
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar distritos:', error);
+                });
+        }
+
+        $(document).ready(function() {
+            // Botão de edição - para cada rota
+            $('.botao-edicao').click(function() {
+                var rotaId = $(this).data('rota-id');
+                $('#formulario-edicao-' + rotaId).slideDown();
+                $(this).parent().hide(); // Esconde os botões de ação
+                
+                // Mostrar inputs de edição e esconder view mode
+                $('#formulario-edicao-' + rotaId + ' .edit-mode').show();
+                $('#formulario-edicao-' + rotaId + ' .view-mode').hide();
+                
+                // Carregar distritos para este formulário
+                carregarDistritosRota(rotaId);
+            });
+
+            // Botão de cancelar - para cada rota
+            $(document).on('click', '.botao-cancelar', function() {
+                var rotaId = $(this).data('rota-id');
+                $('#formulario-edicao-' + rotaId).slideUp();
+                $('.botao-edicao[data-rota-id="' + rotaId + '"]').parent().show(); // Mostra os botões de ação
+                
+                // Mostrar view mode e esconder inputs de edição
+                $('#formulario-edicao-' + rotaId + ' .view-mode').show();
+                $('#formulario-edicao-' + rotaId + ' .edit-mode').hide();
+            });
+        });
+
+        // Botão para anular rota
+        $(document).on('click', '.botao-anular', function() {
+            var rotaId = $(this).data('rota-id');
+            if(confirm('Tem certeza que deseja anular esta rota? Esta ação pode afetar viagens já agendadas.')) {
+                $.ajax({
+                    url: 'anular_rota.php',
+                    method: 'POST',
+                    data: { id: rotaId },
+                    success: function(response) {
+                        location.reload();
+                    },
+                    error: function() {
+                        alert('Erro ao anular rota');
+                    }
+                });
+            }
+        });
+    </script>
+<?php endif; ?>
+
 </body>
 
 </html>

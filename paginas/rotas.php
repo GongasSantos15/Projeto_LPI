@@ -4,7 +4,7 @@
     include '..\basedados\basedados.h';
 
     // Query SQL para selecionar todos os distritos na BD e executar a mesma
-    $sql = "SELECT DISTINCT origem FROM rota ORDER BY origem ASC";
+    $sql = "SELECT DISTINCT origem FROM rota WHERE estado = 1 ORDER BY origem ASC";
     $resultado = $conn->query($sql);
 
     if ($resultado) {

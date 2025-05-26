@@ -122,7 +122,6 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarCollapse">
                 <div class="navbar-nav ms-auto py-0">
-                    <a href="pagina_inicial_admin.php" class="nav-item nav-link">Home</a>
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                 </div>
 

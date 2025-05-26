@@ -97,7 +97,7 @@
         <div class="p-5 rounded shadow" style="max-width: 900px; width: 100%;">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3 class="text-white m-0">Os Meus Bilhetes</h3>
-                <a href="index.php" class="btn btn-outline-light btn-sm">
+                <a href="pagina_inicial_cliente.php" class="btn btn-outline-light btn-sm">
                     <i class="fas fa-arrow-left me-2"></i>Voltar ao Início
                 </a>
             </div>

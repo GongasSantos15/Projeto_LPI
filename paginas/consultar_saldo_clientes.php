@@ -88,7 +88,7 @@
     <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
         <div class="p-5 rounded shadow" style="max-width: 1200px; width: 100%;">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 class="text-white m-0">Gestão de Carteiras dos Clientes</h3>
+                <h3 class="text-white m-0">Gestão da Carteira dos Clientes</h3>
                 <a href="pagina_inicial_func.php" class="btn btn-outline-light btn-sm">
                     <i class="fas fa-arrow-left me-2"></i>Voltar ao Início
                 </a>
@@ -121,7 +121,7 @@
                                             <div class="d-flex align-items-center mb-4">
                                                 <i class="fas fa-wallet text-primary me-2 fa-lg"></i>
                                                 <h5 class="card-title text-primary mb-0">
-                                                    <?php echo htmlspecialchars($cliente['nome_proprio']); ?> 
+                                                    <?php echo htmlspecialchars($cliente['nome_proprio']); ?>(@cliente) 
                                                 </h5>
                                             </div>
                                             

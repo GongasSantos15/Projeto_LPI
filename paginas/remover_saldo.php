@@ -1,6 +1,7 @@
 <?php
 
     include 'C:\xampp\htdocs\lpi\Projeto_LPI\basedados\basedados.h';
+    include 'constUtilizadores.php';
 
     // Inicia a sessão
     session_start();
@@ -13,7 +14,7 @@
 
     // Obtém o ID do utilizador
     $id_utilizador = $_SESSION['id_utilizador'];
-
+    $tipo_utilizador = $_SESSION['tipo_utilizador'];
     // Variáveis de mensagens que vão ser apresentadas ao utilizador
     $mensagem_erro = '';
     $mensagem_sucesso = '';
@@ -53,6 +54,17 @@
 
                             if ($stmt_carteira->affected_rows > 0) {
                                 $mensagem_sucesso = 'Saldo atualizado com sucesso!';
+
+                                if ($tipo_utilizador == CLIENTE) {
+                                    header("Location: pagina_inicial_cliente.php");
+                                    exit();
+                                } else if ($tipo_utilizador == FUNCIONARIO) {
+                                    header("Location: pagina_inicial_func.php");
+                                    exit();
+                                } else {
+                                    header("Location: pagina_inicial_admin.php");
+                                    exit();
+                                }
                             } else {
                                 $mensagem_erro = 'Erro ao atualizar o saldo.';
                             }

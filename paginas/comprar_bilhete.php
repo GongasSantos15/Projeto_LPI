@@ -2,7 +2,10 @@
     session_start();
 
     // Include Conexão BD
-    include("basedados/basedados.h");
+    include("../basedados/basedados.h");
+    include("constUtilizadores.php");
+
+    $tipo_utilizador = $_SESSION['tipo_utilizador'];
 
     // Verifica se o utilizador tem sessão iniciada, senão tiver redireciona para a página de login
     if (!isset($_SESSION['id_utilizador'])) {
@@ -11,6 +14,7 @@
     }
 
     $preco = 0;
+    $estado = 1;
 
     $id_utilizador = $_SESSION['id_utilizador'];
     
@@ -89,17 +93,42 @@
                 $stmt_atualizar_saldo->execute();
             }
 
-            //4. SQL para inserir o bilhete na BD
-            $sql_inserir = "INSERT INTO bilhete (id_viagem, id_utilizador, data_compra) VALUES (?, ?, NOW())";
+            // 4. Obter o saldo da Felixbus
+            $sql_saldo_felixbus = "SELECT saldo FROM carteira WHERE id_carteira = 1";
+            $resultado_saldo_felixbus = $conn->query($sql_saldo_felixbus);
+            $saldo_felixbus = $resultado_saldo_felixbus->fetch_assoc();
+
+            // 5. Adicionar o saldo do cliente à carteira da Felixbus
+            $novo_saldo_felixbus = $saldo_felixbus['saldo'] + $preco_viagem;
+            $sql_atualizar_felixbus = "UPDATE carteira SET saldo = ? WHERE id_carteira = 1";
+            $stmt_atualizar_felixbus = $conn->prepare($sql_atualizar_felixbus);
+
+            if($stmt_atualizar_felixbus) {
+                $stmt_atualizar_felixbus->bind_param("d", $novo_saldo_felixbus);
+                $stmt_atualizar_felixbus->execute();
+            }
+
+            //6. SQL para inserir o bilhete na BD
+            $sql_inserir = "INSERT INTO bilhete (id_viagem, id_utilizador, data_compra, estado) VALUES (?, ?, NOW(), ?)";
                 $stmt_inserir = $conn->prepare($sql_inserir);
                 
             if ($stmt_inserir) {
-                $stmt_inserir->bind_param("ii", $id_viagem, $id_utilizador);
+                $stmt_inserir->bind_param("iii", $id_viagem, $id_utilizador, $estado);
                 
                 if ($stmt_inserir->execute()) {
                     $_SESSION['mensagem_sucesso'] = "Bilhete comprado com sucesso. A redirecionar...";
-                    header('Location: viagens.php');
-                    exit();
+
+                    if ($tipo_utilizador == CLIENTE) {
+                        header("Location: pagina_inicial_cliente.php");
+                        exit();
+                    } else if ($tipo_utilizador == FUNCIONARIO) {
+                        header("Location: pagina_inicial_func.php");
+                        exit();
+                    } else {
+                        header("Location: pagina_inicial_admin.php");
+                        exit();
+                    }
+
                 } else {
                     $_SESSION['mensagem_erro'] = "Erro ao comprar o bilhete: " . $stmt_inserir->error;
                     header('Location: viagens.php');

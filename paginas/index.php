@@ -51,6 +51,7 @@
             <div class="collapse navbar-collapse" id="navbarCollapse">
                 <div class="navbar-nav ms-auto py-0">
                     <a href="index.php" class="nav-item nav-link">Home</a>
+                    <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                 </div>
                     <a href="entrar.php" class="btn btn-primary rounded-pill py-2 px-4">Entrar</a>
             </div>

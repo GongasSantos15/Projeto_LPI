@@ -2,7 +2,7 @@
     session_start();
 
     // Include conexão à BD
-    include("../basedados\basedados.h"); 
+    include("../basedados/basedados.h"); 
 
     // Variável para armazenar mensagens de erro PHP (conexão, query, etc.)
     $mensagem_erro = '';

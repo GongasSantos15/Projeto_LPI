@@ -2,7 +2,7 @@
     session_start();
 
     // Include conexão à BD
-    include("../basedados\basedados.h");
+    include("../basedados/basedados.h");
 
     // Verifica se o utilizador tem sessão iniciada, senão tiver redireciona para a página de login
     if (!isset($_SESSION['id_utilizador'])) {
@@ -92,7 +92,7 @@
         <div class="p-5 rounded shadow" style="max-width: 900px; width: 100%;">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3 class="text-white m-0">Consultar e Editar Dados</h3>
-                <a href="index.php" class="btn btn-outline-light btn-sm">
+                <a href="pagina_inicial_cliente.php" class="btn btn-outline-light btn-sm">
                     <i class="fas fa-arrow-left me-2"></i>Voltar ao Início
                 </a>
             </div>
@@ -103,12 +103,6 @@
                 }
                 if (!empty($mensagem_sucesso)) {
                     echo '<div class="alert alert-success">' . htmlspecialchars($mensagem_sucesso) . '</div>';
-                    echo '<div class="alert alert-success">' . htmlspecialchars($mensagem_sucesso) . '</div>';
-                        echo '<script>
-                            setTimeout(function() {
-                                window.location.href = "index.php";
-                            }, 2000);
-                        </script>';
                 }
             ?>
 
@@ -223,13 +217,6 @@
                 $('#nome-proprio').val('<?php echo htmlspecialchars($dados_utilizador['nome_proprio'] ?? ''); ?>');
                 $('#nome').val('<?php echo htmlspecialchars($dados_utilizador['nome_utilizador'] ?? ''); ?>');
             });
-
-            // Redirecionar após sucesso
-            <?php if (!empty($mensagem_sucesso)): ?>
-            setTimeout(function() {
-                window.location.href = "index.php";
-            }, 2000);
-            <?php endif; ?>
         });
     </script>
 </body>

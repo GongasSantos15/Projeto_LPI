@@ -43,16 +43,55 @@
         unset($_SESSION['mensagem_sucesso']);
     }
 
+    // Parâmetros de pesquisa e ordenação
+    $pesquisa = isset($_GET['pesquisa']) ? trim($_GET['pesquisa']) : '';
+    $ordenacao = isset($_GET['ordenacao']) ? $_GET['ordenacao'] : 'id_asc';
+
     $rotas = []; // Inicializa a variável rotas
 
-    // Só executa a consulta se houver conexão e não houver mensagem de sucesso
+    // Só executa a consulta se houver conexão
     if ($conn) {
-        // Consulta SQL para obter todas as rotas
-        $sql = "SELECT id, origem, destino FROM rota WHERE estado = 1 ORDER BY origem";
+        // Constrói a consulta SQL base
+        $sql = "SELECT id, origem, destino FROM rota WHERE estado = 1";
+        
+        // Adiciona condição de pesquisa se houver termo de pesquisa
+        if (!empty($pesquisa)) {
+            $sql .= " AND (origem LIKE ? OR destino LIKE ? OR id LIKE ?)";
+        }
+        
+        // Adiciona ordenação
+        switch ($ordenacao) {
+            case 'id_asc':
+                $sql .= " ORDER BY id ASC";
+                break;
+            case 'id_desc':
+                $sql .= " ORDER BY id DESC";
+                break;
+            case 'origem_asc':
+                $sql .= " ORDER BY origem ASC";
+                break;
+            case 'origem_desc':
+                $sql .= " ORDER BY origem DESC";
+                break;
+            case 'destino_asc':
+                $sql .= " ORDER BY destino ASC";
+                break;
+            case 'destino_desc':
+                $sql .= " ORDER BY destino DESC";
+                break;
+            default:
+                $sql .= " ORDER BY id ASC";
+        }
 
         $stmt = $conn->prepare($sql);
 
         if ($stmt) {
+            // Faz bind dos parâmetros se houver pesquisa
+            if (!empty($pesquisa)) {
+                $termo_pesquisa = "%$pesquisa%";
+                $stmt->bind_param("sss", $termo_pesquisa, $termo_pesquisa, $pesquisa);
+            }
+            
             if($stmt->execute()) {
                 $resultado = $stmt->get_result();
                 $rotas = $resultado->fetch_all(MYSQLI_ASSOC);
@@ -130,6 +169,55 @@
             scrollbar-width: thin;
             scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
         }
+
+        /* Estilos para os filtros */
+        .filtros-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .search-input, .filtro-select {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid transparent;
+            border-radius: 50px;
+            padding: 12px 20px;
+            color: #333;
+            transition: all 0.3s ease;
+            height: 48px; /* Altura fixa para ambos os inputs */
+        }
+
+        .search-input:focus, .filtro-select:focus {
+            background: white;
+            border-color: #007bff;
+            box-shadow: 0 0 20px rgba(0, 123, 255, 0.3);
+            outline: none;
+        }
+
+        .btn-limpar {
+            background: rgba(220, 53, 69, 0.8);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 20px;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-limpar:hover {
+            background: rgba(220, 53, 69, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+        }
+
+        .contador-resultados {
+            background: rgba(40, 167, 69, 0.8);
+            border-radius: 20px;
+            padding: 8px 16px;
+            color: white;
+            font-weight: 500;
+        }
     </style>
 </head>
 
@@ -140,13 +228,14 @@
         </div>
     </div>
     <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
-    <div class="p-5 rounded shadow" style="max-width: 900px; width: 100%;">
+    <div class="p-5 rounded shadow" style="max-width: 1000px; width: 100%;">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h3 class="text-white m-0">Consultar Rotas</h3>
             <a href="<?php echo htmlspecialchars($pagina_inicial); ?>" class="btn btn-outline-light btn-sm">
                 <i class="fas fa-arrow-left me-2"></i>Voltar ao Início
             </a>
         </div>
+        
         <?php if (isset($_SESSION['tipo_utilizador']) && $_SESSION['tipo_utilizador'] == 1): ?>
             <div class="text-center my-5">
                 <h5 class="text-white">Pretende adicionar uma nova rota? <a href="adicionar_rota.php" class="text-info"> Clique aqui</a></h5>
@@ -168,6 +257,62 @@
                 }, 2000);
             </script>
         <?php endif; ?>
+
+        <!-- Filtros de Pesquisa e Ordenação -->
+        <div class="filtros-container">
+            <form method="GET" action="" class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label text-white mb-2">
+                        <i class="fas fa-search me-2"></i>Pesquisar por Origem, Destino ou ID:
+                    </label>
+                    <input type="text" 
+                           name="pesquisa" 
+                           class="form-control search-input" 
+                           placeholder="Digite o termo de pesquisa..." 
+                           value="<?php echo htmlspecialchars($pesquisa); ?>">
+                </div>
+                
+                <div class="col-md-5">
+                    <label class="form-label text-white mb-2">
+                        <i class="fas fa-sort me-2"></i>Ordenar por:
+                    </label>
+                    <select name="ordenacao" class="form-select filtro-select">
+                        <option value="id_asc" <?php echo ($ordenacao == 'id_asc') ? 'selected' : ''; ?>>ID (Crescente)</option>
+                        <option value="id_desc" <?php echo ($ordenacao == 'id_desc') ? 'selected' : ''; ?>>ID (Decrescente)</option>
+                        <option value="origem_asc" <?php echo ($ordenacao == 'origem_asc') ? 'selected' : ''; ?>>Origem (A-Z)</option>
+                        <option value="origem_desc" <?php echo ($ordenacao == 'origem_desc') ? 'selected' : ''; ?>>Origem (Z-A)</option>
+                        <option value="destino_asc" <?php echo ($ordenacao == 'destino_asc') ? 'selected' : ''; ?>>Destino (A-Z)</option>
+                        <option value="destino_desc" <?php echo ($ordenacao == 'destino_desc') ? 'selected' : ''; ?>>Destino (Z-A)</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-2">
+                    <div class="d-flex justify-content-end">
+                        <a href="?" class="btn btn-limpar rounded-pill">
+                            <i class="fas fa-times me-1"></i>Limpar
+                        </a>
+                    </div>
+                </div>
+            </form>
+            
+            <!-- Contador de resultados -->
+            <div class="mt-3 d-flex justify-content-between align-items-center">
+                <div class="contador-resultados">
+                    <i class="fas fa-list me-2"></i>
+                    <?php echo count($rotas); ?> rota(s) encontrada(s)
+                    <?php if (!empty($pesquisa)): ?>
+                        para "<?php echo htmlspecialchars($pesquisa); ?>"
+                    <?php endif; ?>
+                </div>
+                
+                <?php if (!empty($pesquisa)): ?>
+                    <small class="text-light">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Pesquisando por: <strong><?php echo htmlspecialchars($pesquisa); ?></strong>
+                    </small>
+                <?php endif; ?>
+            </div>
+        </div>
 
         <?php if (!empty($rotas)): ?>
             <!-- Container com scroll aplicado apenas às rotas -->
@@ -267,7 +412,12 @@
                 <div class="mb-4">
                     <i class="fas fa-route text-light" style="font-size: 4rem; opacity: 0.5;"></i>
                 </div>
-                <p class="text-center text-white fs-5 mb-4">Nenhuma rota encontrada.</p>
+                <?php if (!empty($pesquisa)): ?>
+                    <p class="text-center text-white fs-5 mb-3">Nenhuma rota encontrada para "<?php echo htmlspecialchars($pesquisa); ?>"</p>
+                    <p class="text-center text-light mb-4">Tente pesquisar por outros termos ou <a href="?" class="text-info">limpar os filtros</a>.</p>
+                <?php else: ?>
+                    <p class="text-center text-white fs-5 mb-4">Nenhuma rota encontrada.</p>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
     </div>
@@ -341,6 +491,18 @@
                         alert('Erro ao anular rota');
                     }
                 });
+            }
+        });
+
+        // Submissão automática do formulário ao alterar ordenação
+        $('select[name="ordenacao"]').change(function() {
+            $(this).closest('form').submit();
+        });
+
+        // Enter para pesquisar
+        $('input[name="pesquisa"]').keypress(function(e) {
+            if (e.which == 13) {
+                $(this).closest('form').submit();
             }
         });
     </script>

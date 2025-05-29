@@ -20,6 +20,27 @@
     $mensagem_erro = '';
     $mensagem_sucesso = '';
 
+    // Verifica se o utilizador tem o login feito   
+    $tem_login = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']); 
+
+    // Determina a página inicial correta baseada no tipo de utilizador
+    $pagina_inicial = 'index.php'; // Página padrão se não tiver login
+    if ($tem_login && isset($_SESSION['tipo_utilizador'])) {
+        switch ($_SESSION['tipo_utilizador']) {
+            case 1: // Admin
+                $pagina_inicial = 'pagina_inicial_admin.php';
+                break;
+            case 2: // Funcionário
+                $pagina_inicial = 'pagina_inicial_func.php';
+                break;
+            case 3: // Cliente
+                $pagina_inicial = 'pagina_inicial_cliente.php';
+                break;
+            default:
+                $pagina_inicial = 'index.php';
+        }
+    }
+
     // Processa a submissão do formulário para adicionar saldo
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
@@ -133,7 +154,7 @@
             <div class="p-5" style="max-width: 700px; width: 100%;">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3 class="text-white m-0">Adicionar Saldo</h3>
-                    <a href="index.php" class="btn btn-outline-light btn-sm">
+                    <a href="<?php echo htmlspecialchars($pagina_inicial) ?>" class="btn btn-outline-light btn-sm">
                         <i class="fas fa-arrow-left me-2"></i>Voltar ao Início
                     </a>
                 </div>    

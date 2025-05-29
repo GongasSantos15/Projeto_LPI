@@ -1,0 +1,570 @@
+<?php
+    session_start();
+
+    // Include conexão à BD
+    include("../basedados/basedados.h"); 
+
+    // Variável para armazenar mensagens de erro PHP (conexão, query, etc.)
+    $mensagem_erro = '';
+    $mensagem_sucesso = '';
+
+    // Verifica se o utilizador tem o login feito e é admin
+    $tem_login = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']);
+    $eh_admin = isset($_SESSION['tipo_utilizador']) && $_SESSION['tipo_utilizador'] == 1;
+    
+    // Redireciona se não for admin
+    if (!$tem_login || !$eh_admin) {
+        header("Location: index.php");
+        exit();
+    }
+    
+    $pagina_inicial = 'pagina_inicial_admin.php';
+
+    // Verifica se há uma mensagem de erro na sessão
+    if (isset($_SESSION['mensagem_erro'])) {
+        $mensagem_erro = $_SESSION['mensagem_erro'];
+        unset($_SESSION['mensagem_erro']);
+    }
+
+    // Verifica se há uma mensagem de sucesso na sessão
+    if (isset($_SESSION['mensagem_sucesso'])) {
+        $mensagem_sucesso = $_SESSION['mensagem_sucesso'];
+        unset($_SESSION['mensagem_sucesso']);
+    }
+
+    // Parâmetros de pesquisa e ordenação
+    $pesquisa = isset($_GET['pesquisa']) ? trim($_GET['pesquisa']) : '';
+    $filtro_tipo = isset($_GET['filtro_tipo']) ? $_GET['filtro_tipo'] : '';
+    $ordenacao = isset($_GET['ordenacao']) ? $_GET['ordenacao'] : 'id_asc';
+
+    $utilizadores = []; // Inicializa a variável utilizadores
+
+    // Só executa a consulta se houver conexão
+    if ($conn) {
+        // Constrói a consulta SQL base - mostra todos os utilizadores incluindo anulados
+        $sql = "SELECT id, nome_proprio, nome_utilizador, tipo_utilizador, palavra_passe, id_carteira FROM utilizador WHERE 1=1";
+        
+        // Adiciona condição de pesquisa se houver termo de pesquisa
+        if (!empty($pesquisa)) {
+            $sql .= " AND (nome_proprio LIKE ? OR nome_utilizador LIKE ? OR id LIKE ?)";
+        }
+        
+        // Adiciona filtro por tipo de utilizador
+        if (!empty($filtro_tipo)) {
+            $sql .= " AND tipo_utilizador = ?";
+        }
+        
+        // Adiciona ordenação
+        switch ($ordenacao) {
+            case 'id_asc':
+                $sql .= " ORDER BY id ASC";
+                break;
+            case 'id_desc':
+                $sql .= " ORDER BY id DESC";
+                break;
+            case 'nome_asc':
+                $sql .= " ORDER BY nome_proprio ASC";
+                break;
+            case 'nome_desc':
+                $sql .= " ORDER BY nome_proprio DESC";
+                break;
+            case 'utilizador_asc':
+                $sql .= " ORDER BY nome_utilizador ASC";
+                break;
+            case 'utilizador_desc':
+                $sql .= " ORDER BY nome_utilizador DESC";
+                break;
+            case 'tipo_asc':
+                $sql .= " ORDER BY tipo_utilizador ASC";
+                break;
+            case 'tipo_desc':
+                $sql .= " ORDER BY tipo_utilizador DESC";
+                break;
+            default:
+                $sql .= " ORDER BY id ASC";
+        }
+
+        $stmt = $conn->prepare($sql);
+
+        if ($stmt) {
+            // Prepara os parâmetros para bind
+            $params = [];
+            $types = '';
+            
+            // Adiciona parâmetros de pesquisa se houver
+            if (!empty($pesquisa)) {
+                $termo_pesquisa = "%$pesquisa%";
+                $params[] = $termo_pesquisa;
+                $params[] = $termo_pesquisa;
+                $params[] = $pesquisa;
+                $types .= 'sss';
+            }
+            
+            // Adiciona parâmetro de filtro por tipo
+            if (!empty($filtro_tipo)) {
+                $params[] = $filtro_tipo;
+                $types .= 'i';
+            }
+            
+            // Faz bind dos parâmetros se houver
+            if (!empty($params)) {
+                $stmt->bind_param($types, ...$params);
+            }
+            
+            if($stmt->execute()) {
+                $resultado = $stmt->get_result();
+                $utilizadores = $resultado->fetch_all(MYSQLI_ASSOC);
+            } else {
+                $mensagem_erro = "Erro ao executar a consulta dos utilizadores.";
+            }
+            $stmt->close();
+        } else {
+            $mensagem_erro = "Erro ao preparar a consulta dos utilizadores.";
+        }
+    }
+    
+    // Função auxiliar para obter nome do tipo de utilizador
+    function obterTipoUtilizador($tipo) {
+        switch ($tipo) {
+            case 1:
+                return 'Admin';
+            case 2:
+                return 'Funcionário';
+            case 3:
+                return 'Cliente';
+            case 5:
+                 return 'Não Validado';
+            case 6:
+                return 'Anulado';
+        }
+    }
+    
+    if ($conn) {
+        $conn->close();
+    }
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>FelixBus - Utilizadores</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+
+    <link href="favicon.ico" rel="icon">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <link href="animate.min.css" rel="stylesheet">
+    <link href="owl.carousel.min.css" rel="stylesheet">
+    <link href="tempusdominus-bootstrap-4.min.css" rel="stylesheet" />
+
+    <link href="bootstrap.min.css" rel="stylesheet">
+
+    <link href="style.css" rel="stylesheet">
+    
+    <style>
+        /* CSS personalizado para scroll nos utilizadores */
+        .utilizadores-scroll-container {
+            max-height: 500px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 10px;
+        }
+        
+        /* Personalizar a scrollbar */
+        .utilizadores-scroll-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .utilizadores-scroll-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        
+        .utilizadores-scroll-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+        
+        .utilizadores-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        
+        /* Para Firefox */
+        .utilizadores-scroll-container {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+        }
+
+        /* Estilos para os filtros */
+        .filtros-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .search-input, .filtro-select {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid transparent;
+            border-radius: 50px;
+            padding: 12px 20px;
+            color: #333;
+            transition: all 0.3s ease;
+            height: 48px;
+        }
+
+        .search-input:focus, .filtro-select:focus {
+            background: white;
+            border-color: #007bff;
+            box-shadow: 0 0 20px rgba(0, 123, 255, 0.3);
+            outline: none;
+        }
+
+        .btn-limpar {
+            background: rgba(220, 53, 69, 0.8);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 20px;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-limpar:hover {
+            background: rgba(220, 53, 69, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+        }
+
+        .contador-resultados {
+            background: rgba(40, 167, 69, 0.8);
+            border-radius: 20px;
+            padding: 8px 16px;
+            color: white;
+            font-weight: 500;
+        }
+
+        .badge-tipo {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
+        }
+
+        .tipo-admin { background-color: #dc3545; }
+        .tipo-funcionario { background-color: #ffc107; color: #000; }
+        .tipo-cliente { background-color: #28a745; }
+    </style>
+</head>
+
+<body>
+    <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+    
+    <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
+        <div class="p-5 rounded shadow" style="max-width: 1200px; width: 100%;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="text-white m-0">Gestão de Utilizadores</h3>
+                <a href="<?php echo htmlspecialchars($pagina_inicial); ?>" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-arrow-left me-2"></i>Voltar ao Início
+                </a>
+            </div>
+            
+            <div class="text-center my-5">
+                <h5 class="text-white">Pretende adicionar um novo utilizador? <a href="adicionar_utilizador.php" class="text-info">Clique aqui</a></h5>
+            </div>
+
+            <?php if (!empty($mensagem_erro)): ?>
+                <div class="alert alert-danger"><?php echo htmlspecialchars($mensagem_erro); ?></div>
+            <?php endif; ?>
+            
+            <?php if (!empty($mensagem_sucesso)): ?>
+                <div class="alert alert-success" id="mensagem-sucesso">
+                    <?php echo htmlspecialchars($mensagem_sucesso); ?>
+                </div>
+                <script>
+                    setTimeout(function() {
+                        document.getElementById('mensagem-sucesso').style.display = 'none';
+                    }, 3000);
+                </script>
+            <?php endif; ?>
+
+            <!-- Filtros de Pesquisa e Ordenação -->
+            <div class="filtros-container">
+                <form method="GET" action="" class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label text-white mb-2">
+                            <i class="fas fa-search me-2"></i>Pesquisar por Nome, Utilizador ou ID:
+                        </label>
+                        <input type="text" 
+                               name="pesquisa" 
+                               class="form-control search-input" 
+                               placeholder="Digite o termo de pesquisa..." 
+                               value="<?php echo htmlspecialchars($pesquisa); ?>">
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label text-white mb-2">
+                            <i class="fas fa-user-tag me-2"></i>Filtrar por Tipo:
+                        </label>
+                        <select name="filtro_tipo" class="form-select filtro-select">
+                            <option value="">Todos os tipos</option>
+                            <option value="1" <?php echo ($filtro_tipo == '1') ? 'selected' : ''; ?>>Admin</option>
+                            <option value="2" <?php echo ($filtro_tipo == '2') ? 'selected' : ''; ?>>Funcionário</option>
+                            <option value="3" <?php echo ($filtro_tipo == '3') ? 'selected' : ''; ?>>Cliente</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label text-white mb-2">
+                            <i class="fas fa-sort me-2"></i>Ordenar por:
+                        </label>
+                        <select name="ordenacao" class="form-select filtro-select">
+                            <option value="id_asc" <?php echo ($ordenacao == 'id_asc') ? 'selected' : ''; ?>>ID (Crescente)</option>
+                            <option value="id_desc" <?php echo ($ordenacao == 'id_desc') ? 'selected' : ''; ?>>ID (Decrescente)</option>
+                            <option value="nome_asc" <?php echo ($ordenacao == 'nome_asc') ? 'selected' : ''; ?>>Nome (A-Z)</option>
+                            <option value="nome_desc" <?php echo ($ordenacao == 'nome_desc') ? 'selected' : ''; ?>>Nome (Z-A)</option>
+                            <option value="utilizador_asc" <?php echo ($ordenacao == 'utilizador_asc') ? 'selected' : ''; ?>>Utilizador (A-Z)</option>
+                            <option value="utilizador_desc" <?php echo ($ordenacao == 'utilizador_desc') ? 'selected' : ''; ?>>Utilizador (Z-A)</option>
+                            <option value="tipo_asc" <?php echo ($ordenacao == 'tipo_asc') ? 'selected' : ''; ?>>Tipo (Crescente)</option>
+                            <option value="tipo_desc" <?php echo ($ordenacao == 'tipo_desc') ? 'selected' : ''; ?>>Tipo (Decrescente)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <div class="d-flex justify-content-end">
+                            <a href="?" class="btn btn-limpar rounded-pill">
+                                <i class="fas fa-times me-1"></i>Limpar
+                            </a>
+                        </div>
+                    </div>
+                </form>
+                
+                <!-- Contador de resultados -->
+                <div class="mt-3 d-flex justify-content-between align-items-center">
+                    <div class="contador-resultados">
+                        <i class="fas fa-users me-2"></i>
+                        <?php echo count($utilizadores); ?> utilizador(es) encontrado(s)
+                        <?php if (!empty($pesquisa)): ?>
+                            para "<?php echo htmlspecialchars($pesquisa); ?>"
+                        <?php endif; ?>
+                    </div>
+                    
+                    <?php if (!empty($pesquisa) || !empty($filtro_tipo)): ?>
+                        <small class="text-light">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Filtros ativos
+                        </small>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <?php if (!empty($utilizadores)): ?>
+                <!-- Container com scroll aplicado apenas aos utilizadores -->
+                <div class="utilizadores-scroll-container">
+                    <div class="row g-3">
+                        <?php foreach ($utilizadores as $utilizador): ?>
+                            <div class="col-12">
+                                <div class="bg-gradient position-relative mx-auto mt-3 animated slideInDown">
+                                    <div class="card-body p-4">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-8">
+                                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="fas fa-user text-primary me-2 fa-lg"></i>
+                                                        <h5 class="card-title text-primary mb-0">Utilizador #<?php echo htmlspecialchars($utilizador['id']); ?></h5>
+                                                    </div>
+                                                    <span class="badge badge-tipo tipo-<?php echo strtolower(str_replace('ário', 'ario', obterTipoUtilizador($utilizador['tipo_utilizador']))); ?>">
+                                                        <?php echo obterTipoUtilizador($utilizador['tipo_utilizador']); ?>
+                                                    </span>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-sm-6">
+                                                        <p class="card-text mb-1"><strong><i class="fas fa-user text-info me-1"></i>Nome:</strong> <?php echo htmlspecialchars($utilizador['nome_proprio']); ?></p>
+                                                        <p class="card-text mb-1"><strong><i class="fas fa-at text-success me-1"></i>Utilizador:</strong> <?php echo htmlspecialchars($utilizador['nome_utilizador']); ?></p>
+                                                    </div>
+                                                    <div class="col-sm-6">
+                                                        <p class="card-text mb-1"><strong><i class="fas fa-wallet text-warning me-1"></i>ID Carteira:</strong> <?php echo htmlspecialchars($utilizador['id_carteira']) ?: 'N/A'; ?></p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="col-md-4 text-md-end">
+                                                <div class="d-flex flex-column gap-2">
+                                                    <button type="button" class="btn btn-warning rounded-pill py-2 px-4 botao-edicao" data-utilizador-id="<?php echo $utilizador['id']; ?>">
+                                                        <i class="fas fa-edit me-2"></i>Editar
+                                                    </button>
+                                                    <?php if ($utilizador['id'] != $_SESSION['id_utilizador']): ?>
+                                                        <button type="button" class="btn btn-danger rounded-pill py-2 px-4 botao-anular" data-utilizador-id="<?php echo $utilizador['id']; ?>">
+                                                            <i class="fas fa-user-times me-2"></i>Anular
+                                                        </button>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Formulário de edição (inicialmente oculto) -->
+                                        <div id="formulario-edicao-<?php echo $utilizador['id']; ?>" class="formulario-edicao" style="display: none;">
+                                            <hr class="text-white my-4">
+                                            <form action="editar_utilizador.php" method="POST">
+                                                <input type="hidden" name="id" value="<?php echo htmlspecialchars($utilizador['id']); ?>">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label class="form-label text-white">
+                                                                <i class="fas fa-user text-info me-1"></i>Nome Próprio:
+                                                            </label>
+                                                            <input type="text" name="nome_proprio" class="form-control bg-dark text-light border-primary" 
+                                                                   value="<?php echo htmlspecialchars($utilizador['nome_proprio']); ?>" required>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label class="form-label text-white">
+                                                                <i class="fas fa-at text-success me-1"></i>Nome de Utilizador:
+                                                            </label>
+                                                            <input type="text" name="nome_utilizador" class="form-control bg-dark text-light border-primary" 
+                                                                   value="<?php echo htmlspecialchars($utilizador['nome_utilizador']); ?>" required>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label class="form-label text-white">
+                                                                <i class="fas fa-user-tag text-primary me-1"></i>Tipo de Utilizador:
+                                                            </label>
+                                                            <select name="tipo_utilizador" class="form-select bg-dark text-light border-primary" required>
+                                                                <option value="1" <?php echo ($utilizador['tipo_utilizador'] == 1) ? 'selected' : ''; ?>>Admin</option>
+                                                                <option value="2" <?php echo ($utilizador['tipo_utilizador'] == 2) ? 'selected' : ''; ?>>Funcionário</option>
+                                                                <option value="3" <?php echo ($utilizador['tipo_utilizador'] == 3) ? 'selected' : ''; ?>>Cliente</option>
+                                                                <option value="4" <?php echo ($utilizador['tipo_utilizador'] == 5) ? 'selected' : ''; ?>>Não Validado</option>
+                                                                <option value="5" <?php echo ($utilizador['tipo_utilizador'] == 6) ? 'selected' : ''; ?>>Apagado</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label class="form-label text-white">
+                                                                <i class="fas fa-wallet text-warning me-1"></i>ID Carteira:
+                                                            </label>
+                                                            <input type="number" name="id_carteira" class="form-control bg-dark text-light border-primary" 
+                                                                   value="<?php echo htmlspecialchars($utilizador['id_carteira']); ?>">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="d-flex justify-content-end gap-2 mt-3">
+                                                    <button type="button" class="btn btn-outline-danger rounded-pill botao-cancelar" data-utilizador-id="<?php echo $utilizador['id']; ?>">
+                                                        <i class="fas fa-times me-2"></i>Cancelar
+                                                    </button>
+                                                    <button type="submit" class="btn btn-success rounded-pill">
+                                                        <i class="fas fa-save me-2"></i>Guardar Alterações
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php else: ?>
+                <div class="text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-users text-light" style="font-size: 4rem; opacity: 0.5;"></i>
+                    </div>
+                    <?php if (!empty($pesquisa) || !empty($filtro_tipo)): ?>
+                        <p class="text-center text-white fs-5 mb-3">Nenhum utilizador encontrado com os filtros aplicados</p>
+                        <p class="text-center text-light mb-4">Tente pesquisar por outros termos ou <a href="?" class="text-info">limpar os filtros</a>.</p>
+                    <?php else: ?>
+                        <p class="text-center text-white fs-5 mb-4">Nenhum utilizador encontrado.</p>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="wow.min.js"></script>
+    <script src="easing.min.js"></script>
+    <script src="waypoints.min.js"></script>
+    <script src="owl.carousel.min.js"></script>
+    <script src="moment.min.js"></script>
+    <script src="moment-timezone.min.js"></script>
+    <script src="tempusdominus-bootstrap-4.min.js"></script>
+    <script src="main.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Botão de edição - para cada utilizador
+            $('.botao-edicao').click(function() {
+                var utilizadorId = $(this).data('utilizador-id');
+                $('#formulario-edicao-' + utilizadorId).slideDown();
+                $(this).parent().hide(); // Esconde os botões de ação
+            });
+
+            // Botão de cancelar - para cada utilizador
+            $(document).on('click', '.botao-cancelar', function() {
+                var utilizadorId = $(this).data('utilizador-id');
+                $('#formulario-edicao-' + utilizadorId).slideUp();
+                $('.botao-edicao[data-utilizador-id="' + utilizadorId + '"]').parent().show(); // Mostra os botões de ação
+            });
+
+            // Botão para anular utilizador
+            $(document).on('click', '.botao-anular', function() {
+                var utilizadorId = $(this).data('utilizador-id');
+                if(confirm('Tem certeza que deseja anular este utilizador? Esta ação irá desativar o acesso do utilizador ao sistema.')) {
+                    $.ajax({
+                        url: 'anular_utilizador.php',
+                        method: 'POST',
+                        data: { id: utilizadorId },
+                        success: function(response) {
+                            try {
+                                var result = JSON.parse(response);
+                                if(result.success) {
+                                    alert('Utilizador anulado com sucesso!');
+                                    location.reload();
+                                } else {
+                                    alert('Erro: ' + result.message);
+                                }
+                            } catch(e) {
+                                alert('Erro ao processar resposta do servidor');
+                            }
+                        },
+                        error: function() {
+                            alert('Erro ao anular utilizador');
+                        }
+                    });
+                }
+            });
+
+            // Submissão automática do formulário ao alterar ordenação ou filtro
+            $('select[name="ordenacao"], select[name="filtro_tipo"]').change(function() {
+                $(this).closest('form').submit();
+            });
+
+            // Enter para pesquisar
+            $('input[name="pesquisa"]').keypress(function(e) {
+                if (e.which == 13) {
+                    $(this).closest('form').submit();
+                }
+            });
+        });
+    </script>
+
+</body>
+
+</html>

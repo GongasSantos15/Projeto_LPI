@@ -12,6 +12,7 @@
     $valor_carteira = 0;
     $numero_bilhetes = 0;
     $id_utilizador = null;
+    $id_carteira = 1;
 
     if ($temLogin) {
         $id_utilizador = $_SESSION['id_utilizador'];
@@ -27,9 +28,6 @@
                 $resultado = $stmt->get_result();  
 
                 if ($resultado && $resultado->num_rows > 0) {
-                    $linha = $resultado->fetch_assoc();
-                    $id_carteira = $linha['id_carteira'];
-
                     $sql_carteira = "SELECT saldo FROM carteira WHERE id_carteira = ?";
                     $stmt_carteira = $conn->prepare($sql_carteira);
 

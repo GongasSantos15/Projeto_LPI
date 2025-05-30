@@ -1,73 +1,12 @@
 <?php
 
-    // Include BD
-    include("..\basedados\basedados.h");
-
     // Inicia a sessão
     session_start();
 
-    // Verifica o estado de login
-    $temLogin = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']);
-    $nome_utilizador = $temLogin ? ($_SESSION['nome_utilizador'] ?? 'Utilizador') : '';
-    $valor_carteira = 0;
-    $numero_bilhetes = 0;
-    $id_utilizador = null;
+    // Include BD
+    include("..\basedados\basedados.h");
+    include("dados_navbar.php");
 
-    if ($temLogin) {
-        $id_utilizador = $_SESSION['id_utilizador'];
-
-        if ($conn) {
-            // Consulta para obter dados da carteira
-            $sql = "SELECT id_carteira FROM utilizador WHERE id = ?";
-            $stmt = $conn->prepare($sql);
-
-            if ($stmt) {
-                $stmt->bind_param("i", $id_utilizador);
-                $stmt->execute();
-                $resultado = $stmt->get_result();  
-
-                if ($resultado && $resultado->num_rows > 0) {
-                    $linha = $resultado->fetch_assoc();
-                    $id_carteira = $linha['id_carteira'];
-
-                    $sql_carteira = "SELECT saldo FROM carteira WHERE id_carteira = ?";
-                    $stmt_carteira = $conn->prepare($sql_carteira);
-
-                    if ($stmt_carteira) {
-                        $stmt_carteira->bind_param("i", $id_carteira);
-                        $stmt_carteira->execute();
-                        $resultado_carteira = $stmt_carteira->get_result();
-
-                        if ($resultado_carteira && $resultado_carteira->num_rows > 0) {
-                            $linha_carteira = $resultado_carteira->fetch_assoc();
-                            $valor_carteira = number_format($linha_carteira['saldo'], 2, ',', '.');
-                        }
-
-                        $stmt_carteira->close();
-                    }
-                }
-
-                $stmt->close();
-            }
-
-            // Consulta para contar os bilhetes do utilizador
-            $sql_bilhetes = "SELECT COUNT(*) as total_bilhetes FROM bilhete WHERE id_utilizador = ? AND estado = 1";
-            $stmt_bilhetes = $conn->prepare($sql_bilhetes);
-
-            if ($stmt_bilhetes) {
-                $stmt_bilhetes->bind_param("i", $id_utilizador);
-                $stmt_bilhetes->execute();
-                $resultado_bilhetes = $stmt_bilhetes->get_result();
-
-                if ($resultado_bilhetes && $resultado_bilhetes->num_rows > 0) {
-                    $linha_bilhetes = $resultado_bilhetes->fetch_assoc();
-                    $numero_bilhetes = $linha_bilhetes['total_bilhetes'];
-                }
-
-                $stmt_bilhetes->close();
-            }
-        }
-    }
 ?>
 
 <!DOCTYPE html>
@@ -136,6 +75,7 @@
                         <ul class="dropdown-menu" aria-labelledby="walletDropdownLink">
                             <li><a class="dropdown-item" href="adicionar_saldo.php"><i class="fas fa-plus-circle"></i>Adicionar</a></li>
                             <li><a class="dropdown-item" href="remover_saldo.php"><i class="fas fa-minus-circle"></i>Remover</a></li>
+                            <li><a class="dropdown-item" href="consultar_saldo_clientes.php"><i class="fas fa-user"></i>Consulta Clientes</a></li>
                         </ul>
                     </div>
 

@@ -4,6 +4,7 @@
     // Include conexão à BD
     include("../basedados/basedados.h"); 
     include("constUtilizadores.php");
+    include("dados_navbar.php");
 
     // Variável para armazenar mensagens de erro PHP (conexão, query, etc.)
     $mensagem_erro = '';
@@ -11,10 +12,10 @@
 
     // Verifica se o utilizador tem o login feito e é admin
     $tem_login = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']);
-    $eh_admin = isset($_SESSION['tipo_utilizador']) && $_SESSION['tipo_utilizador'] == 1;
+    $e_admin = isset($_SESSION['tipo_utilizador']) && $_SESSION['tipo_utilizador'] == 1;
     
     // Redireciona se não for admin
-    if (!$tem_login || !$eh_admin) {
+    if (!$tem_login || !$e_admin) {
         header("Location: index.php");
         exit();
     }
@@ -274,12 +275,56 @@
     </div>
     
     <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
-        <div class="p-5 rounded shadow" style="max-width: 1200px; width: 100%;">
-            <div class="d-flex justify-content-between align-items-center mb-4">
+        <nav class="navbar navbar-expand-lg navbar-light px-5 px-lg-5 py-3 py-lg-3">
+            <a href="pagina_inicial_admin.php" class="navbar-brand p-0">
+                <h1 class="text-primary m-0"><i class="fa fa-map-marker-alt me-3"></i>FelixBus</h1>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+                <span class="fa fa-bars"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarCollapse">
+                <div class="navbar-nav ms-auto py-0">
+                    <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
+                     <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
+                        <?php if (in_array($_SESSION['tipo_utilizador'], [1, 2, 3])): ?>
+                            <a href="consultar_utilizadores.php" class="nav-item nav-link active">Utilizadores</a>
+                            <a href="consultar_bilhetes.php" class="nav-item nav-link">Bilhetes</a>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                </div>
+
+                <?php if ($tem_login): ?>
+                    <!-- Dropdown da Carteira -->
+                    <div class="nav-item dropdown">
+                       <a href="#" class="nav-link dropdown-toggle" id="walletDropdownLink" role="button" aria-expanded="false">
+                            <i class="fa fa-wallet me-2"></i> 
+                            <?php echo isset($_SESSION['valor_carteira']) ? $_SESSION['valor_carteira'] : '0,00'; ?> €
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="walletDropdownLink">
+                            <li><a class="dropdown-item" href="adicionar_saldo.php"><i class="fas fa-plus-circle"></i>Adicionar</a></li>
+                            <li><a class="dropdown-item" href="remover_saldo.php"><i class="fas fa-minus-circle"></i>Remover</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Dropdown do Utilizador -->
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa fa-user-circle fa-2x me-2"></i>
+                            <span><?php echo htmlspecialchars($nome_utilizador); ?></span>
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="consultar_dados.php"><i class="fas fa-user-cog me-2"></i> Consultar Dados</a></li>
+                            <li><a class="dropdown-item" href="sair.php"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+                        </ul>
+                    </div>
+                <?php else: ?>
+                    <a href="entrar.php" class="btn btn-primary rounded-pill py-2 px-4">Entrar</a>
+                <?php endif; ?>
+            </div>
+        </nav>
+        <div class="rounded shadow" style="max-width: 1200px; width: 100%; margin-top: 150px;">
+            <div class="d-flex justify-content-between align-items-center mb-5">
                 <h3 class="text-white m-0">Gestão de Utilizadores</h3>
-                <a href="<?php echo htmlspecialchars($pagina_inicial); ?>" class="btn btn-outline-light btn-sm">
-                    <i class="fas fa-arrow-left me-2"></i>Voltar ao Início
-                </a>
             </div>
             
             <div class="text-center my-5">
@@ -313,19 +358,25 @@
                                class="form-control search-input" 
                                placeholder="Digite o termo de pesquisa..." 
                                value="<?php echo htmlspecialchars($pesquisa); ?>">
-                    </div>
-                    
-                    <div class="col-md-3">
-                        <label class="form-label text-white mb-2">
-                            <i class="fas fa-user-tag me-2"></i>Filtrar por Tipo:
-                        </label>
-                        <select name="filtro_tipo" class="form-select filtro-select">
-                            <option value="">Todos os tipos</option>
-                            <option value="1" <?php echo ($filtro_tipo == '1') ? 'selected' : ''; ?>>Admin</option>
-                            <option value="2" <?php echo ($filtro_tipo == '2') ? 'selected' : ''; ?>>Funcionário</option>
-                            <option value="3" <?php echo ($filtro_tipo == '3') ? 'selected' : ''; ?>>Cliente</option>
-                        </select>
-                    </div>
+                    </div>                  
+                        <div class="col-md-3">
+                            <label class="form-label text-white mb-2">
+                                <i class="fas fa-user-tag me-2"></i>Filtrar por Tipo:
+                            </label>
+                            <select name="filtro_tipo" class="form-select filtro-select">
+                                <option value="">Todos os tipos</option> <!-- Opção para mostrar todos -->
+                                <?php
+                                    $valores_tipos = [1, 2, 3, 5, 6];
+                                
+                                    foreach ($valores_tipos as $valor) {
+                                        // Verifica contra o filtro atual ($filtro_tipo) em vez do tipo do utilizador
+                                        $selected = ($filtro_tipo == $valor) ? 'selected' : '';
+                                        $nome = obterTipoUtilizador($valor);
+                                        echo "<option value='$valor' $selected>$nome</option>";
+                                    }
+                                ?>
+                            </select>
+                        </div>
                     
                     <div class="col-md-3">
                         <label class="form-label text-white mb-2">
@@ -446,8 +497,17 @@
                                                             <label class="form-label text-white">
                                                                 <i class="fas fa-user-tag text-primary me-1"></i>Tipo de Utilizador:
                                                             </label>
-                                                            <input type="number" id="tipo_utilizador" name="tipo_utilizador" class="form-control bg-dark text-light border-primary"
-                                                            value="<?php echo htmlspecialchars($utilizador['tipo_utilizador']); ?>" />
+                                                            <select name="tipo_utilizador" class="form-select bg-dark text-light border-primary" required>
+                                                                <?php
+                                                                $valores_tipos = [1, 2, 3, 5, 6]; // Valores possíveis
+                                                                
+                                                                foreach ($valores_tipos as $valor) {
+                                                                    $selected = ($utilizador['tipo_utilizador'] == $valor) ? 'selected' : '';
+                                                                    $nome = obterTipoUtilizador($valor);
+                                                                    echo "<option value='$valor' $selected>$nome</option>";
+                                                                }
+                                                                ?>
+                                                            </select>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-6">
@@ -456,7 +516,7 @@
                                                                 <i class="fas fa-wallet text-warning me-1"></i>ID Carteira:
                                                             </label>
                                                             <input type="number" name="id_carteira" class="form-control bg-dark text-light border-primary" 
-                                                                   value="<?php echo htmlspecialchars($utilizador['id_carteira']); ?>">
+                                                                   value="<?php echo htmlspecialchars($utilizador['id_carteira']); ?>" required>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -502,6 +562,30 @@
     <script src="moment-timezone.min.js"></script>
     <script src="tempusdominus-bootstrap-4.min.js"></script>
     <script src="main.js"></script>
+
+    <!-- Footer Start -->
+    <div class="container-fluid bg-dark d-flex justify-content-center text-light footer pt-5 wow fadeIn" data-wow-delay="0.1s">
+        <div class="container py-5">
+            <div class="row">
+                <div class="col-lg-4">
+                    <h4 class="text-white mb-3">Localização</h4>
+                    <p class="mb-2"><i class="fa fa-map-marker-alt me-3"></i>Rua 123, Castelo Branco, Portugal</p>
+                </div>
+                <div class="col-lg-4">
+                    <h4 class="text-white mb-3">Contactos</h4>
+                    <p class="mb-2"><i class="fa fa-phone me-3"></i><strong>Telemóvel:</strong> +351 925 887 788</p>
+                    <p class="mb-2"><i class="fa fa-phone me-3"></i><strong>Telefone:</strong> +351 272 999 888</p>
+                </div>
+                <div class="col-lg-4">
+                    <h4 class="text-white mb-3">Horário de Funcionamento</h4>
+                    <p class="mb-2"><i class="fa fa-clock me-3"></i><strong>Segunda a Sexta:</strong> 9:00 - 17:00</p>
+                    <p class="mb-2"><i class="fa fa-clock me-3"></i><strong>Sábados:</strong> 10:00 - 16:00</p>
+                    <p class="mb-2"><i class="fa fa-clock me-3"></i><strong>Domingos e Feriados:</strong> 9:00 - 13:00</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Footer End -->
 
     <script>
         $(document).ready(function() {

@@ -3,6 +3,7 @@
 
     // Include conexão à BD
     include("../basedados/basedados.h"); 
+    include("constUtilizadores.php");
 
     // Variável para armazenar mensagens de erro PHP (conexão, query, etc.)
     $mensagem_erro = '';
@@ -42,7 +43,7 @@
     // Só executa a consulta se houver conexão
     if ($conn) {
         // Constrói a consulta SQL base - mostra todos os utilizadores incluindo anulados
-        $sql = "SELECT id, nome_proprio, nome_utilizador, tipo_utilizador, palavra_passe, id_carteira FROM utilizador WHERE 1=1";
+        $sql = "SELECT id, nome_proprio, nome_utilizador, tipo_utilizador, id_carteira FROM utilizador";
         
         // Adiciona condição de pesquisa se houver termo de pesquisa
         if (!empty($pesquisa)) {
@@ -405,7 +406,7 @@
                                                     <button type="button" class="btn btn-warning rounded-pill py-2 px-4 botao-edicao" data-utilizador-id="<?php echo $utilizador['id']; ?>">
                                                         <i class="fas fa-edit me-2"></i>Editar
                                                     </button>
-                                                    <?php if ($utilizador['id'] != $_SESSION['id_utilizador']): ?>
+                                                    <?php if ($utilizador['id'] != $_SESSION['id_utilizador'] && $utilizador['tipo_utilizador'] != CLIENTE_APAGADO): ?>
                                                         <button type="button" class="btn btn-danger rounded-pill py-2 px-4 botao-anular" data-utilizador-id="<?php echo $utilizador['id']; ?>">
                                                             <i class="fas fa-user-times me-2"></i>Anular
                                                         </button>
@@ -532,20 +533,16 @@
                         method: 'POST',
                         data: { id: utilizadorId },
                         success: function(response) {
-                            try {
-                                var result = JSON.parse(response);
-                                if(result.success) {
-                                    alert('Utilizador anulado com sucesso!');
-                                    location.reload();
-                                } else {
-                                    alert('Erro: ' + result.message);
-                                }
-                            } catch(e) {
-                                alert('Erro ao processar resposta do servidor');
+                            if (response === "success") {
+                                location.reload(); // Recarrega para mostrar a mensagem
+                            } else if (response === "self_delete") {
+                                alert("Não pode anular a sua própria conta!");
+                            } else {
+                                alert("Erro ao anular utilizador");
                             }
                         },
                         error: function() {
-                            alert('Erro ao anular utilizador');
+                            alert('Erro de comunicação com o servidor');
                         }
                     });
                 }

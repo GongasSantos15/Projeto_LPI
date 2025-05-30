@@ -17,7 +17,7 @@
                 $nome_utilizador = mysqli_real_escape_string($conn, $_POST['nome_utilizador']);
                 $nome_proprio = mysqli_real_escape_string($conn, $_POST['nome_proprio']);
                 $palavra_passe_encriptada = md5($_POST['palavra_passe']);
-                $tipo_nome_utilizador = CLIENTE_NAO_VALIDO;
+                $tipo_utilizador = CLIENTE_NAO_VALIDO;
 
                 // 1. Verificar qual é o maior id_carteira existente
                 $sql_max_carteira = "SELECT MAX(id_carteira) AS max_id FROM utilizador";
@@ -37,7 +37,7 @@
                 if (!$stmt_inserir) {
                     $mensagem_erro = "Erro ao preparar a consulta.";
                 } else {
-                    $stmt_inserir->bind_param("sssii", $nome_utilizador, $nome_proprio, $palavra_passe_encriptada, $tipo_nome_utilizador, $novo_id_carteira);
+                    $stmt_inserir->bind_param("sssii", $nome_utilizador, $nome_proprio, $palavra_passe_encriptada, $tipo_utilizador, $novo_id_carteira);
 
                     if ($stmt_inserir->execute()){
                         $mensagem_sucesso = "Utilizador registado com sucesso";

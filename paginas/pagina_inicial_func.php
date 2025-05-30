@@ -121,6 +121,7 @@
             <div class="collapse navbar-collapse" id="navbarCollapse">
                 <div class="navbar-nav ms-auto py-0">
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
+                    <a href="consultar_bilhetes.php" class="nav-item nav-link">Bilhetes</a>
                 </div>
 
                 <?php if ($temLogin): ?>
@@ -133,16 +134,6 @@
                             <li><a class="dropdown-item" href="adicionar_saldo.php"><i class="fas fa-plus-circle"></i>Adicionar Saldo</a></li>
                             <li><a class="dropdown-item" href="remover_saldo.php"><i class="fas fa-minus-circle"></i>Remover Saldo</a></li>
                             <li><a class="dropdown-item" href="consultar_saldo_clientes.php"><i class="fas fa-user"></i>Consultar Clientes</a></li>
-                        </ul>
-                    </div>
-
-                    <!-- Dropdown dos Bilhetes -->
-                    <div class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle" id="ticketsDropdownLink" role="button" aria-expanded="false">
-                            <i class="fa fa-ticket-alt me-2"></i> <?php echo $numero_bilhetes; ?>
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="ticketsDropdownLink">
-                            <li><a class="dropdown-item" href="consultar_bilhetes.php"><i class="fas fa-eye"></i>Consultar Bilhetes</a></li>
                         </ul>
                     </div>
 

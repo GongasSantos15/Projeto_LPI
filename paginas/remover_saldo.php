@@ -247,41 +247,42 @@
                     </div>
                 </div>
         </div>
-            <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
-            <script src="wow.min.js"></script>
-            <script src="easing.min.js"></script>
-            <script src="waypoints.min.js"></script>
-            <script src="owl.carousel.min.js"></script>
-            <script src="moment.min.js"></script>
-            <script src="moment-timezone.min.js"></script>
-            <script src="tempusdominus-bootstrap-4.min.js"></script>
+            
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="wow.min.js"></script>
+        <script src="easing.min.js"></script>
+        <script src="waypoints.min.js"></script>
+        <script src="owl.carousel.min.js"></script>
+        <script src="moment.min.js"></script>
+        <script src="moment-timezone.min.js"></script>
+        <script src="tempusdominus-bootstrap-4.min.js"></script>
 
-            <script src="main.js"></script>
+        <script src="main.js"></script>
 
-            <!-- Footer Start -->
-            <div class="container-fluid bg-dark d-flex justify-content-center text-light footer pt-5 wow fadeIn" data-wow-delay="0.1s">
-                <div class="container py-5">
-                    <div class="row">
-                        <div class="col-lg-4">
-                            <h4 class="text-white mb-3">Localização</h4>
-                            <p class="mb-2"><i class="fa fa-map-marker-alt me-3"></i>Rua 123, Castelo Branco, Portugal</p>
-                        </div>
-                        <div class="col-lg-4">
-                            <h4 class="text-white mb-3">Contactos</h4>
-                            <p class="mb-2"><i class="fa fa-phone me-3"></i><strong>Telemóvel:</strong> +351 925 887 788</p>
-                            <p class="mb-2"><i class="fa fa-phone me-3"></i><strong>Telefone:</strong> +351 272 999 888</p>
-                        </div>
-                        <div class="col-lg-4">
-                            <h4 class="text-white mb-3">Horário de Funcionamento</h4>
-                            <p class="mb-2"><i class="fa fa-clock me-3"></i><strong>Segunda a Sexta:</strong> 9:00 - 17:00</p>
-                            <p class="mb-2"><i class="fa fa-clock me-3"></i><strong>Sábados:</strong> 10:00 - 16:00</p>
-                            <p class="mb-2"><i class="fa fa-clock me-3"></i><strong>Domingos e Feriados:</strong> 9:00 - 13:00</p>
-                        </div>
+        <!-- Footer Start -->
+        <div class="container-fluid bg-dark d-flex justify-content-center text-light footer pt-5 wow fadeIn" data-wow-delay="0.1s">
+            <div class="container py-5">
+                <div class="row">
+                    <div class="col-lg-4">
+                        <h4 class="text-white mb-3">Localização</h4>
+                        <p class="mb-2"><i class="fa fa-map-marker-alt me-3"></i>Rua 123, Castelo Branco, Portugal</p>
+                    </div>
+                    <div class="col-lg-4">
+                        <h4 class="text-white mb-3">Contactos</h4>
+                        <p class="mb-2"><i class="fa fa-phone me-3"></i><strong>Telemóvel:</strong> +351 925 887 788</p>
+                        <p class="mb-2"><i class="fa fa-phone me-3"></i><strong>Telefone:</strong> +351 272 999 888</p>
+                    </div>
+                    <div class="col-lg-4">
+                        <h4 class="text-white mb-3">Horário de Funcionamento</h4>
+                        <p class="mb-2"><i class="fa fa-clock me-3"></i><strong>Segunda a Sexta:</strong> 9:00 - 17:00</p>
+                        <p class="mb-2"><i class="fa fa-clock me-3"></i><strong>Sábados:</strong> 10:00 - 16:00</p>
+                        <p class="mb-2"><i class="fa fa-clock me-3"></i><strong>Domingos e Feriados:</strong> 9:00 - 13:00</p>
                     </div>
                 </div>
             </div>
-            <!-- Footer End -->
+        </div>
+        <!-- Footer End -->
     </body>
 
 </html>

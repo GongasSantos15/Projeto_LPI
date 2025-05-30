@@ -43,7 +43,7 @@
     // Só executa a consulta se houver conexão
     if ($conn) {
         // Constrói a consulta SQL base - mostra todos os utilizadores incluindo anulados
-        $sql = "SELECT id, nome_proprio, nome_utilizador, tipo_utilizador, id_carteira FROM utilizador";
+        $sql = "SELECT id, nome_proprio, nome_utilizador, tipo_utilizador, id_carteira FROM utilizador WHERE 1=1";
         
         // Adiciona condição de pesquisa se houver termo de pesquisa
         if (!empty($pesquisa)) {
@@ -94,7 +94,7 @@
             
             // Adiciona parâmetros de pesquisa se houver
             if (!empty($pesquisa)) {
-                $termo_pesquisa = "%$pesquisa%";
+                $termo_pesquisa = "$pesquisa%";
                 $params[] = $termo_pesquisa;
                 $params[] = $termo_pesquisa;
                 $params[] = $pesquisa;
@@ -446,13 +446,8 @@
                                                             <label class="form-label text-white">
                                                                 <i class="fas fa-user-tag text-primary me-1"></i>Tipo de Utilizador:
                                                             </label>
-                                                            <select name="tipo_utilizador" class="form-select bg-dark text-light border-primary" required>
-                                                                <option value="1" <?php echo ($utilizador['tipo_utilizador'] == 1) ? 'selected' : ''; ?>>Admin</option>
-                                                                <option value="2" <?php echo ($utilizador['tipo_utilizador'] == 2) ? 'selected' : ''; ?>>Funcionário</option>
-                                                                <option value="3" <?php echo ($utilizador['tipo_utilizador'] == 3) ? 'selected' : ''; ?>>Cliente</option>
-                                                                <option value="4" <?php echo ($utilizador['tipo_utilizador'] == 5) ? 'selected' : ''; ?>>Não Validado</option>
-                                                                <option value="5" <?php echo ($utilizador['tipo_utilizador'] == 6) ? 'selected' : ''; ?>>Apagado</option>
-                                                            </select>
+                                                            <input type="number" id="tipo_utilizador" name="tipo_utilizador" class="form-control bg-dark text-light border-primary"
+                                                            value="<?php echo htmlspecialchars($utilizador['tipo_utilizador']); ?>" />
                                                         </div>
                                                     </div>
                                                     <div class="col-md-6">

@@ -135,7 +135,7 @@
     <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
     <div class="p-5 rounded shadow" style="max-width: 700px; width: 100%;">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="text-white m-0">Consultar e Editar Dados</h3>
+            <h3 class="text-white m-0">Viagens</h3>
             <a href="<?php echo htmlspecialchars($pagina_inicial) ?>" class="btn btn-outline-light btn-sm">
                 <i class="fas fa-arrow-left me-2"></i>Voltar ao Início
             </a>
@@ -144,11 +144,6 @@
         <?php
             if (!empty($mensagem_erro)) {
                 echo '<div class="alert alert-danger">' . htmlspecialchars($mensagem_erro) . '</div>';
-                echo '<script>
-                    setTimeout(function() {
-                        window.location.href = "index.php";
-                    }, 4000);
-                </script>';
             }
             if (!empty($mensagem_sucesso)) {
                 echo '<div class="alert alert-success">' . htmlspecialchars($mensagem_sucesso) . '</div>';
@@ -176,8 +171,40 @@
                                 </div>
                                 <div>
                                     <?php if ($tem_login): ?>
-                                        <a href="comprar_bilhete.php?id_viagem=<?php echo htmlspecialchars($viagem['id_viagem']); ?>" 
-                                        class="btn btn-primary text-light px-5 py-2 rounded-pill">Comprar</a>
+                                        <?php if (in_array($_SESSION['tipo_utilizador'], [1, 2, 3])): ?>
+                                            <form action="comprar_bilhete.php" method="GET" class="mb-3">
+                                                <input type="hidden" name="id_viagem" value="<?php echo htmlspecialchars($viagem['id_viagem']); ?>">
+
+                                                <?php if ($_SESSION['tipo_utilizador'] == 3): ?>
+                                                    <!-- Cliente compra para si mesmo -->
+                                                    <button type="submit" class="btn btn-primary text-light px-5 py-2 rounded-pill w-100 mt-3">
+                                                        Comprar
+                                                    </button>
+                                                <?php elseif (in_array($_SESSION['tipo_utilizador'], [1, 2])): ?>
+                                                    <!-- Admin ou funcionário escolhe utilizador -->
+                                                    <div class="mt-4">
+                                                        <select name="id_utilizador" class="form-select bg-dark text-light border-primary" required>
+                                                            <option value="">Selecione o utilizador</option>
+                                                            <?php
+                                                            include("../basedados/basedados.h");
+                                                            $sql_utilizadores = "SELECT id, nome_utilizador FROM utilizador 
+                                                                                WHERE tipo_utilizador = 3";
+                                                            $result_utilizadores = $conn->query($sql_utilizadores);
+                                                            if ($result_utilizadores && $result_utilizadores->num_rows > 0) {
+                                                                while ($row = $result_utilizadores->fetch_assoc()) {
+                                                                    echo '<option value="' . $row['id'] . '">' . htmlspecialchars($row['nome_utilizador']) . '</option>';
+                                                                }
+                                                            }
+                                                            if ($conn) $conn->close();
+                                                            ?>
+                                                        </select>
+                                                    </div>
+                                                    <button type="submit" class="btn btn-primary text-light px-5 py-2 rounded-pill w-100 mt-3">
+                                                        Comprar para utilizador
+                                                    </button>
+                                                <?php endif; ?>
+                                            </form>
+                                        <?php endif; ?>
                                     <?php endif; ?>
                                 </div>
                             </div>

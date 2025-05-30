@@ -105,6 +105,41 @@
     <link href="tempusdominus-bootstrap-4.min.css" rel="stylesheet" />
     <link href="bootstrap.min.css" rel="stylesheet">
     <link href="style.css" rel="stylesheet">
+    
+    <style>
+        /* CSS personalizado para scroll nos bilhetes */
+        .bilhetes-scroll-container {
+            max-height: 500px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 10px;
+        }
+        
+        /* Personalizar a scrollbar */
+        .bilhetes-scroll-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .bilhetes-scroll-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        
+        .bilhetes-scroll-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+        
+        .bilhetes-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        
+        /* Para Firefox */
+        .bilhetes-scroll-container {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+        }
+    </style>
 </head>
 
 <body>
@@ -132,7 +167,6 @@
                     <?php echo htmlspecialchars($mensagem_sucesso); ?>
                 </div>
                 <script>
-                    // Esconde a mensagem de sucesso após 2 segundos
                     setTimeout(function() {
                         document.getElementById('mensagem-sucesso').style.display = 'none';
                     }, 2000);
@@ -140,111 +174,114 @@
             <?php endif; ?>
 
             <?php if (!empty($bilhetes)): ?>
-                <div class="row g-3">
-                    <?php foreach ($bilhetes as $bilhete): ?>
-                        <?php if ($bilhete['estado'] == 1): ?>
-                        <div class="col-12">
-                            <div class="bg-gradient mb-3 position-relative mx-auto mt-3 animated slideInDown">
-                                <div class="card-body p-4">
-                                    <div class="row align-items-center">
-                                        <div class="col-md-8">
-                                            <div class="d-flex align-items-center mb-4">
-                                                <i class="fas fa-ticket-alt text-primary me-2 fa-lg"></i>
-                                                <h5 class="card-title text-primary mb-0">Bilhete #<?php echo htmlspecialchars($bilhete['id_bilhete']); ?></h5>
+                <!-- Container com scroll aplicado apenas aos bilhetes -->
+                <div class="bilhetes-scroll-container">
+                    <div class="row g-3">
+                        <?php foreach ($bilhetes as $bilhete): ?>
+                            <?php if ($bilhete['estado'] == 1): ?>
+                            <div class="col-12">
+                                <div class="bg-gradient mb-3 position-relative mx-auto mt-3 animated slideInDown">
+                                    <div class="card-body p-4">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-8">
+                                                <div class="d-flex align-items-center mb-4">
+                                                    <i class="fas fa-ticket-alt text-primary me-2 fa-lg"></i>
+                                                    <h5 class="card-title text-primary mb-0">Bilhete #<?php echo htmlspecialchars($bilhete['id_bilhete']); ?></h5>
+                                                </div>
+                                                
+                                                <div class="row">
+                                                    <div class="col-sm-6">
+                                                        <p class="card-text mb-1"><strong><i class="fas fa-map-marker-alt text-success me-1"></i>De:</strong> <?php echo htmlspecialchars($bilhete['origem']); ?></p>
+                                                        <p class="card-text mb-1"><strong><i class="fas fa-map-marker-alt text-danger me-1"></i>Para:</strong> <?php echo htmlspecialchars($bilhete['destino']); ?></p>
+                                                    </div>
+                                                    <div class="col-sm-6">
+                                                        <p class="card-text mb-1"><strong><i class="fas fa-calendar-alt text-info me-1"></i>Viagem:</strong> <?php echo htmlspecialchars(date('d/m/Y H:i', strtotime($bilhete['data_hora']))); ?></p>
+                                                        <p class="card-text mb-1"><strong><i class="fas fa-shopping-cart text-warning me-1"></i>Data:</strong> <?php echo htmlspecialchars(date('d/m/Y H:i', strtotime($bilhete['data_compra']))); ?></p>
+                                                    </div>
+                                                </div>
                                             </div>
                                             
-                                            <div class="row">
-                                                <div class="col-sm-6">
-                                                    <p class="card-text mb-1"><strong><i class="fas fa-map-marker-alt text-success me-1"></i>De:</strong> <?php echo htmlspecialchars($bilhete['origem']); ?></p>
-                                                    <p class="card-text mb-1"><strong><i class="fas fa-map-marker-alt text-danger me-1"></i>Para:</strong> <?php echo htmlspecialchars($bilhete['destino']); ?></p>
+                                            <div class="col-md-4 text-md-end">
+                                                <div class="mb-3">
+                                                    <span class="badge bg-info text-dark fs-6 px-3 py-2">
+                                                        <i class="fas fa-euro-sign me-1"></i>
+                                                        <?php echo number_format($bilhete['preco'], 2, ',', '.'); ?> €
+                                                    </span>
                                                 </div>
-                                                <div class="col-sm-6">
-                                                    <p class="card-text mb-1"><strong><i class="fas fa-calendar-alt text-info me-1"></i>Viagem:</strong> <?php echo htmlspecialchars(date('d/m/Y H:i', strtotime($bilhete['data_hora']))); ?></p>
-                                                    <p class="card-text mb-1"><strong><i class="fas fa-shopping-cart text-warning me-1"></i>Data:</strong> <?php echo htmlspecialchars(date('d/m/Y H:i', strtotime($bilhete['data_compra']))); ?></p>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-4">
+                                            <div class="col-sm-6 d-flex justify-content-center">
+                                                <div class="mb-3">
+                                                    <button type="button" class="btn btn-warning rounded-pill py-2 px-4 botao-edicao" data-bilhete-id="<?php echo $bilhete['id_bilhete']; ?>">
+                                                        <i class="fas fa-edit me-2"></i>Editar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6 d-flex justify-content-center">
+                                                <div class="mb-3">
+                                                    <button type="button" class="btn btn-danger rounded-pill py-2 px-4 botao-anular" data-bilhete-id="<?php echo $bilhete['id_bilhete']; ?>">
+                                                        <i class="fas fa-times me-2"></i>Anular
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
                                         
-                                        <div class="col-md-4 text-md-end">
-                                            <div class="mb-3">
-                                                <span class="badge bg-info text-dark fs-6 px-3 py-2">
-                                                    <i class="fas fa-euro-sign me-1"></i>
-                                                    <?php echo number_format($bilhete['preco'], 2, ',', '.'); ?> €
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row mt-4">
-                                        <div class="col-sm-6 d-flex justify-content-center">
-                                            <div class="mb-3">
-                                                <button type="button" class="btn btn-warning rounded-pill py-2 px-4 botao-edicao" data-bilhete-id="<?php echo $bilhete['id_bilhete']; ?>">
-                                                    <i class="fas fa-edit me-2"></i>Editar
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="col-sm-6 d-flex justify-content-center">
-                                            <div class="mb-3">
-                                                <button type="button" class="btn btn-danger rounded-pill py-2 px-4 botao-anular" data-bilhete-id="<?php echo $bilhete['id_bilhete']; ?>">
-                                                    <i class="fas fa-times me-2"></i>Anular
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Formulário de edição (inicialmente oculto) -->
-                                    <div id="formulario-edicao-<?php echo $bilhete['id_bilhete']; ?>" class="formulario-edicao" style="display: none;">
-                                        <hr class="text-white my-4">
-                                        <form action="editar_bilhete.php" method="GET">
-                                            <input type="hidden" name="id_bilhete" value="<?php echo htmlspecialchars($bilhete['id_bilhete']); ?>">
-                                            
-                                            <!-- Dentro do formulário de edição -->
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label text-white">
-                                                            <i class="fas fa-map-marker-alt text-success me-1"></i>Origem:
-                                                        </label>
-                                                        <div class="view-mode">
-                                                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($bilhete['origem']); ?>" readonly>
+                                        <!-- Formulário de edição (inicialmente oculto) -->
+                                        <div id="formulario-edicao-<?php echo $bilhete['id_bilhete']; ?>" class="formulario-edicao" style="display: none;">
+                                            <hr class="text-white my-4">
+                                            <form action="editar_bilhete.php" method="GET">
+                                                <input type="hidden" name="id_bilhete" value="<?php echo htmlspecialchars($bilhete['id_bilhete']); ?>">
+                                                
+                                                <!-- Dentro do formulário de edição -->
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label class="form-label text-white">
+                                                                <i class="fas fa-map-marker-alt text-success me-1"></i>Origem:
+                                                            </label>
+                                                            <div class="view-mode">
+                                                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($bilhete['origem']); ?>" readonly>
+                                                            </div>
+                                                            <div class="edit-mode" style="display: none;">
+                                                                <select name="origem" id="origem" class="form-select bg-dark text-light border-primary" required>
+                                                                    <option>A carregar...</option>
+                                                                </select>
+                                                            </div>
                                                         </div>
-                                                        <div class="edit-mode" style="display: none;">
-                                                            <select name="origem" id="origem" class="form-select bg-dark text-light border-primary" required>
-                                                                <option>A carregar...</option>
-                                                            </select>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label class="form-label text-white">
+                                                                <i class="fas fa-map-marker-alt text-danger me-1"></i>Destino:
+                                                            </label>
+                                                            <div class="view-mode">
+                                                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($bilhete['destino']); ?>" readonly>
+                                                            </div>
+                                                            <div class="edit-mode" style="display: none;">
+                                                                <select name="destino"  id="destino" class="form-select bg-dark text-light border-primary" required>
+                                                                    <option>A carregar...</option>
+                                                                </select>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label text-white">
-                                                            <i class="fas fa-map-marker-alt text-danger me-1"></i>Destino:
-                                                        </label>
-                                                        <div class="view-mode">
-                                                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($bilhete['destino']); ?>" readonly>
-                                                        </div>
-                                                        <div class="edit-mode" style="display: none;">
-                                                            <select name="destino"  id="destino" class="form-select bg-dark text-light border-primary" required>
-                                                                <option>A carregar...</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
+                                                <div class="d-flex justify-content-end gap-2 mt-3">
+                                                    <button type="button" class="btn btn-outline-danger rounded-pill botao-cancelar" data-bilhete-id="<?php echo $bilhete['id_bilhete']; ?>">
+                                                        <i class="fas fa-times me-2"></i>Cancelar
+                                                    </button>
+                                                    <button type="submit" class="btn btn-success rounded-pill">
+                                                        <i class="fas fa-save me-2"></i>Guardar Alterações
+                                                    </button>
                                                 </div>
-                                            </div>
-                                            <div class="d-flex justify-content-end gap-2 mt-3">
-                                                <button type="button" class="btn btn-outline-danger rounded-pill botao-cancelar" data-bilhete-id="<?php echo $bilhete['id_bilhete']; ?>">
-                                                    <i class="fas fa-times me-2"></i>Cancelar
-                                                </button>
-                                                <button type="submit" class="btn btn-success rounded-pill">
-                                                    <i class="fas fa-save me-2"></i>Guardar Alterações
-                                                </button>
-                                            </div>
-                                        </form>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <?php endif ?>
-                    <?php endforeach; ?>
+                            <?php endif ?>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
             <?php else: ?>
                 <div class="text-center">

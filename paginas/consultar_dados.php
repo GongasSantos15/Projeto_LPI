@@ -295,6 +295,7 @@
                                         <div>
                                             <p class="card-text mb-2 text-white"><strong><i class="fas fa-id-card text-info me-1"></i>Nome Próprio:</strong> <?php echo htmlspecialchars($dados_utilizador['nome_proprio']); ?></p>
                                             <p class="card-text mb-2 text-white"><strong><i class="fas fa-user-tag text-warning me-1"></i>Nome de Utilizador:</strong> <?php echo htmlspecialchars($dados_utilizador['nome_utilizador']); ?></p>
+                                            <p class="card-text mb-2 text-white"><strong><i class="fas fa-key text-danger me-1"></i>Palavra Passe:</strong></p>
                                         </div>
                                     </div>
                                     
@@ -331,6 +332,17 @@
                                                     <input name="nome" id="nome" type="text" 
                                                            class="text-dark form-control" 
                                                            value="<?php echo htmlspecialchars($dados_utilizador['nome_utilizador']); ?>" 
+                                                           required />
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="mb-3">
+                                                    <label for="nome" class="form-label text-white">
+                                                        <i class="fas fa-key me-1"></i>Palavra Passe:
+                                                    </label>
+                                                    <input name="palavra_passe" id="palavra_passe" type="text" 
+                                                           class="text-dark form-control" 
+                                                           value="" 
                                                            required />
                                                 </div>
                                             </div>

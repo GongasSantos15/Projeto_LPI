@@ -20,16 +20,17 @@
 
         // Verifica se os campos 'id_utilizador', 'nome' e 'nome-completo' foram enviados no POST
         // Also check if the posted id_utilizador matches the session id_utilizador for security
-        if (isset($_POST['id_utilizador'], $_POST['nome'], $_POST['nome-proprio']) && $_POST['id_utilizador'] == $id_utilizador) {
+        if (isset($_POST['id_utilizador'], $_POST['nome'], $_POST['nome-proprio']) && $_POST['id_utilizador'] == $id_utilizador && $_POST['palavra_passe']) {
 
             // Obtém os novos dados do utilizador do POST
-            $novo_nome = trim($_POST['nome']); // Trim whitespace
-            $novo_nome_proprio = trim($_POST['nome-proprio']); // Trim whitespace
+            $novo_nome = trim($_POST['nome']);
+            $novo_nome_proprio = trim($_POST['nome-proprio']); 
+            $nova_palavra_passe = trim(md5($_POST['palavra_passe']));
 
             // Validação básica: verifica se os campos não estão vazios após trim
-            if (empty($novo_nome) || empty($novo_nome_proprio)) {
+            if (empty($novo_nome) || empty($novo_nome_proprio) || empty($nova_palavra_passe)) {
                 // Redireciona de volta com mensagem de erro se algum campo estiver vazio
-                header('Location: consultar_dados.php?status=error&message=Os campos Nome e Nome Próprio não podem estar vazios.');
+                header('Location: consultar_dados.php?status=error&message=Os campos não podem estar vazios.');
                 exit();
             }
 
@@ -39,18 +40,19 @@
             if ($conn) {
                 // SQL para atualizar o nome e nome_proprio do utilizador
                 // Usamos prepared statements para prevenir SQL injection
-                $sql = "UPDATE utilizador SET nome_utilizador = ?, nome_proprio = ? WHERE id = ?"; // Assumindo tabela 'user' e colunas 'nome', 'nome_proprio'
+                $sql = "UPDATE utilizador SET nome_utilizador = ?, nome_proprio = ?, palavra_passe = ? WHERE id = ?";
                 $stmt = $conn->prepare($sql);
 
                 if ($stmt) { // Verifica se a preparação da query foi bem-sucedida
-                    $stmt->bind_param("ssi", $novo_nome, $novo_nome_proprio, $id_utilizador);
+                    $stmt->bind_param("sssi", $novo_nome, $novo_nome_proprio, $nova_palavra_passe, $id_utilizador);
 
                     // Executa a query
                     if ($stmt->execute()) {
 
                         $_SESSION['nome'] = $novo_nome;
                         $_SESSION['nome_proprio'] = $novo_nome_proprio;
-                        $_SESSION['mensagem_sucesso'] = "Dados atualizados com sucesso. A redirecionar...";
+                        $_SESSION['palavra_passe'] = $nova_palavra_passe;
+                        $_SESSION['mensagem_sucesso'] = "Dados atualizados com sucesso.";
 
                         // Redireciona de volta para a página de consulta
                         header('Location: consultar_dados.php');

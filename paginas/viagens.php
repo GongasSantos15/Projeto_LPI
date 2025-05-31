@@ -3,6 +3,7 @@
 
     // Include conexão à BD
     include("../basedados/basedados.h"); 
+    include("dados_navbar.php");
 
     // Variável para armazenar mensagens de erro PHP (conexão, query, etc.)
     $mensagem_erro = '';
@@ -133,91 +134,161 @@
         </div>
     </div>
     <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
-    <div class="p-5 rounded shadow" style="max-width: 700px; width: 100%;">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="text-white m-0">Viagens</h3>
-            <a href="<?php echo htmlspecialchars($pagina_inicial) ?>" class="btn btn-outline-light btn-sm">
-                <i class="fas fa-arrow-left me-2"></i>Voltar ao Início
+
+        <nav class="navbar navbar-expand-lg navbar-light px-5 px-lg-5 py-3 py-lg-3">
+            <a href="<?php echo htmlspecialchars($pagina_inicial) ?>" class="navbar-brand p-0">
+                <h1 class="text-primary m-0"><i class="fa fa-map-marker-alt me-3"></i>FelixBus</h1>
             </a>
-        </div>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+                <span class="fa fa-bars"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarCollapse">
+                <div class="navbar-nav ms-auto py-0">
+                    <a href="sobre.php" class="nav-item nav-link">Sobre</a>
+                    <a href="equipa.php" class="nav-item nav-link">Equipa</a>
+                    <a href="destinos.php" class="nav-item nav-link">Destinos</a>
+                    <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
+                    <a href="consultar_alertas.php" class="nav-item nav-link">Alertas</a>
 
-        <?php
-            if (!empty($mensagem_erro)) {
-                echo '<div class="alert alert-danger">' . htmlspecialchars($mensagem_erro) . '</div>';
-            }
-            if (!empty($mensagem_sucesso)) {
-                echo '<div class="alert alert-success">' . htmlspecialchars($mensagem_sucesso) . '</div>';
-                echo '<script>
-                    setTimeout(function() {
-                        window.location.href = "index.php";
-                    }, 2000);
-                </script>';
-            }
-        ?>
+                    <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
+                        <?php if (in_array($_SESSION['tipo_utilizador'], [1, 2])): ?>
+                            <?php if ($_SESSION['tipo_utilizador'] == 1): ?>
+                                <a href="consultar_utilizadores.php" class="nav-item nav-link">Utilizadores</a>
+                            <?php endif; ?>
+                            <a href="consultar_bilhetes.php" class="nav-item nav-link">Bilhetes</a>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                </div>
 
-        <?php if (!empty($mensagem_sucesso)): ?>
-            <!-- Se há mensagem de sucesso, não mostra mais nada -->
-        <?php elseif (!empty($resultados)): ?>
-            <div class="row g-3">
-                <?php foreach ($resultados as $viagem): ?>
-                    <div class="col-12">
-                        <div class="bg-gradient position-relative mx-auto mt-3 animated slideInDown">
-                            <div class="card-body d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h5 class="card-title text-primary">Viagem #<?php echo htmlspecialchars($viagem['id_viagem']); ?></h5>
-                                    <p class="card-text"><strong>De:</strong> <?php echo htmlspecialchars($viagem['origem']); ?> </p>
-                                    <p class="card-text"><strong>Para:</strong> <?php echo htmlspecialchars($viagem['destino']); ?></p>
-                                    <p class="card-text"><strong>Data e Hora:</strong> <?php echo htmlspecialchars(date('d/m/Y H:i', strtotime($viagem['data_hora']))); ?></p>
-                                </div>
-                                <div>
-                                    <?php if ($tem_login): ?>
-                                        <?php if (in_array($_SESSION['tipo_utilizador'], [1, 2, 3])): ?>
-                                            <form action="comprar_bilhete.php" method="GET" class="mb-3">
-                                                <input type="hidden" name="id_viagem" value="<?php echo htmlspecialchars($viagem['id_viagem']); ?>">
+                <?php if ($tem_login): ?>
+                    <!-- Dropdown da Carteira -->
+                    <div class="nav-item dropdown">
+                       <a href="#" class="nav-link dropdown-toggle" id="walletDropdownLink" role="button" aria-expanded="false">
+                            <i class="fa fa-wallet me-2"></i> 
+                            <?php echo isset($_SESSION['valor_carteira']) ? $_SESSION['valor_carteira'] : '0,00'; ?> €
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="walletDropdownLink">
+                            <li><a class="dropdown-item" href="adicionar_saldo.php"><i class="fas fa-plus-circle"></i>Adicionar</a></li>
+                            <li><a class="dropdown-item" href="remover_saldo.php"><i class="fas fa-minus-circle"></i>Remover</a></li>
 
-                                                <?php if ($_SESSION['tipo_utilizador'] == 3): ?>
-                                                    <!-- Cliente compra para si mesmo -->
-                                                    <button type="submit" class="btn btn-primary text-light px-5 py-2 rounded-pill w-100 mt-3">
-                                                        Comprar
-                                                    </button>
-                                                <?php elseif (in_array($_SESSION['tipo_utilizador'], [1, 2])): ?>
-                                                    <!-- Admin ou funcionário escolhe utilizador -->
-                                                    <div class="mt-4">
-                                                        <select name="id_utilizador" class="form-select bg-dark text-light border-primary" required>
-                                                            <option value="">Selecione o utilizador</option>
-                                                            <?php
-                                                            include("../basedados/basedados.h");
-                                                            $sql_utilizadores = "SELECT id, nome_utilizador FROM utilizador 
-                                                                                WHERE tipo_utilizador = 3";
-                                                            $result_utilizadores = $conn->query($sql_utilizadores);
-                                                            if ($result_utilizadores && $result_utilizadores->num_rows > 0) {
-                                                                while ($row = $result_utilizadores->fetch_assoc()) {
-                                                                    echo '<option value="' . $row['id'] . '">' . htmlspecialchars($row['nome_utilizador']) . '</option>';
+                            <?php if(in_array($_SESSION['tipo_utilizador'], [1,2])): ?>
+                                <li><a class="dropdown-item" href="consultar_saldo_clientes.php"><i class="fas fa-user"></i>Consulta Clientes</a></li>
+                            <?php endif; ?>
+
+                        </ul>
+                    </div>
+
+                    <?php if($_SESSION['tipo_utilizador'] == 3): ?>
+                        <!-- Dropdown dos Bilhetes -->
+                        <div class="nav-item dropdown">
+                            <a href="#" class="nav-link dropdown-toggle" id="ticketsDropdownLink" role="button" aria-expanded="false">
+                                <i class="fa fa-ticket-alt me-2"></i> <?php echo $numero_bilhetes; ?>
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="ticketsDropdownLink">
+                                <li><a class="dropdown-item" href="consultar_bilhetes.php"><i class="fas fa-eye"></i>Consultar Bilhetes</a></li>
+                            </ul>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Dropdown do Utilizador -->
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa fa-user-circle fa-2x me-2"></i>
+                            <span><?php echo htmlspecialchars($nome_utilizador); ?></span>
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="consultar_dados.php"><i class="fas fa-user-cog me-2"></i> Consultar Dados</a></li>
+                            <li><a class="dropdown-item" href="sair.php"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+                        </ul>
+                    </div>
+                <?php else: ?>
+                    <a href="entrar.php" class="btn btn-primary rounded-pill py-2 px-4">Entrar</a>
+                <?php endif; ?>
+            </div>
+        </nav>
+
+        <div class="p-5 rounded shadow" style="max-width: 700px; width: 100%;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="text-white m-0">Viagens</h3>
+            </div>
+
+            <?php
+                if (!empty($mensagem_erro)) {
+                    echo '<div class="alert alert-danger">' . htmlspecialchars($mensagem_erro) . '</div>';
+                }
+                if (!empty($mensagem_sucesso)) {
+                    echo '<div class="alert alert-success">' . htmlspecialchars($mensagem_sucesso) . '</div>';
+                    echo '<script>
+                        setTimeout(function() {
+                            window.location.href = "index.php";
+                        }, 2000);
+                    </script>';
+                }
+            ?>
+
+            <?php if (!empty($mensagem_sucesso)): ?>
+                <!-- Se há mensagem de sucesso, não mostra mais nada -->
+            <?php elseif (!empty($resultados)): ?>
+                <div class="row g-3">
+                    <?php foreach ($resultados as $viagem): ?>
+                        <div class="col-12">
+                            <div class="bg-gradient position-relative mx-auto mt-3 animated slideInDown">
+                                <div class="card-body d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="card-title text-primary">Viagem #<?php echo htmlspecialchars($viagem['id_viagem']); ?></h5>
+                                        <p class="card-text"><strong>De:</strong> <?php echo htmlspecialchars($viagem['origem']); ?> </p>
+                                        <p class="card-text"><strong>Para:</strong> <?php echo htmlspecialchars($viagem['destino']); ?></p>
+                                        <p class="card-text"><strong>Data e Hora:</strong> <?php echo htmlspecialchars(date('d/m/Y H:i', strtotime($viagem['data_hora']))); ?></p>
+                                    </div>
+                                    <div>
+                                        <?php if ($tem_login): ?>
+                                            <?php if (in_array($_SESSION['tipo_utilizador'], [1, 2, 3])): ?>
+                                                <form action="comprar_bilhete.php" method="GET" class="mb-3">
+                                                    <input type="hidden" name="id_viagem" value="<?php echo htmlspecialchars($viagem['id_viagem']); ?>">
+
+                                                    <?php if ($_SESSION['tipo_utilizador'] == 3): ?>
+                                                        <!-- Cliente compra para si mesmo -->
+                                                        <button type="submit" class="btn btn-primary text-light px-5 py-2 rounded-pill w-100 mt-3">
+                                                            Comprar
+                                                        </button>
+                                                    <?php elseif (in_array($_SESSION['tipo_utilizador'], [1, 2])): ?>
+                                                        <!-- Admin ou funcionário escolhe utilizador -->
+                                                        <div class="mt-4">
+                                                            <select name="id_utilizador" class="form-select bg-dark text-light border-primary" required>
+                                                                <option value="">Selecione o utilizador</option>
+                                                                <?php
+                                                                include("../basedados/basedados.h");
+                                                                $sql_utilizadores = "SELECT id, nome_utilizador FROM utilizador 
+                                                                                    WHERE tipo_utilizador = 3";
+                                                                $result_utilizadores = $conn->query($sql_utilizadores);
+                                                                if ($result_utilizadores && $result_utilizadores->num_rows > 0) {
+                                                                    while ($row = $result_utilizadores->fetch_assoc()) {
+                                                                        echo '<option value="' . $row['id'] . '">' . htmlspecialchars($row['nome_utilizador']) . '</option>';
+                                                                    }
                                                                 }
-                                                            }
-                                                            if ($conn) $conn->close();
-                                                            ?>
-                                                        </select>
-                                                    </div>
-                                                    <button type="submit" class="btn btn-primary text-light px-5 py-2 rounded-pill w-100 mt-3">
-                                                        Comprar para utilizador
-                                                    </button>
-                                                <?php endif; ?>
-                                            </form>
+                                                                if ($conn) $conn->close();
+                                                                ?>
+                                                            </select>
+                                                        </div>
+                                                        <button type="submit" class="btn btn-primary text-light px-5 py-2 rounded-pill w-100 mt-3">
+                                                            Comprar para utilizador
+                                                        </button>
+                                                    <?php endif; ?>
+                                                </form>
+                                            <?php endif; ?>
                                         <?php endif; ?>
-                                    <?php endif; ?>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        <?php elseif (!empty($origem) && !empty($destino) && !empty($data_viagem)): ?>
-            <p class="text-center text-white">Nenhuma viagem encontrada para os critérios selecionados.</p>
-        <?php endif; ?>
+                    <?php endforeach; ?>
+                </div>
+            <?php elseif (!empty($origem) && !empty($destino) && !empty($data_viagem)): ?>
+                <p class="text-center text-white">Nenhuma viagem encontrada para os critérios selecionados.</p>
+            <?php endif; ?>
+        </div>
     </div>
-</div>
-<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="wow.min.js"></script>
     <script src="easing.min.js"></script>

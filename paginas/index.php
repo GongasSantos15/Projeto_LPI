@@ -50,6 +50,9 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarCollapse">
                 <div class="navbar-nav ms-auto py-0">
+                    <a href="sobre.php" class="nav-item nav-link">Sobre</a>
+                    <a href="equipa.php" class="nav-item nav-link">Equipa</a>
+                    <a href="destinos.php" class="nav-item nav-link">Destinos</a>
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                 </div>
                     <a href="entrar.php" class="btn btn-primary rounded-pill py-2 px-4">Entrar</a>

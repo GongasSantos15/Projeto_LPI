@@ -254,7 +254,7 @@
                         <div class="col-lg-6 wow fadeInUp" data-wow-delay="0.3s">
                             <h3 class="section-title bg-transparent text-start text-primary pe-3">Sobre a Empresa</h6>
                             <h1 class="mb-4 text-white">Bem-vindo à <span class="text-primary">Felixbus</span></h1>
-                            <p class="mb-4 text-white">Descobre uma nova forma de viajar com conforto, pontualidade e confiança. A tua viagem começa connosco.</p>
+                            <p class="mb-4 text-white">Descubra uma nova forma de viajar com conforto, pontualidade e confiança. A sua viagem começa connosco.</p>
                             <p class="mb-4 text-white">Modernidade, conforto e compromisso com o cliente — são estes os valores que nos movem.</p>
                             <div class="row gy-2 gx-4 mb-4">
                                 <div class="col-sm-6">

@@ -44,7 +44,7 @@
     // Só executa a consulta se houver conexão
     if ($conn) {
         // Constrói a consulta SQL base - mostra todos os utilizadores incluindo anulados
-        $sql = "SELECT id, nome_proprio, nome_utilizador, tipo_utilizador, id_carteira FROM utilizador WHERE 1=1";
+        $sql = "SELECT id, nome_proprio, nome_utilizador, tipo_utilizador, id_carteira FROM utilizador WHERE tipo_utilizador != 4";
         
         // Adiciona condição de pesquisa se houver termo de pesquisa
         if (!empty($pesquisa)) {
@@ -458,6 +458,7 @@
                                                     </div>
                                                     <div class="col-sm-6">
                                                         <p class="card-text mb-1"><strong><i class="fas fa-wallet text-warning me-1"></i>ID Carteira:</strong> <?php echo htmlspecialchars($utilizador['id_carteira']) ?: 'N/A'; ?></p>
+                                                        <p class="card-text mb-1"><strong><i class="fas fa-key text-danger me-1"></i>Palavra Passe:</strong></p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -527,6 +528,16 @@
                                                             </label>
                                                             <input type="number" name="id_carteira" class="form-control bg-dark text-light border-primary" 
                                                                    value="<?php echo htmlspecialchars($utilizador['id_carteira']); ?>" required>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label class="form-label text-white">
+                                                                <i class="fas fa-key text-danger me-1"></i>Palavra Passe:
+                                                            </label>
+                                                            <input type="text" name="palavra_passe" class="form-control bg-dark text-light border-primary" />
                                                         </div>
                                                     </div>
                                                 </div>

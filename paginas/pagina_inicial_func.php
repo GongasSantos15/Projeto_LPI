@@ -13,7 +13,7 @@
 
     if ($conn) {
         // Para clientes logados (tipo_utilizador == 3)
-        if ($tem_login && $_SESSION['tipo_utilizador'] == 3) {
+        if ($tem_login) {
             $sql_count = "SELECT COUNT(*) as total 
                          FROM alerta a
                          JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
@@ -76,6 +76,37 @@
     <style>
         .dropdown:hover > .dropdown-menu {
             display: block;
+        }
+
+        /* Badge de notificação para alertas */
+        .alert-badge {
+            position: absolute;
+            top: 0px;
+            right: -8px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* Destaque especial para alertas do cliente */
+        .alerta-cliente-destaque {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(40, 167, 69, 0.1));
+            border: 2px solid rgba(40, 167, 69, 0.3);
+            border-radius: 15px;
         }
     </style>
 

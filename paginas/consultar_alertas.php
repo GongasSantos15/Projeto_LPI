@@ -11,6 +11,8 @@
 
     // Verifica se o utilizador tem o login feito   
     $tem_login = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']);
+    $mostrar_alertas = false;
+    $numero_alertas_cliente = 0;
     
     // Determina a página inicial correta baseada no tipo de utilizador
     $pagina_inicial = 'index.php'; // Página padrão se não tiver login
@@ -50,8 +52,20 @@
     $numero_alertas_cliente = 0; // Contador de alertas para cliente
 
     if ($conn) {
-        // Para clientes logados (tipo_utilizador == 3)
-        if ($tem_login && $_SESSION['tipo_utilizador'] == 3) {
+        // Contagem de alertas baseada no tipo de utilizador
+        if ($tem_login && $_SESSION['tipo_utilizador'] == 1) {
+            // Para ADMIN - conta todos os alertas
+            $sql_count = "SELECT COUNT(*) as total 
+                         FROM alerta a
+                         JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta";
+            $result = $conn->query($sql_count);
+            if ($result) {
+                $row = $result->fetch_assoc();
+                $numero_alertas_cliente = $row['total'];
+                $mostrar_alertas = $numero_alertas_cliente > 0;
+            }
+        } else if ($tem_login && in_array($_SESSION['tipo_utilizador'], [2, 3])) {
+            // Para FUNCIONÁRIOS e CLIENTES - apenas seus alertas
             $sql_count = "SELECT COUNT(*) as total 
                          FROM alerta a
                          JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
@@ -83,8 +97,18 @@
         }
 
         // Constrói a consulta SQL baseada no tipo de utilizador
-        if ($tem_login && $_SESSION['tipo_utilizador'] == 3) {
-            // Consulta para clientes (apenas seus alertas ativos)
+        if ($tem_login && $_SESSION['tipo_utilizador'] == 1) {
+            // Consulta para ADMIN (pode ver todos os alertas)
+            $sql = "SELECT a.id_alerta, a.descricao, a.estado, ua.data_hora, u.nome_utilizador as nome_utilizador, u.id as id_utilizador 
+                    FROM alerta a
+                    JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
+                    JOIN utilizador u ON ua.id_utilizador = u.id";
+            
+            if (!empty($pesquisa)) {
+                $sql .= " AND (a.descricao LIKE ? OR u.nome_utilizador LIKE ? OR a.id_alerta = ?)";
+            }
+        } else if ($tem_login && in_array($_SESSION['tipo_utilizador'], [2, 3])) {
+            // Consulta para FUNCIONÁRIOS (tipo 2) e CLIENTES (tipo 3) - apenas seus alertas
             $sql = "SELECT a.id_alerta, a.descricao, a.estado, ua.data_hora, u.nome_utilizador as nome_utilizador, u.id as id_utilizador 
                     FROM alerta a
                     JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
@@ -94,16 +118,16 @@
             if (!empty($pesquisa)) {
                 $sql .= " AND (a.descricao LIKE ? OR a.id_alerta = ?)";
             }
-        } else {
-            // Consulta para admin/funcionários (todos os alertas)
+        } else if (!$tem_login) {
+            // Para visitantes não logados (apenas alertas do utilizador padrão ID=4)
             $sql = "SELECT a.id_alerta, a.descricao, a.estado, ua.data_hora, u.nome_utilizador as nome_utilizador, u.id as id_utilizador 
                     FROM alerta a
                     JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
                     JOIN utilizador u ON ua.id_utilizador = u.id
-                    WHERE a.estado = 1";
+                    WHERE ua.id_utilizador = 4 AND a.estado = 1";
             
             if (!empty($pesquisa)) {
-                $sql .= " WHERE (a.descricao LIKE ? OR u.nome_utilizador LIKE ? OR a.id_alerta = ?)";
+                $sql .= " AND (a.descricao LIKE ? OR a.id_alerta = ?)";
             }
         }
         
@@ -129,19 +153,25 @@
 
         if ($stmt) {
             // Faz bind dos parâmetros
-            if ($tem_login && $_SESSION['tipo_utilizador'] == 3) {
-                // Para clientes
+            if ($tem_login && $_SESSION['tipo_utilizador'] == 1) {
+                // Para ADMIN (pode pesquisar em todos os alertas)
+                if (!empty($pesquisa)) {
+                    $termo_pesquisa = "%$pesquisa%";
+                    $stmt->bind_param("ssi", $termo_pesquisa, $termo_pesquisa, $pesquisa);
+                }
+            } else if ($tem_login && in_array($_SESSION['tipo_utilizador'], [2, 3])) {
+                // Para FUNCIONÁRIOS e CLIENTES (apenas seus alertas)
                 if (!empty($pesquisa)) {
                     $termo_pesquisa = "%$pesquisa%";
                     $stmt->bind_param("isi", $_SESSION['id_utilizador'], $termo_pesquisa, $pesquisa);
                 } else {
                     $stmt->bind_param("i", $_SESSION['id_utilizador']);
                 }
-            } else {
-                // Para admin e funcionários
+            } else if (!$tem_login) {
+                // Para visitantes não logados
                 if (!empty($pesquisa)) {
                     $termo_pesquisa = "%$pesquisa%";
-                    $stmt->bind_param("ssi", $termo_pesquisa, $termo_pesquisa, $pesquisa);
+                    $stmt->bind_param("si", $termo_pesquisa, $pesquisa);
                 }
             }
             
@@ -360,14 +390,9 @@
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                     
                     <!-- Link de Alertas - só aparece se houver alertas -->
-                    <?php if ($mostrar_alertas): ?>
-                        <a href="consultar_alertas.php" class="nav-item nav-link position-relative">
-                            Alertas
-                            <?php if ($numero_alertas_cliente > 0): ?>
-                                <span class="alert-badge"><?php echo $numero_alertas_cliente; ?></span>
-                            <?php endif; ?>
-                        </a>
-                    <?php endif; ?>
+                    <a href="consultar_alertas.php" class="nav-item nav-link position-relative active">
+                        Alertas
+                    </a>
 
                     <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
                             <?php if (in_array($_SESSION['tipo_utilizador'], [1, 2])): ?>
@@ -519,21 +544,14 @@
                     <div class="row g-3">
                         <?php foreach ($alertas as $alerta): ?>
                             <div class="col-12">
-                                <div class="bg-gradient position-relative mx-auto mt-3 animated slideInDown 
-                                    <?php echo ($tem_login && $_SESSION['tipo_utilizador'] == 3) ? 
-                                        'alerta-card-cliente alerta-cliente-destaque' : 'alerta-card'; ?>">
+                                <div class="bg-gradient position-relative mx-auto mt-3 animated slideInDown alerta-card">
                                     <div class="card-body p-4">
                                         <div class="row align-items-center">
                                             <div class="col-md-8">
                                                 <div class="d-flex align-items-center justify-content-between mb-3">
                                                     <div class="d-flex align-items-center mb-3">
-                                                        <?php if ($tem_login && $_SESSION['tipo_utilizador'] == 3): ?>
-                                                            <i class="fas fa-bell text-primary me-2 fa-lg"></i>
-                                                            <h5 class="card-title text-primary mb-0">Notificação #<?php echo htmlspecialchars($alerta['id_alerta']); ?></h5>
-                                                        <?php else: ?>
-                                                            <i class="fas fa-exclamation-triangle text-warning me-2 fa-lg"></i>
-                                                            <h5 class="card-title text-warning mb-0">Alerta #<?php echo htmlspecialchars($alerta['id_alerta']); ?></h5>
-                                                        <?php endif; ?>
+                                                        <i class="fas fa-exclamation-triangle text-warning me-2 fa-lg"></i>
+                                                        <h5 class="card-title text-warning mb-0">Alerta #<?php echo htmlspecialchars($alerta['id_alerta']); ?></h5>
                                                     </div>
                                                     <span class="badge badge-estado estado-<?php echo ($alerta['estado'] == 1) ? 'ativo' : 'anulado'; ?>">
                                                         <?php echo ($alerta['estado'] == 1) ? 'Ativo' : 'Anulado'; ?>

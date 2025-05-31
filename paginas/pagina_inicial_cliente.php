@@ -134,10 +134,10 @@
                     <a href="destinos.php" class="nav-item nav-link">Destinos</a>
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                    <a href="consultar_alertas.php" class="nav-item nav-link position-relative">
-                            Alertas
-                            <?php if ($numero_alertas_cliente > 0): ?>
-                                <span class="alert-badge"><?php echo $numero_alertas_cliente; ?></span>
-                            <?php endif; ?>
+                        Alertas
+                        <?php if ($numero_alertas_cliente > 0): ?>
+                            <span class="alert-badge"><?php echo $numero_alertas_cliente; ?></span>
+                        <?php endif; ?>
                     </a>
                 </div>
 

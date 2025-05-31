@@ -62,6 +62,7 @@
             <div class="collapse navbar-collapse" id="navbarCollapse">
                 <div class="navbar-nav ms-auto py-0">
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
+                    <a href="consultar_alertas.php" class="nav-item nav-link">Alertas</a>
                     <a href="consultar_utilizadores.php" class="nav-item nav-link">Utilizadores</a>
                     <a href="consultar_bilhetes.php" class="nav-item nav-link">Bilhetes</a>
                 </div>

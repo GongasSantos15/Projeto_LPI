@@ -122,6 +122,8 @@
             <div class="collapse navbar-collapse" id="navbarCollapse">
                 <div class="navbar-nav ms-auto py-0">
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
+                    <a href="consultar_alertas.php" class="nav-item nav-link">Alertas</a>
+
                     <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
                         <?php if (in_array($_SESSION['tipo_utilizador'], [1, 2])): ?>
                             <?php if ($_SESSION['tipo_utilizador'] == 1): ?>
@@ -142,6 +144,11 @@
                         <ul class="dropdown-menu" aria-labelledby="walletDropdownLink">
                             <li><a class="dropdown-item" href="adicionar_saldo.php"><i class="fas fa-plus-circle"></i>Adicionar</a></li>
                             <li><a class="dropdown-item" href="remover_saldo.php"><i class="fas fa-minus-circle"></i>Remover</a></li>
+
+                            <?php if(in_array($_SESSION['tipo_utilizador'], [1,2])): ?>
+                                <li><a class="dropdown-item" href="consultar_saldo_clientes.php"><i class="fas fa-user"></i>Consulta Clientes</a></li>
+                            <?php endif; ?>
+
                         </ul>
                     </div>
 

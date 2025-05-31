@@ -7,13 +7,14 @@
     // Verificar se é admin
     if (!isset($_SESSION['tipo_utilizador']) || $_SESSION['tipo_utilizador'] != 1) {
         $_SESSION['mensagem_erro'] = "Acesso não autorizado!";
-        header('Location: consultar_rotas.php');
+        header('Location: consultar_alertas.php');
         exit();
     }
 
     // Verifica se o utilizador tem o login feito   
     $tem_login = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']); 
     $nome_utilizador = $_SESSION['nome_utilizador'];
+    $estado = 1;
 
     // Determina a página inicial correta baseada no tipo de utilizador
     $pagina_inicial = 'index.php'; // Página padrão se não tiver login
@@ -33,32 +34,58 @@
         }
     }
 
-    if ($_SERVER["REQUEST_METHOD"] == "GET") {
-        $origem = filter_input(INPUT_GET, 'origem');
-        $destino = filter_input(INPUT_GET, 'destino');
-
-        if (empty($origem) || empty($destino)) {
-            $mensagem_erro = 'Por favor, preencha todos os campos.';
-        } else {
-            // Inserir a rota na base de dados
-            $sql = "INSERT INTO rota (origem, destino, estado) VALUES (?, ?, 1)";
-            $stmt = $conn->prepare($sql);
-
-            if ($stmt) {
-                $stmt->bind_param("ss", $origem, $destino);
-                if ($stmt->execute()) {
-                    $_SESSION['mensagem_sucesso'] = 'Rota adicionada com sucesso!';
-                    header("Location: consultar_rotas.php");
-                } else {
-                    $_SESSION['mensagem_erro'] = 'Erro ao adicionar a rota: ' . $stmt->$connect_error;
-                }
-                $stmt->close();
-            } else {
-                $_SESSION['mensagem_erro'] = 'Erro ao preparar a consulta: ' . $conn->$connect_error;
-            }
+    // Obter lista de utilizadores para o dropdown
+    $utilizadores = [];
+    $sql_utilizadores = "SELECT id, nome_utilizador FROM utilizador";
+    $result = $conn->query($sql_utilizadores);
+    if ($result && $result->num_rows > 0) {
+        while($row = $result->fetch_assoc()) {
+            $utilizadores[$row['id']] = $row['nome_utilizador'];
         }
     }
 
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        $descricao = filter_input(INPUT_POST, 'descricao');
+        $id_utilizador_alvo = filter_input(INPUT_POST, 'id_utilizador', FILTER_VALIDATE_INT);
+        $id_admin = $_SESSION['id_utilizador'];
+
+        if (empty($descricao) || empty($id_utilizador_alvo)) {
+            $_SESSION['mensagem_erro'] = 'Por favor, preencha todos os campos.';
+        } else {
+            // 1. Inserir na tabela alerta
+            $sql_alerta = "INSERT INTO alerta (descricao, estado) VALUES (?, ?)";
+            $stmt = $conn->prepare($sql_alerta);
+            if ($stmt) {
+                $stmt->bind_param("s", $descricao ,$estado);
+                $stmt->execute();
+            } else {
+                $_SESSION['mensagem_erro'] = "Erro ao adicionar alerta!";
+            }
+            $stmt->close();
+            
+            // 2. Obter o ID do alerta inserido
+            $id_alerta = $conn->insert_id;
+
+            // 3. Inserir na tabela utilizador_alerta
+            $sql_utilizador_alerta = "INSERT INTO utilizador_alerta (id_alerta, id_utilizador, data_hora) VALUES (?, ?, NOW())";
+            $stmt = $conn->prepare($sql_utilizador_alerta);
+            if ($stmt) {
+                $stmt->bind_param("ii", $id_alerta, $id_utilizador_alvo);
+                if ($stmt->execute()) {
+                    $_SESSION['mensagem_sucesso'] = 'Alerta adicionado com sucesso!';
+                    header("Location: consultar_alertas.php");
+                    exit();
+                } else {
+                    $_SESSION["mensagem_erro"] = "Erro ao adicionar o alerta na tabela utilizador_alerta: " . $conn->$connect_error;
+                }
+                $stmt->close();
+            } else {
+                $_SESSION["mensagem_erro"] = "Erro ao preparar a consulta: " . $conn->$connect_error;
+            }
+            
+           
+        }
+    }
 ?>
 
 <!DOCTYPE html>
@@ -66,7 +93,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>FelixBus - Adicionar Rota</title>
+    <title>FelixBus - Adicionar Alerta</title>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <meta content="" name="keywords">
     <meta content="" name="description">
@@ -114,8 +141,9 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarCollapse">
                     <div class="navbar-nav ms-auto py-0">
-                        <a href="consultar_rotas.php" class="nav-item nav-link active">Rotas</a>
-                        <a href="consultar_alertas.php" class="nav-item nav-link">Alertas</a>
+                        <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
+                        <a href="consultar_alertas.php" class="nav-item nav-link active">Alertas</a>
+                        
                         <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
                             <?php if (in_array($_SESSION['tipo_utilizador'], [1, 2])): ?>
                                 <?php if ($_SESSION['tipo_utilizador'] == 1): ?>
@@ -175,19 +203,24 @@
         <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
             <div class="p-5 rounded shadow" style="max-width: 900px; width: 100%;">
                 <div class="d-flex justify-content-center align-items-center mb-4">
-                    <h3 class="text-white m-0">Adicionar Rotas</h3>
+                    <h3 class="text-white m-0">Adicionar Alerta</h3>
                 </div>
+                
                 <div class="bg-gradient position-relative w-75 mx-auto mt-5 animated slideInDown">
-                    <form method="GET" action="adicionar_rota.php" class="d-flex flex-wrap p-4 rounded text-light justify-content-center" style="gap: 2rem 0.5rem;">
-                        <div class="me-4">
-                            <label class="form-label">Origem:</label>
-                            <input type="text" name="origem" id="origem" class="form-control bg-dark text-light border-primary" placeholder="Insira a origem da rota" required />
+                    <form method="POST" action="adicionar_alerta.php" class="d-flex flex-wrap p-4 rounded text-light justify-content-center" style="gap: 2rem 0.5rem;">
+                        <div class="w-100">
+                            <label class="form-label">Utilizador Destino:</label>
+                            <select name="id_utilizador" class="form-control bg-dark text-light border-primary" required>
+                                <option value="">Selecione um utilizador</option>
+                                <?php foreach ($utilizadores as $id => $nome_utilizador): ?>
+                                    <option value="<?php echo $id; ?>"><?php echo htmlspecialchars($nome_utilizador); ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
 
-                        <div class="me-4">
-                            <label class="form-label">Destino:</label>
-                                <input type="text" name="destino" id="destino" class="form-control bg-dark text-light border-primary" placeholder="Insira o destino da rota" required />
-
+                        <div class="w-100">
+                            <label class="form-label">Descrição:</label>
+                            <textarea name="descricao" id="descricao" class="form-control bg-dark text-light border-primary" placeholder="Insira a descrição do alerta" rows="4" required></textarea>
                         </div>
 
                         <div class="w-100 text-center mt-2">

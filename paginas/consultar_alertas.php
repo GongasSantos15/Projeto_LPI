@@ -64,15 +64,21 @@
                     $resultado_count = $stmt_count->get_result();
                     $row_count = $resultado_count->fetch_assoc();
                     $numero_alertas_cliente = $row_count['total'];
+                    $mostrar_alertas = $numero_alertas_cliente > 0;
                 }
                 $stmt_count->close();
             }
         } else if (!$tem_login) {
-            $sql_count = "SELECT COUNT(*) as total FROM utilizador_alerta WHERE id_utilizador = 4";
+            // Para visitantes não logados - verifica também o estado do alerta
+            $sql_count = "SELECT COUNT(*) as total 
+                         FROM alerta a
+                         JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
+                         WHERE ua.id_utilizador = 4 AND a.estado = 1";
             $result = $conn->query($sql_count);
             if ($result) {
                 $row = $result->fetch_assoc();
                 $numero_alertas_cliente = $row['total'];
+                $mostrar_alertas = $numero_alertas_cliente > 0;
             }
         }
 
@@ -93,7 +99,8 @@
             $sql = "SELECT a.id_alerta, a.descricao, a.estado, ua.data_hora, u.nome_utilizador as nome_utilizador, u.id as id_utilizador 
                     FROM alerta a
                     JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
-                    JOIN utilizador u ON ua.id_utilizador = u.id";
+                    JOIN utilizador u ON ua.id_utilizador = u.id
+                    WHERE a.estado = 1";
             
             if (!empty($pesquisa)) {
                 $sql .= " WHERE (a.descricao LIKE ? OR u.nome_utilizador LIKE ? OR a.id_alerta = ?)";
@@ -352,26 +359,24 @@
                     <a href="destinos.php" class="nav-item nav-link">Destinos</a>
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                     
-                    <!-- Link de Alertas com contador -->
-                    <?php if ($tem_login && $_SESSION['tipo_utilizador'] == 3 || !$tem_login): ?>
-                        <a href="consultar_alertas.php" class="nav-item nav-link position-relative active">
+                    <!-- Link de Alertas - só aparece se houver alertas -->
+                    <?php if ($mostrar_alertas): ?>
+                        <a href="consultar_alertas.php" class="nav-item nav-link position-relative">
                             Alertas
-                            <?php if (isset($numero_alertas_cliente) && $numero_alertas_cliente > 0): ?>
+                            <?php if ($numero_alertas_cliente > 0): ?>
                                 <span class="alert-badge"><?php echo $numero_alertas_cliente; ?></span>
                             <?php endif; ?>
                         </a>
-                    <?php else: ?>
-                        <a href="consultar_alertas.php" class="nav-item nav-link">Alertas</a>
                     <?php endif; ?>
 
-                <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
-                        <?php if (in_array($_SESSION['tipo_utilizador'], [1, 2])): ?>
-                            <?php if ($_SESSION['tipo_utilizador'] == 1): ?>
-                                <a href="consultar_utilizadores.php" class="nav-item nav-link">Utilizadores</a>
+                    <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
+                            <?php if (in_array($_SESSION['tipo_utilizador'], [1, 2])): ?>
+                                <?php if ($_SESSION['tipo_utilizador'] == 1): ?>
+                                    <a href="consultar_utilizadores.php" class="nav-item nav-link">Utilizadores</a>
+                                <?php endif; ?>
+                                <a href="consultar_bilhetes.php" class="nav-item nav-link">Bilhetes</a>
                             <?php endif; ?>
-                            <a href="consultar_bilhetes.php" class="nav-item nav-link">Bilhetes</a>
                         <?php endif; ?>
-                    <?php endif; ?>
                 </div>
 
                 <?php if ($tem_login): ?>

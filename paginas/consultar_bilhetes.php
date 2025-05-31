@@ -19,6 +19,10 @@
 
     // Verifica se o utilizador tem o login feito   
     $tem_login = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']); 
+
+    $mostrar_alertas = false;
+    $numero_alertas_cliente = 0;
+
     $e_admin = isset($_SESSION['tipo_utilizador']) && $_SESSION['tipo_utilizador'] == 1;
     $e_funcionario = isset($_SESSION['tipo_utilizador']) && $_SESSION['tipo_utilizador'] == 2;
     $eh_cliente = isset($_SESSION['tipo_utilizador']) && $_SESSION['tipo_utilizador'] == 3;
@@ -448,9 +452,11 @@
                             <?php echo isset($_SESSION['valor_carteira']) ? $_SESSION['valor_carteira'] : '0,00'; ?> €
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="walletDropdownLink">
-                            <li><a class="dropdown-item" href="adicionar_saldo.php"><i class="fas fa-plus-circle"></i>Adicionar</a></li>
-                            <li><a class="dropdown-item" href="remover_saldo.php"><i class="fas fa-minus-circle"></i>Remover</a></li>
-
+                            <?php if ($_SESSION['tipo_utilizador'] != 2): ?>
+                                <li><a class="dropdown-item" href="adicionar_saldo.php"><i class="fas fa-plus-circle"></i>Adicionar</a></li>
+                                <li><a class="dropdown-item" href="remover_saldo.php"><i class="fas fa-minus-circle"></i>Remover</a></li>
+                            <?php endif; ?>
+                            
                             <?php if(in_array($_SESSION['tipo_utilizador'], [1,2])): ?>
                                 <li><a class="dropdown-item" href="consultar_saldo_clientes.php"><i class="fas fa-user"></i>Consulta Clientes</a></li>
                             <?php endif; ?>

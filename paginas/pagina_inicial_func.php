@@ -6,6 +6,44 @@
     // Include BD
     include("..\basedados\basedados.h");
     include("dados_navbar.php");
+
+    $tem_login = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']);
+    $mostrar_alertas = false;
+    $numero_alertas_cliente = 0;
+
+    if ($conn) {
+        // Para clientes logados (tipo_utilizador == 3)
+        if ($tem_login && $_SESSION['tipo_utilizador'] == 3) {
+            $sql_count = "SELECT COUNT(*) as total 
+                         FROM alerta a
+                         JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
+                         WHERE ua.id_utilizador = ? AND a.estado = 1";
+            
+            $stmt_count = $conn->prepare($sql_count);
+            if ($stmt_count) {
+                $stmt_count->bind_param("i", $_SESSION['id_utilizador']);
+                if ($stmt_count->execute()) {
+                    $resultado_count = $stmt_count->get_result();
+                    $row_count = $resultado_count->fetch_assoc();
+                    $numero_alertas_cliente = $row_count['total'];
+                    $mostrar_alertas = $numero_alertas_cliente > 0;
+                }
+                $stmt_count->close();
+            }
+        } else if (!$tem_login) {
+            // Para visitantes não logados - verifica também o estado do alerta
+            $sql_count = "SELECT COUNT(*) as total 
+                         FROM alerta a
+                         JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
+                         WHERE ua.id_utilizador = 4 AND a.estado = 1";
+            $result = $conn->query($sql_count);
+            if ($result) {
+                $row = $result->fetch_assoc();
+                $numero_alertas_cliente = $row['total'];
+                $mostrar_alertas = $numero_alertas_cliente > 0;
+            }
+        }
+    }
 ?>
 
 <!DOCTYPE html>
@@ -64,7 +102,17 @@
                     <a href="equipa.php" class="nav-item nav-link">Equipa</a>
                     <a href="destinos.php" class="nav-item nav-link">Destinos</a>
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
-                    <a href="consultar_alertas.php" class="nav-item nav-link">Alertas</a>
+
+                    <!-- Link de Alertas - só aparece se houver alertas -->
+                    <?php if ($mostrar_alertas): ?>
+                        <a href="consultar_alertas.php" class="nav-item nav-link position-relative">
+                            Alertas
+                            <?php if ($numero_alertas_cliente > 0): ?>
+                                <span class="alert-badge"><?php echo $numero_alertas_cliente; ?></span>
+                            <?php endif; ?>
+                        </a>
+                    <?php endif; ?>
+
                     <a href="consultar_bilhetes.php" class="nav-item nav-link">Bilhetes</a>
                 </div>
 
@@ -75,8 +123,6 @@
                             <i class="fa fa-wallet me-2"></i> <?php echo $valor_carteira; ?> €
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="walletDropdownLink">
-                            <li><a class="dropdown-item" href="adicionar_saldo.php"><i class="fas fa-plus-circle"></i>Adicionar Saldo</a></li>
-                            <li><a class="dropdown-item" href="remover_saldo.php"><i class="fas fa-minus-circle"></i>Remover Saldo</a></li>
                             <li><a class="dropdown-item" href="consultar_saldo_clientes.php"><i class="fas fa-user"></i>Consultar Clientes</a></li>
                         </ul>
                     </div>

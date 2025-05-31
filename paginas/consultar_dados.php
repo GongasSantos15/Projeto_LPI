@@ -24,6 +24,8 @@
 
     // Verifica se o utilizador tem o login feito   
     $tem_login = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']); 
+    $mostrar_alertas = false;
+    $numero_alertas_cliente = 0;
 
     // Determina a página inicial correta baseada no tipo de utilizador
     $pagina_inicial = 'index.php'; // Página padrão se não tiver login
@@ -44,9 +46,8 @@
     }
 
     if ($conn) {
-        // Se for cliente (tipo_utilizador == 3), busca apenas seus alertas
+        // Para clientes logados (tipo_utilizador == 3)
         if ($tem_login && $_SESSION['tipo_utilizador'] == 3) {
-            // Consulta para contar alertas ativos do cliente
             $sql_count = "SELECT COUNT(*) as total 
                          FROM alerta a
                          JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
@@ -59,8 +60,21 @@
                     $resultado_count = $stmt_count->get_result();
                     $row_count = $resultado_count->fetch_assoc();
                     $numero_alertas_cliente = $row_count['total'];
+                    $mostrar_alertas = $numero_alertas_cliente > 0;
                 }
                 $stmt_count->close();
+            }
+        } else if (!$tem_login) {
+            // Para visitantes não logados - verifica também o estado do alerta
+            $sql_count = "SELECT COUNT(*) as total 
+                         FROM alerta a
+                         JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
+                         WHERE ua.id_utilizador = 4 AND a.estado = 1";
+            $result = $conn->query($sql_count);
+            if ($result) {
+                $row = $result->fetch_assoc();
+                $numero_alertas_cliente = $row['total'];
+                $mostrar_alertas = $numero_alertas_cliente > 0;
             }
         }
     }
@@ -197,16 +211,14 @@
                     <a href="destinos.php" class="nav-item nav-link">Destinos</a>
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                     
-                    <!-- Link de Alertas com contador para clientes -->
-                    <?php if ($tem_login && $_SESSION['tipo_utilizador'] == 3): ?>
+                    <!-- Link de Alertas - só aparece se houver alertas -->
+                    <?php if ($mostrar_alertas): ?>
                         <a href="consultar_alertas.php" class="nav-item nav-link position-relative">
                             Alertas
                             <?php if ($numero_alertas_cliente > 0): ?>
                                 <span class="alert-badge"><?php echo $numero_alertas_cliente; ?></span>
                             <?php endif; ?>
                         </a>
-                    <?php elseif ($tem_login): ?>
-                        <a href="consultar_alertas.php" class="nav-item nav-link">Alertas</a>
                     <?php endif; ?>
 
                     <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
@@ -227,8 +239,10 @@
                             <?php echo isset($_SESSION['valor_carteira']) ? $_SESSION['valor_carteira'] : '0,00'; ?> €
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="walletDropdownLink">
-                            <li><a class="dropdown-item" href="adicionar_saldo.php"><i class="fas fa-plus-circle"></i>Adicionar</a></li>
-                            <li><a class="dropdown-item" href="remover_saldo.php"><i class="fas fa-minus-circle"></i>Remover</a></li>
+                            <?php if ($_SESSION['tipo_utilizador'] != 2): ?>
+                                <li><a class="dropdown-item" href="adicionar_saldo.php"><i class="fas fa-plus-circle"></i>Adicionar</a></li>
+                                <li><a class="dropdown-item" href="remover_saldo.php"><i class="fas fa-minus-circle"></i>Remover</a></li>
+                            <?php endif; ?>
 
                             <?php if(in_array($_SESSION['tipo_utilizador'], [1,2])): ?>
                                 <li><a class="dropdown-item" href="consultar_saldo_clientes.php"><i class="fas fa-user"></i>Consulta Clientes</a></li>

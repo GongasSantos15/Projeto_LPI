@@ -77,7 +77,7 @@
                     FROM alerta a
                     JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
                     JOIN utilizador u ON ua.id_utilizador = u.id
-                    WHERE ua.id_utilizador = ?";
+                    WHERE ua.id_utilizador = ? AND a.estado = 1";
             
             // Adiciona condição de pesquisa se houver termo de pesquisa
             if (!empty($pesquisa)) {

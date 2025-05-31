@@ -3,7 +3,7 @@
 session_start();
 include("../basedados/basedados.h");
 
-if (!isset($_SESSION['id_utilizador']) || ($_SESSION['tipo_utilizador'] != 1 && $_SESSION['tipo_utilizador'] != 2)) {
+if (!isset($_SESSION['id_utilizador'])) {
     header("Location: entrar.php");
     exit();
 }

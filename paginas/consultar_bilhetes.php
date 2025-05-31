@@ -41,10 +41,9 @@
         }
     }
 
-        if ($conn) {
-        // Se for cliente (tipo_utilizador == 3), busca apenas seus alertas
+    if ($conn) {
+        // Para clientes logados (tipo_utilizador == 3)
         if ($tem_login && $_SESSION['tipo_utilizador'] == 3) {
-            // Consulta para contar alertas ativos do cliente
             $sql_count = "SELECT COUNT(*) as total 
                          FROM alerta a
                          JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
@@ -57,8 +56,21 @@
                     $resultado_count = $stmt_count->get_result();
                     $row_count = $resultado_count->fetch_assoc();
                     $numero_alertas_cliente = $row_count['total'];
+                    $mostrar_alertas = $numero_alertas_cliente > 0;
                 }
                 $stmt_count->close();
+            }
+        } else if (!$tem_login) {
+            // Para visitantes não logados - verifica também o estado do alerta
+            $sql_count = "SELECT COUNT(*) as total 
+                         FROM alerta a
+                         JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
+                         WHERE ua.id_utilizador = 4 AND a.estado = 1";
+            $result = $conn->query($sql_count);
+            if ($result) {
+                $row = $result->fetch_assoc();
+                $numero_alertas_cliente = $row['total'];
+                $mostrar_alertas = $numero_alertas_cliente > 0;
             }
         }
     }
@@ -408,16 +420,14 @@
                     <a href="destinos.php" class="nav-item nav-link">Destinos</a>
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                     
-                    <!-- Link de Alertas com contador para clientes -->
-                    <?php if ($tem_login && $_SESSION['tipo_utilizador'] == 3): ?>
+                    <!-- Link de Alertas - só aparece se houver alertas -->
+                    <?php if ($mostrar_alertas): ?>
                         <a href="consultar_alertas.php" class="nav-item nav-link position-relative">
                             Alertas
                             <?php if ($numero_alertas_cliente > 0): ?>
                                 <span class="alert-badge"><?php echo $numero_alertas_cliente; ?></span>
                             <?php endif; ?>
                         </a>
-                    <?php elseif ($tem_login): ?>
-                        <a href="consultar_alertas.php" class="nav-item nav-link">Alertas</a>
                     <?php endif; ?>
 
                     <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
@@ -619,7 +629,7 @@
                                                 
                                                 <?php if ($bilhete['estado'] == 1): ?>
                                                     <div class="d-flex flex-column gap-2">
-                                                        <?php if ($e_admin || $e_funcionario): ?>
+                                                        <?php if ($tem_login): ?>
                                                             <button type="button" class="btn btn-warning rounded-pill py-2 px-4 botao-edicao" data-bilhete-id="<?php echo $bilhete['id_bilhete']; ?>">
                                                                 <i class="fas fa-edit me-2"></i>Editar
                                                             </button>
@@ -634,7 +644,7 @@
                                         </div>
                                         
                                         <!-- Formulário de edição (inicialmente oculto, apenas para admin/funcionário) -->
-                                        <?php if ($e_admin || $e_funcionario): ?>
+                                        <?php if ($tem_login): ?>
                                         <div id="formulario-edicao-<?php echo $bilhete['id_bilhete']; ?>" class="formulario-edicao" style="display: none;">
                                             <hr class="text-white my-4">
                                             <form action="editar_bilhete.php" method="GET">
@@ -703,9 +713,6 @@
                         <?php endif; ?>
                     <?php else: ?>
                         <p class="text-center text-white fs-5 mb-4">Ainda não possui bilhetes comprados.</p>
-                        <a href="comprar_bilhete.php" class="btn btn-primary rounded-pill py-2 px-4">
-                            <i class="fas fa-ticket-alt me-2"></i>Comprar Bilhete
-                        </a>
                     <?php endif; ?>
                 </div>
             <?php endif; ?>

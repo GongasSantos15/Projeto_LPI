@@ -27,9 +27,8 @@
     }
     
     if ($conn) {
-        // Se for cliente (tipo_utilizador == 3), busca apenas seus alertas
+        // Para clientes logados (tipo_utilizador == 3)
         if ($tem_login && $_SESSION['tipo_utilizador'] == 3) {
-            // Consulta para contar alertas ativos do cliente
             $sql_count = "SELECT COUNT(*) as total 
                          FROM alerta a
                          JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
@@ -42,8 +41,21 @@
                     $resultado_count = $stmt_count->get_result();
                     $row_count = $resultado_count->fetch_assoc();
                     $numero_alertas_cliente = $row_count['total'];
+                    $mostrar_alertas = $numero_alertas_cliente > 0;
                 }
                 $stmt_count->close();
+            }
+        } else if (!$tem_login) {
+            // Para visitantes não logados - verifica também o estado do alerta
+            $sql_count = "SELECT COUNT(*) as total 
+                         FROM alerta a
+                         JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
+                         WHERE ua.id_utilizador = 4 AND a.estado = 1";
+            $result = $conn->query($sql_count);
+            if ($result) {
+                $row = $result->fetch_assoc();
+                $numero_alertas_cliente = $row['total'];
+                $mostrar_alertas = $numero_alertas_cliente > 0;
             }
         }
     }
@@ -158,16 +170,14 @@
                     <a href="destinos.php" class="nav-item nav-link">Destinos</a>
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                     
-                    <!-- Link de Alertas com contador para clientes -->
-                    <?php if ($tem_login && $_SESSION['tipo_utilizador'] == 3): ?>
+                    <!-- Link de Alertas - só aparece se houver alertas -->
+                    <?php if ($mostrar_alertas): ?>
                         <a href="consultar_alertas.php" class="nav-item nav-link position-relative">
                             Alertas
                             <?php if ($numero_alertas_cliente > 0): ?>
                                 <span class="alert-badge"><?php echo $numero_alertas_cliente; ?></span>
                             <?php endif; ?>
                         </a>
-                    <?php elseif ($tem_login): ?>
-                        <a href="consultar_alertas.php" class="nav-item nav-link">Alertas</a>
                     <?php endif; ?>
 
                     <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
@@ -234,39 +244,39 @@
                         <h1 class="mb-5 text-primary">Conheça a Nossa Equipa</h1>
                     </div>
                     <div class="row g-4 d-flex justify-content-center">
-                        <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
-                            <div class="team-item">
-                                <div class="overflow-hidden">
-                                    <img class="img-fluid" src="equipa_1.jpg" alt="Foto do primeiro elemento">
-                                </div>
-                                <div class="position-relative d-flex justify-content-center" style="margin-top: -19px;">
-                                    <a class="btn btn-square mx-1" href=""><i class="fab fa-linkedin"></i></a>
-                                    <a class="btn btn-square mx-1" href=""><i class="fab fa-github"></i></a>
-                                    <a class="btn btn-square mx-1" href=""><i class="fab fa-instagram"></i></a>
-                                </div>
-                                <div class="text-center p-4">
-                                    <h5 class="mb-0 text-white">Gonçalo Santos</h5>
-                                    <small class="text-white">Funcionário</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.7s">
-                            <div class="team-item">
-                                <div class="overflow-hidden">
-                                    <img class="img-fluid" src="team-4.jpg" alt="Foto do segundo elemento">
-                                </div>
-                                <div class="position-relative d-flex justify-content-center" style="margin-top: -19px;">
-                                    <a class="btn btn-square mx-1" href=""><i class="fab fa-linkedin"></i></a>
-                                    <a class="btn btn-square mx-1" href=""><i class="fab fa-github"></i></a>
-                                    <a class="btn btn-square mx-1" href=""><i class="fab fa-instagram"></i></a>
-                                </div>
-                                <div class="text-center p-4">
-                                    <h5 class="mb-0 text-white">Catarina Antunes</h5>
-                                    <small class="text-white">Administrador</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+    <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
+        <div class="team-item" style="height: 100%;">
+            <div class="overflow-hidden" style="height: 300px;"> <!-- Altura fixa para a imagem -->
+                <img class="img-fluid h-100 w-100" src="equipa_1.jpg" alt="Foto do primeiro elemento" style="object-fit: cover;">
+            </div>
+            <div class="position-relative d-flex justify-content-center" style="margin-top: -19px;">
+                <a class="btn btn-square mx-1" href=""><i class="fab fa-linkedin"></i></a>
+                <a class="btn btn-square mx-1" href=""><i class="fab fa-github"></i></a>
+                <a class="btn btn-square mx-1" href=""><i class="fab fa-instagram"></i></a>
+            </div>
+            <div class="text-center p-4">
+                <h5 class="mb-0 text-white">Gonçalo Santos</h5>
+                <small class="text-white">Funcionário</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.3s">
+        <div class="team-item" style="height: 100%;">
+            <div class="overflow-hidden" style="height: 300px;"> <!-- Mesma altura fixa -->
+                <img class="img-fluid h-100 w-100" src="equipa_2.jpg" alt="Foto do segundo elemento" style="object-fit: cover;">
+            </div>
+            <div class="position-relative d-flex justify-content-center" style="margin-top: -19px;">
+                <a class="btn btn-square mx-1" href=""><i class="fab fa-linkedin"></i></a>
+                <a class="btn btn-square mx-1" href=""><i class="fab fa-github"></i></a>
+                <a class="btn btn-square mx-1" href=""><i class="fab fa-instagram"></i></a>
+            </div>
+            <div class="text-center p-4">
+                <h5 class="mb-0 text-white">Catarina Antunes</h5>
+                <small class="text-white">Administradora</small>
+            </div>
+        </div>
+    </div>
+</div>
                 </div>
             </div>
         </div>

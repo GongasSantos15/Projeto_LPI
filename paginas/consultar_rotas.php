@@ -31,13 +31,12 @@
     }   
 
     if ($conn) {
-        // Se for cliente (tipo_utilizador == 3), busca apenas seus alertas
+        // Para clientes logados (tipo_utilizador == 3)
         if ($tem_login && $_SESSION['tipo_utilizador'] == 3) {
-            // Consulta para contar alertas ativos do cliente
             $sql_count = "SELECT COUNT(*) as total 
-                         FROM alerta a
-                         JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
-                         WHERE ua.id_utilizador = ? AND a.estado = 1";
+                            FROM alerta a
+                            JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
+                            WHERE ua.id_utilizador = ? AND a.estado = 1";
             
             $stmt_count = $conn->prepare($sql_count);
             if ($stmt_count) {
@@ -46,8 +45,21 @@
                     $resultado_count = $stmt_count->get_result();
                     $row_count = $resultado_count->fetch_assoc();
                     $numero_alertas_cliente = $row_count['total'];
+                    $mostrar_alertas = $numero_alertas_cliente > 0;
                 }
                 $stmt_count->close();
+            }
+        } else if (!$tem_login) {
+            // Para visitantes não logados - verifica também o estado do alerta
+            $sql_count = "SELECT COUNT(*) as total 
+                         FROM alerta a
+                         JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
+                         WHERE ua.id_utilizador = 4 AND a.estado = 1";
+            $result = $conn->query($sql_count);
+            if ($result) {
+                $row = $result->fetch_assoc();
+                $numero_alertas_cliente = $row['total'];
+                $mostrar_alertas = $numero_alertas_cliente > 0;
             }
         }
     }
@@ -310,16 +322,14 @@
                     <a href="destinos.php" class="nav-item nav-link">Destinos</a>
                     <a href="consultar_rotas.php" class="nav-item nav-link active">Rotas</a>
 
-                   <!-- Link de Alertas com contador para clientes -->
-                    <?php if ($tem_login && $_SESSION['tipo_utilizador'] == 3): ?>
+                    <!-- Link de Alertas - só aparece se houver alertas -->
+                    <?php if ($mostrar_alertas): ?>
                         <a href="consultar_alertas.php" class="nav-item nav-link position-relative">
                             Alertas
                             <?php if ($numero_alertas_cliente > 0): ?>
                                 <span class="alert-badge"><?php echo $numero_alertas_cliente; ?></span>
                             <?php endif; ?>
                         </a>
-                    <?php elseif ($tem_login): ?>
-                        <a href="consultar_alertas.php" class="nav-item nav-link">Alertas</a>
                     <?php endif; ?>
 
                     <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
@@ -408,8 +418,8 @@
 
                 <!-- Filtros de Pesquisa e Ordenação -->
                 <div class="filtros-container">
-                    <form method="GET" action="" class="row g-3 align-items-end">
-                        <div class="col-md-5">
+                    <form method="GET" action="" class="row g-3 align-items-end" id="filtrosForm">
+                        <div class="col-md-4">
                             <label class="form-label text-white mb-2">
                                 <i class="fas fa-search me-2"></i>Pesquisar por Origem, Destino ou ID:
                             </label>
@@ -420,11 +430,11 @@
                                 value="<?php echo htmlspecialchars($pesquisa); ?>">
                         </div>
                         
-                        <div class="col-md-5">
+                        <div class="col-md-4">
                             <label class="form-label text-white mb-2">
                                 <i class="fas fa-sort me-2"></i>Ordenar por:
                             </label>
-                            <select name="ordenacao" class="form-select filtro-select">
+                            <select name="ordenacao" class="form-select filtro-select" id="ordenacaoSelect" onchange="this.form.submit()">
                                 <option value="id_asc" <?php echo ($ordenacao == 'id_asc') ? 'selected' : ''; ?>>ID (Crescente)</option>
                                 <option value="id_desc" <?php echo ($ordenacao == 'id_desc') ? 'selected' : ''; ?>>ID (Decrescente)</option>
                                 <option value="origem_asc" <?php echo ($ordenacao == 'origem_asc') ? 'selected' : ''; ?>>Origem (A-Z)</option>
@@ -434,7 +444,7 @@
                             </select>
                         </div>
                         
-                        <div class="col-md-2">
+                        <div class="col-md-4">
                             <div class="d-flex justify-content-end">
                                 <a href="?" class="btn btn-limpar rounded-pill">
                                     <i class="fas fa-times me-1"></i>Limpar
@@ -666,17 +676,27 @@
                     }
                 });
 
-                // Submissão automática do formulário ao alterar ordenação
-                $('select[name="ordenacao"]').change(function() {
-                    $(this).closest('form').submit();
-                });
+                // JavaScript corrigido para os filtros
+                    $(document).ready(function() {
+                        // Submissão automática do formulário ao alterar ordenação
+                        $('#ordenacaoSelect').change(function() {
+                            $('#filtrosForm').submit();
+                        });
 
-                // Enter para pesquisar
-                $('input[name="pesquisa"]').keypress(function(e) {
-                    if (e.which == 13) {
-                        $(this).closest('form').submit();
-                    }
-                });
+                        // Enter para pesquisar
+                        $('input[name="pesquisa"]').keypress(function(e) {
+                            if (e.which == 13) { // Enter key
+                                e.preventDefault();
+                                $('#filtrosForm').submit();
+                            }
+                        });
+
+                        // Botão de pesquisa
+                        $('#filtrosForm').on('submit', function(e) {
+                            // Permitir submissão normal do formulário
+                            return true;
+                        });
+                    });
             </script>
         <?php endif; ?>
     </body>

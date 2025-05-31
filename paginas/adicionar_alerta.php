@@ -17,73 +17,94 @@
     $estado = 1;
 
     // Determina a página inicial correta baseada no tipo de utilizador
-    $pagina_inicial = 'index.php'; // Página padrão se não tiver login
+    $pagina_inicial = 'index.php';
     if ($tem_login && isset($_SESSION['tipo_utilizador'])) {
         switch ($_SESSION['tipo_utilizador']) {
-            case 1: // Admin
-                $pagina_inicial = 'pagina_inicial_admin.php';
-                break;
-            case 2: // Funcionário
-                $pagina_inicial = 'pagina_inicial_func.php';
-                break;
-            case 3: // Cliente
-                $pagina_inicial = 'pagina_inicial_cliente.php';
-                break;
-            default:
-                $pagina_inicial = 'index.php';
+            case 1: $pagina_inicial = 'pagina_inicial_admin.php'; break;
+            case 2: $pagina_inicial = 'pagina_inicial_func.php'; break;
+            case 3: $pagina_inicial = 'pagina_inicial_cliente.php'; break;
         }
     }
 
     // Obter lista de utilizadores para o dropdown
     $utilizadores = [];
-    $sql_utilizadores = "SELECT id, nome_utilizador FROM utilizador";
-    $result = $conn->query($sql_utilizadores);
-    if ($result && $result->num_rows > 0) {
-        while($row = $result->fetch_assoc()) {
-            $utilizadores[$row['id']] = $row['nome_utilizador'];
-        }
+    $sql_utilizadores = "SELECT id, nome_utilizador FROM utilizador WHERE tipo_utilizador != 1 AND id != ?";
+    $stmt_utilizadores = $conn->prepare($sql_utilizadores);
+    $stmt_utilizadores->bind_param("i", $_SESSION['id_utilizador']);
+    $stmt_utilizadores->execute();
+    $result = $stmt_utilizadores->get_result();
+    while($row = $result->fetch_assoc()) {
+        $utilizadores[$row['id']] = $row['nome_utilizador'];
     }
+    $stmt_utilizadores->close();
 
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        $descricao = filter_input(INPUT_POST, 'descricao');
+        $descricao = filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $id_utilizador_alvo = filter_input(INPUT_POST, 'id_utilizador', FILTER_VALIDATE_INT);
         $id_admin = $_SESSION['id_utilizador'];
 
-        if (empty($descricao) || empty($id_utilizador_alvo)) {
-            $_SESSION['mensagem_erro'] = 'Por favor, preencha todos os campos.';
+        if (empty($descricao) || $id_utilizador_alvo === false) {
+            $_SESSION['mensagem_erro'] = 'Por favor, preencha todos os campos corretamente.';
         } else {
-            // 1. Inserir na tabela alerta
+            // Inserir na tabela alerta
             $sql_alerta = "INSERT INTO alerta (descricao, estado) VALUES (?, ?)";
             $stmt = $conn->prepare($sql_alerta);
             if ($stmt) {
                 $stmt->bind_param("si", $descricao , $estado);
                 $stmt->execute();
+                $stmt->close();
             } else {
                 $_SESSION['mensagem_erro'] = "Erro ao adicionar alerta!";
+                header("Location: adicionar_alerta.php");
+                exit();
             }
-            $stmt->close();
-            
-            // 2. Obter o ID do alerta inserido
+
+            // Obter o ID do alerta inserido
             $id_alerta = $conn->insert_id;
 
             // 3. Inserir na tabela utilizador_alerta
-            $sql_utilizador_alerta = "INSERT INTO utilizador_alerta (id_alerta, id_utilizador, data_hora) VALUES (?, ?, NOW())";
-            $stmt = $conn->prepare($sql_utilizador_alerta);
-            if ($stmt) {
-                $stmt->bind_param("ii", $id_alerta, $id_utilizador_alvo);
-                if ($stmt->execute()) {
-                    $_SESSION['mensagem_sucesso'] = 'Alerta adicionado com sucesso!';
-                    header("Location: consultar_alertas.php");
-                    exit();
+            if ($id_utilizador_alvo == 4) {
+                // Alerta geral para utilizadores do tipo 4
+                $sql = "SELECT id FROM utilizador WHERE tipo_utilizador = 4";
+                $result = $conn->query($sql);
+
+                if ($result && $result->num_rows > 0) {
+                    $sql_insert_alerta = "INSERT INTO utilizador_alerta (id_alerta, id_utilizador, data_hora) VALUES (?, ?, NOW())";
+                    $stmt = $conn->prepare($sql_insert_alerta);
+
+                    if ($stmt) {
+                        while ($row = $result->fetch_assoc()) {
+                            $id_destinatario = $row['id'];
+                            $stmt->bind_param("ii", $id_alerta, $id_destinatario);
+                            $stmt->execute();
+                        }
+                        $_SESSION['mensagem_sucesso'] = 'Alerta geral adicionado com sucesso!';
+                        header("Location: consultar_alertas.php");
+                        exit();
+                    } else {
+                        $_SESSION["mensagem_erro"] = "Erro ao preparar inserção de alerta geral: " . $conn->$connect_error;
+                    }
                 } else {
-                    $_SESSION["mensagem_erro"] = "Erro ao adicionar o alerta na tabela utilizador_alerta: " . $conn->$connect_error;
+                    $_SESSION["mensagem_erro"] = "Não foram encontrados utilizadores com tipo_utilizador = 4.";
                 }
-                $stmt->close();
             } else {
-                $_SESSION["mensagem_erro"] = "Erro ao preparar a consulta: " . $conn->$connect_error;
+                // Alerta individual
+                $sql_utilizador_alerta = "INSERT INTO utilizador_alerta (id_alerta, id_utilizador, data_hora) VALUES (?, ?, NOW())";
+                $stmt = $conn->prepare($sql_utilizador_alerta);
+                if ($stmt) {
+                    $stmt->bind_param("ii", $id_alerta, $id_utilizador_alvo);
+                    if ($stmt->execute()) {
+                        $_SESSION['mensagem_sucesso'] = 'Alerta adicionado com sucesso!';
+                        header("Location: consultar_alertas.php");
+                        exit();
+                    } else {
+                        $_SESSION["mensagem_erro"] = "Erro ao adicionar o alerta na tabela utilizador_alerta: " . $conn->$connect_error;
+                    }
+                    $stmt->close();
+                } else {
+                    $_SESSION["mensagem_erro"] = "Erro ao preparar a consulta: " . $conn->$connect_error;
+                }
             }
-            
-           
         }
     }
 ?>
@@ -216,6 +237,7 @@
                                     <option value="<?php echo $id; ?>"><?php echo htmlspecialchars($nome_utilizador); ?></option>
                                 <?php endforeach; ?>
                             </select>
+
                         </div>
 
                         <div class="w-100">

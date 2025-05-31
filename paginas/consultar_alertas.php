@@ -33,14 +33,12 @@
     // Verifica se há uma mensagem de erro na sessão
     if (isset($_SESSION['mensagem_erro'])) {
         $mensagem_erro = $_SESSION['mensagem_erro'];
-        // Limpa a variável de sessão para não exibir a mensagem novamente em carregamentos futuros
         unset($_SESSION['mensagem_erro']);
     }
 
     // Verifica se há uma mensagem de sucesso na sessão
     if (isset($_SESSION['mensagem_sucesso'])) {
         $mensagem_sucesso = $_SESSION['mensagem_sucesso'];
-        // Limpa a variável de sessão para não exibir a mensagem novamente em carregamentos futuros
         unset($_SESSION['mensagem_sucesso']);
     }
 
@@ -51,11 +49,9 @@
     $alertas = []; // Inicializa a variável alertas
     $numero_alertas_cliente = 0; // Contador de alertas para cliente
 
-    // Só executa a consulta se houver conexão
     if ($conn) {
-        // Se for cliente (tipo_utilizador == 3), busca apenas seus alertas
+        // Para clientes logados (tipo_utilizador == 3)
         if ($tem_login && $_SESSION['tipo_utilizador'] == 3) {
-            // Consulta para contar alertas ativos do cliente
             $sql_count = "SELECT COUNT(*) as total 
                          FROM alerta a
                          JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
@@ -71,28 +67,36 @@
                 }
                 $stmt_count->close();
             }
+        } else if (!$tem_login) {
+            $sql_count = "SELECT COUNT(*) as total FROM utilizador_alerta WHERE id_utilizador = 4";
+            $result = $conn->query($sql_count);
+            if ($result) {
+                $row = $result->fetch_assoc();
+                $numero_alertas_cliente = $row['total'];
+            }
+        }
 
-            // Constrói a consulta SQL base para cliente específico
+        // Constrói a consulta SQL baseada no tipo de utilizador
+        if ($tem_login && $_SESSION['tipo_utilizador'] == 3) {
+            // Consulta para clientes (apenas seus alertas ativos)
             $sql = "SELECT a.id_alerta, a.descricao, a.estado, ua.data_hora, u.nome_utilizador as nome_utilizador, u.id as id_utilizador 
                     FROM alerta a
                     JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
                     JOIN utilizador u ON ua.id_utilizador = u.id
                     WHERE ua.id_utilizador = ? AND a.estado = 1";
             
-            // Adiciona condição de pesquisa se houver termo de pesquisa
             if (!empty($pesquisa)) {
-                $sql .= " AND (a.descricao LIKE ? OR a.id_alerta LIKE ?)";
+                $sql .= " AND (a.descricao LIKE ? OR a.id_alerta = ?)";
             }
         } else {
-            // Para admin e funcionários - consulta original
+            // Consulta para admin/funcionários (todos os alertas)
             $sql = "SELECT a.id_alerta, a.descricao, a.estado, ua.data_hora, u.nome_utilizador as nome_utilizador, u.id as id_utilizador 
                     FROM alerta a
                     JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
                     JOIN utilizador u ON ua.id_utilizador = u.id";
             
-            // Adiciona condição de pesquisa se houver termo de pesquisa
             if (!empty($pesquisa)) {
-                $sql .= " WHERE (a.descricao LIKE ? OR u.nome_utilizador LIKE ? OR a.id_alerta LIKE ?)";
+                $sql .= " WHERE (a.descricao LIKE ? OR u.nome_utilizador LIKE ? OR a.id_alerta = ?)";
             }
         }
         
@@ -122,7 +126,7 @@
                 // Para clientes
                 if (!empty($pesquisa)) {
                     $termo_pesquisa = "%$pesquisa%";
-                    $stmt->bind_param("iss", $_SESSION['id_utilizador'], $termo_pesquisa, $pesquisa);
+                    $stmt->bind_param("isi", $_SESSION['id_utilizador'], $termo_pesquisa, $pesquisa);
                 } else {
                     $stmt->bind_param("i", $_SESSION['id_utilizador']);
                 }
@@ -130,7 +134,7 @@
                 // Para admin e funcionários
                 if (!empty($pesquisa)) {
                     $termo_pesquisa = "%$pesquisa%";
-                    $stmt->bind_param("sss", $termo_pesquisa, $termo_pesquisa, $pesquisa);
+                    $stmt->bind_param("ssi", $termo_pesquisa, $termo_pesquisa, $pesquisa);
                 }
             }
             
@@ -138,16 +142,18 @@
                 $resultado = $stmt->get_result();
                 $alertas = $resultado->fetch_all(MYSQLI_ASSOC);
             } else {
-                $mensagem_erro = "Erro ao executar a consulta dos alertas.";
+                $mensagem_erro = "Erro ao executar a consulta dos alertas: " . $stmt->error;
             }
             $stmt->close();
         } else {
-            $mensagem_erro = "Erro ao preparar a consulta dos alertas.";
+            $mensagem_erro = "Erro ao preparar a consulta dos alertas: " . $conn->$connect_error;
         }
-    }
     
-    if ($conn) {
-        $conn->close();
+        if ($conn) {
+            $conn->close();
+        }
+    } else {
+        $mensagem_erro = "Erro na conexão à base de dados";
     }
 ?>
 
@@ -346,16 +352,16 @@
                     <a href="destinos.php" class="nav-item nav-link">Destinos</a>
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                     
-                    <!-- Link de Alertas com contador para clientes -->
-                    <?php if ($tem_login && $_SESSION['tipo_utilizador'] == 3): ?>
-                        <a href="consultar_alertas.php" class="nav-item nav-link active position-relative">
+                    <!-- Link de Alertas com contador -->
+                    <?php if ($tem_login && $_SESSION['tipo_utilizador'] == 3 || !$tem_login): ?>
+                        <a href="consultar_alertas.php" class="nav-item nav-link position-relative active">
                             Alertas
-                            <?php if ($numero_alertas_cliente > 0): ?>
+                            <?php if (isset($numero_alertas_cliente) && $numero_alertas_cliente > 0): ?>
                                 <span class="alert-badge"><?php echo $numero_alertas_cliente; ?></span>
                             <?php endif; ?>
                         </a>
                     <?php else: ?>
-                        <a href="consultar_alertas.php" class="nav-item nav-link active">Alertas</a>
+                        <a href="consultar_alertas.php" class="nav-item nav-link">Alertas</a>
                     <?php endif; ?>
 
                 <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
@@ -447,58 +453,60 @@
             <?php endif; ?>
 
             <!-- Filtros de Pesquisa e Ordenação -->
-            <div class="filtros-container">
-                <form method="GET" action="" class="row g-3 align-items-end">
-                    <div class="col-md-5">
-                        <label class="form-label text-white mb-2">
-                            <i class="fas fa-search me-2"></i>Pesquisar por Descrição<?php echo ($tem_login && $_SESSION['tipo_utilizador'] != 3) ? ', Utilizador' : ''; ?> ou ID:
-                        </label>
-                        <input type="text" 
-                            name="pesquisa" 
-                            class="form-control search-input" 
-                            placeholder="Digite o termo de pesquisa..." 
-                            value="<?php echo htmlspecialchars($pesquisa); ?>">
-                    </div>
-                    
-                    <div class="col-md-5">
-                        <label class="form-label text-white mb-2">
-                            <i class="fas fa-sort me-2"></i>Ordenar por:
-                        </label>
-                        <select name="ordenacao" class="form-select filtro-select">
-                            <option value="id_asc" <?php echo ($ordenacao == 'id_asc') ? 'selected' : ''; ?>>ID (Crescente)</option>
-                            <option value="id_desc" <?php echo ($ordenacao == 'id_desc') ? 'selected' : ''; ?>>ID (Decrescente)</option>
-                            <option value="data_asc" <?php echo ($ordenacao == 'data_asc') ? 'selected' : ''; ?>>Data (Mais Antigos)</option>
-                            <option value="data_desc" <?php echo ($ordenacao == 'data_desc') ? 'selected' : ''; ?>>Data (Mais Recentes)</option>
-                        </select>
-                    </div>
-                    
-                    <div class="col-md-2">
-                        <div class="d-flex justify-content-end">
-                            <a href="?" class="btn btn-limpar rounded-pill">
-                                <i class="fas fa-times me-1"></i>Limpar
-                            </a>
+            <?php if (isset($_SESSION['tipo_utilizador']) && $_SESSION['tipo_utilizador'] == 1): ?>
+                <div class="filtros-container">
+                    <form method="GET" action="" class="row g-3 align-items-end">
+                        <div class="col-md-5">
+                            <label class="form-label text-white mb-2">
+                                <i class="fas fa-search me-2"></i>Pesquisar por Descrição<?php echo ($tem_login && $_SESSION['tipo_utilizador'] != 3) ? ', Utilizador' : ''; ?> ou ID:
+                            </label>
+                            <input type="text" 
+                                name="pesquisa" 
+                                class="form-control search-input" 
+                                placeholder="Digite o termo de pesquisa..." 
+                                value="<?php echo htmlspecialchars($pesquisa); ?>">
                         </div>
-                    </div>
-                </form>
-                
-                <!-- Contador de resultados -->
-                <div class="mt-3 d-flex justify-content-between align-items-center">
-                    <div class="contador-resultados">
-                        <i class="fas fa-bell me-2"></i>
-                        <?php echo count($alertas); ?> alerta(s) encontrado(s)
+                        
+                        <div class="col-md-5">
+                            <label class="form-label text-white mb-2">
+                                <i class="fas fa-sort me-2"></i>Ordenar por:
+                            </label>
+                            <select name="ordenacao" class="form-select filtro-select">
+                                <option value="id_asc" <?php echo ($ordenacao == 'id_asc') ? 'selected' : ''; ?>>ID (Crescente)</option>
+                                <option value="id_desc" <?php echo ($ordenacao == 'id_desc') ? 'selected' : ''; ?>>ID (Decrescente)</option>
+                                <option value="data_asc" <?php echo ($ordenacao == 'data_asc') ? 'selected' : ''; ?>>Data (Mais Antigos)</option>
+                                <option value="data_desc" <?php echo ($ordenacao == 'data_desc') ? 'selected' : ''; ?>>Data (Mais Recentes)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-2">
+                            <div class="d-flex justify-content-end">
+                                <a href="?" class="btn btn-limpar rounded-pill">
+                                    <i class="fas fa-times me-1"></i>Limpar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <!-- Contador de resultados -->
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <div class="contador-resultados">
+                            <i class="fas fa-bell me-2"></i>
+                            <?php echo count($alertas); ?> alerta(s) encontrado(s)
+                            <?php if (!empty($pesquisa)): ?>
+                                para "<?php echo htmlspecialchars($pesquisa); ?>"
+                            <?php endif; ?>
+                        </div>
+                        
                         <?php if (!empty($pesquisa)): ?>
-                            para "<?php echo htmlspecialchars($pesquisa); ?>"
+                            <small class="text-light">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Pesquisando por: <strong><?php echo htmlspecialchars($pesquisa); ?></strong>
+                            </small>
                         <?php endif; ?>
                     </div>
-                    
-                    <?php if (!empty($pesquisa)): ?>
-                        <small class="text-light">
-                            <i class="fas fa-info-circle me-1"></i>
-                            Pesquisando por: <strong><?php echo htmlspecialchars($pesquisa); ?></strong>
-                        </small>
-                    <?php endif; ?>
                 </div>
-            </div>
+            <?php endif; ?>
 
             <?php if (!empty($alertas)): ?>
                 <!-- Container com scroll aplicado apenas aos alertas -->

@@ -1,3 +1,47 @@
+<?php 
+    session_start();
+    include("../basedados/basedados.h"); 
+    include("dados_navbar.php");
+
+    $tem_login = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']);
+    $mostrar_alertas = false;
+    $numero_alertas_cliente = 0;
+
+    if ($conn) {
+        // Para clientes logados (tipo_utilizador == 3)
+        if ($tem_login && $_SESSION['tipo_utilizador'] == 3) {
+            $sql_count = "SELECT COUNT(*) as total 
+                         FROM alerta a
+                         JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
+                         WHERE ua.id_utilizador = ? AND a.estado = 1";
+            
+            $stmt_count = $conn->prepare($sql_count);
+            if ($stmt_count) {
+                $stmt_count->bind_param("i", $_SESSION['id_utilizador']);
+                if ($stmt_count->execute()) {
+                    $resultado_count = $stmt_count->get_result();
+                    $row_count = $resultado_count->fetch_assoc();
+                    $numero_alertas_cliente = $row_count['total'];
+                    $mostrar_alertas = $numero_alertas_cliente > 0;
+                }
+                $stmt_count->close();
+            }
+        } else if (!$tem_login) {
+            // Para visitantes não logados - verifica também o estado do alerta
+            $sql_count = "SELECT COUNT(*) as total 
+                         FROM alerta a
+                         JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
+                         WHERE ua.id_utilizador = 4 AND a.estado = 1";
+            $result = $conn->query($sql_count);
+            if ($result) {
+                $row = $result->fetch_assoc();
+                $numero_alertas_cliente = $row['total'];
+                $mostrar_alertas = $numero_alertas_cliente > 0;
+            }
+        }
+    }
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -29,6 +73,37 @@
         .dropdown:hover > .dropdown-menu {
             display: block;
         }
+
+        /* Badge de notificação para alertas */
+        .alert-badge {
+            position: absolute;
+            top: 0px;
+            right: -8px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* Destaque especial para alertas do cliente */
+        .alerta-cliente-destaque {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(40, 167, 69, 0.1));
+            border: 2px solid rgba(40, 167, 69, 0.3);
+            border-radius: 15px;
+        }
     </style>
 
     <script src="main.js" defer></script>
@@ -54,6 +129,16 @@
                     <a href="equipa.php" class="nav-item nav-link">Equipa</a>
                     <a href="destinos.php" class="nav-item nav-link">Destinos</a>
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
+
+                    <!-- Link de Alertas - só aparece se houver alertas -->
+                    <?php if ($mostrar_alertas): ?>
+                        <a href="consultar_alertas.php" class="nav-item nav-link position-relative">
+                            Alertas
+                            <?php if ($numero_alertas_cliente > 0): ?>
+                                <span class="alert-badge"><?php echo $numero_alertas_cliente; ?></span>
+                            <?php endif; ?>
+                        </a>
+                    <?php endif; ?>
                 </div>
                     <a href="entrar.php" class="btn btn-primary rounded-pill py-2 px-4">Entrar</a>
             </div>

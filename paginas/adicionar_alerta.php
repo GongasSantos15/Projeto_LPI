@@ -56,7 +56,7 @@
             $sql_alerta = "INSERT INTO alerta (descricao, estado) VALUES (?, ?)";
             $stmt = $conn->prepare($sql_alerta);
             if ($stmt) {
-                $stmt->bind_param("s", $descricao ,$estado);
+                $stmt->bind_param("si", $descricao , $estado);
                 $stmt->execute();
             } else {
                 $_SESSION['mensagem_erro'] = "Erro ao adicionar alerta!";
@@ -143,7 +143,7 @@
                     <div class="navbar-nav ms-auto py-0">
                         <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                         <a href="consultar_alertas.php" class="nav-item nav-link active">Alertas</a>
-                        
+
                         <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
                             <?php if (in_array($_SESSION['tipo_utilizador'], [1, 2])): ?>
                                 <?php if ($_SESSION['tipo_utilizador'] == 1): ?>

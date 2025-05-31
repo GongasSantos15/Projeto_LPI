@@ -49,18 +49,51 @@
     $ordenacao = isset($_GET['ordenacao']) ? $_GET['ordenacao'] : 'id_asc';
 
     $alertas = []; // Inicializa a variável alertas
+    $numero_alertas_cliente = 0; // Contador de alertas para cliente
 
     // Só executa a consulta se houver conexão
     if ($conn) {
-        // Constrói a consulta SQL base com JOIN entre as 3 tabelas
-        $sql = "SELECT a.id_alerta, a.descricao, a.estado, ua.data_hora, u.nome_utilizador as nome_utilizador, u.id as id_utilizador 
-                FROM alerta a
-                JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
-                JOIN utilizador u ON ua.id_utilizador = u.id";
-        
-        // Adiciona condição de pesquisa se houver termo de pesquisa
-        if (!empty($pesquisa)) {
-            $sql .= " WHERE (a.descricao LIKE ? OR u.nome_utilizador LIKE ? OR a.id_alerta LIKE ?)";
+        // Se for cliente (tipo_utilizador == 3), busca apenas seus alertas
+        if ($tem_login && $_SESSION['tipo_utilizador'] == 3) {
+            // Consulta para contar alertas ativos do cliente
+            $sql_count = "SELECT COUNT(*) as total 
+                         FROM alerta a
+                         JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
+                         WHERE ua.id_utilizador = ? AND a.estado = 1";
+            
+            $stmt_count = $conn->prepare($sql_count);
+            if ($stmt_count) {
+                $stmt_count->bind_param("i", $_SESSION['id_utilizador']);
+                if ($stmt_count->execute()) {
+                    $resultado_count = $stmt_count->get_result();
+                    $row_count = $resultado_count->fetch_assoc();
+                    $numero_alertas_cliente = $row_count['total'];
+                }
+                $stmt_count->close();
+            }
+
+            // Constrói a consulta SQL base para cliente específico
+            $sql = "SELECT a.id_alerta, a.descricao, a.estado, ua.data_hora, u.nome_utilizador as nome_utilizador, u.id as id_utilizador 
+                    FROM alerta a
+                    JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
+                    JOIN utilizador u ON ua.id_utilizador = u.id
+                    WHERE ua.id_utilizador = ?";
+            
+            // Adiciona condição de pesquisa se houver termo de pesquisa
+            if (!empty($pesquisa)) {
+                $sql .= " AND (a.descricao LIKE ? OR a.id_alerta LIKE ?)";
+            }
+        } else {
+            // Para admin e funcionários - consulta original
+            $sql = "SELECT a.id_alerta, a.descricao, a.estado, ua.data_hora, u.nome_utilizador as nome_utilizador, u.id as id_utilizador 
+                    FROM alerta a
+                    JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
+                    JOIN utilizador u ON ua.id_utilizador = u.id";
+            
+            // Adiciona condição de pesquisa se houver termo de pesquisa
+            if (!empty($pesquisa)) {
+                $sql .= " WHERE (a.descricao LIKE ? OR u.nome_utilizador LIKE ? OR a.id_alerta LIKE ?)";
+            }
         }
         
         // Adiciona ordenação
@@ -84,10 +117,21 @@
         $stmt = $conn->prepare($sql);
 
         if ($stmt) {
-            // Faz bind dos parâmetros se houver pesquisa
-            if (!empty($pesquisa)) {
-                $termo_pesquisa = "%$pesquisa%";
-                $stmt->bind_param("sss", $termo_pesquisa, $termo_pesquisa, $pesquisa);
+            // Faz bind dos parâmetros
+            if ($tem_login && $_SESSION['tipo_utilizador'] == 3) {
+                // Para clientes
+                if (!empty($pesquisa)) {
+                    $termo_pesquisa = "%$pesquisa%";
+                    $stmt->bind_param("iss", $_SESSION['id_utilizador'], $termo_pesquisa, $pesquisa);
+                } else {
+                    $stmt->bind_param("i", $_SESSION['id_utilizador']);
+                }
+            } else {
+                // Para admin e funcionários
+                if (!empty($pesquisa)) {
+                    $termo_pesquisa = "%$pesquisa%";
+                    $stmt->bind_param("sss", $termo_pesquisa, $termo_pesquisa, $pesquisa);
+                }
             }
             
             if($stmt->execute()) {
@@ -222,6 +266,18 @@
             transition: all 0.3s ease;
         }
         
+        /* Estilos específicos para clientes */
+        .alerta-card-cliente {
+            border-left: 4px solid #28a745;
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(40, 167, 69, 0.05));
+            position: relative;
+        }
+        
+        .alerta-card-cliente:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(40, 167, 69, 0.2);
+        }
+
         .alerta-card:hover {
             transform: translateY(-3px);
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
@@ -234,6 +290,37 @@
 
         .estado-ativo { background-color: #28a745; }
         .estado-anulado { background-color: #dc3545; }
+
+        /* Badge de notificação para alertas */
+        .alert-badge {
+            position: absolute;
+            top: 0px;
+            right: -8px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* Destaque especial para alertas do cliente */
+        .alerta-cliente-destaque {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(40, 167, 69, 0.1));
+            border: 2px solid rgba(40, 167, 69, 0.3);
+            border-radius: 15px;
+        }
     </style>
 </head>
 
@@ -255,7 +342,18 @@
             <div class="collapse navbar-collapse" id="navbarCollapse">
                 <div class="navbar-nav ms-auto py-0">
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
-                    <a href="consultar_alertas.php" class="nav-item nav-link active">Alertas</a>
+                    
+                    <!-- Link de Alertas com contador para clientes -->
+                    <?php if ($tem_login && $_SESSION['tipo_utilizador'] == 3): ?>
+                        <a href="consultar_alertas.php" class="nav-item nav-link active position-relative">
+                            Alertas
+                            <?php if ($numero_alertas_cliente > 0): ?>
+                                <span class="alert-badge"><?php echo $numero_alertas_cliente; ?></span>
+                            <?php endif; ?>
+                        </a>
+                    <?php else: ?>
+                        <a href="consultar_alertas.php" class="nav-item nav-link active">Alertas</a>
+                    <?php endif; ?>
 
                 <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
                         <?php if (in_array($_SESSION['tipo_utilizador'], [1, 2])): ?>
@@ -316,7 +414,11 @@
 
         <div class="rounded shadow" style="max-width: 1200px; width: 100%; margin-top: 150px;">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 class="text-white m-0">Consultar Alertas</h3>
+                <?php if ($tem_login && $_SESSION['tipo_utilizador'] == 3): ?>
+                    <h3 class="text-white m-0">Os Seus Alertas</h3>
+                <?php else: ?>
+                    <h3 class="text-white m-0">Consultar Alertas</h3>
+                <?php endif; ?>
             </div>
             
             <?php if (isset($_SESSION['tipo_utilizador']) && $_SESSION['tipo_utilizador'] == 1): ?>
@@ -346,7 +448,7 @@
                 <form method="GET" action="" class="row g-3 align-items-end">
                     <div class="col-md-5">
                         <label class="form-label text-white mb-2">
-                            <i class="fas fa-search me-2"></i>Pesquisar por Descrição, Utilizador ou ID:
+                            <i class="fas fa-search me-2"></i>Pesquisar por Descrição<?php echo ($tem_login && $_SESSION['tipo_utilizador'] != 3) ? ', Utilizador' : ''; ?> ou ID:
                         </label>
                         <input type="text" 
                             name="pesquisa" 
@@ -401,14 +503,21 @@
                     <div class="row g-3">
                         <?php foreach ($alertas as $alerta): ?>
                             <div class="col-12">
-                                <div class="bg-gradient position-relative mx-auto mt-3 animated slideInDown alerta-card">
+                                <div class="bg-gradient position-relative mx-auto mt-3 animated slideInDown 
+                                    <?php echo ($tem_login && $_SESSION['tipo_utilizador'] == 3) ? 
+                                        'alerta-card-cliente alerta-cliente-destaque' : 'alerta-card'; ?>">
                                     <div class="card-body p-4">
                                         <div class="row align-items-center">
                                             <div class="col-md-8">
                                                 <div class="d-flex align-items-center justify-content-between mb-3">
                                                     <div class="d-flex align-items-center mb-3">
-                                                        <i class="fas fa-exclamation-triangle text-warning me-2 fa-lg"></i>
-                                                        <h5 class="card-title text-warning mb-0">Alerta #<?php echo htmlspecialchars($alerta['id_alerta']); ?></h5>
+                                                        <?php if ($tem_login && $_SESSION['tipo_utilizador'] == 3): ?>
+                                                            <i class="fas fa-bell text-primary me-2 fa-lg"></i>
+                                                            <h5 class="card-title text-primary mb-0">Notificação #<?php echo htmlspecialchars($alerta['id_alerta']); ?></h5>
+                                                        <?php else: ?>
+                                                            <i class="fas fa-exclamation-triangle text-warning me-2 fa-lg"></i>
+                                                            <h5 class="card-title text-warning mb-0">Alerta #<?php echo htmlspecialchars($alerta['id_alerta']); ?></h5>
+                                                        <?php endif; ?>
                                                     </div>
                                                     <span class="badge badge-estado estado-<?php echo ($alerta['estado'] == 1) ? 'ativo' : 'anulado'; ?>">
                                                         <?php echo ($alerta['estado'] == 1) ? 'Ativo' : 'Anulado'; ?>
@@ -416,11 +525,18 @@
                                                 </div>
                                                 <div class="row">
                                                     <div class="col-sm-12 mb-2">
-                                                        <p class="card-text mb-1"><strong><i class="fas fa-comment me-1"></i>Descrição:</strong> <?php echo htmlspecialchars($alerta['descricao']); ?></p>
+                                                        <p class="card-text mb-1">
+                                                            <strong><i class="fas fa-comment me-1"></i>
+                                                            <?php echo ($tem_login && $_SESSION['tipo_utilizador'] == 3) ? 'Mensagem:' : 'Descrição:'; ?>
+                                                            </strong> 
+                                                            <?php echo htmlspecialchars($alerta['descricao']); ?>
+                                                        </p>
                                                     </div>
+                                                    <?php if ($tem_login && $_SESSION['tipo_utilizador'] != 3): ?>
                                                     <div class="col-sm-6">
                                                         <p class="card-text mb-1"><strong><i class="fas fa-user me-1"></i>Utilizador:</strong> <?php echo htmlspecialchars($alerta['nome_utilizador']); ?> (ID: <?php echo htmlspecialchars($alerta['id_utilizador']); ?>)</p>
                                                     </div>
+                                                    <?php endif; ?>
                                                     <div class="col-sm-6">
                                                         <p class="card-text mb-1"><strong><i class="fas fa-clock me-1"></i>Data/Hora:</strong> <?php echo date('d/m/Y H:i', strtotime($alerta['data_hora'])); ?></p>
                                                     </div>

@@ -2,10 +2,10 @@
     // Inicia sessão
     session_start();
 
-    // Inclui os detalhes da conexão com a base de dados
+    // Include BD
     include 'C:\xampp\htdocs\lpi\Projeto_LPI\basedados\basedados.h';
 
-    // Verifica se o utilizador NÃO está logado
+    // Verifica se o utilizador está autenticado
     if (!isset($_SESSION['id_utilizador'])) {
         header('Location: entrar.php');
         exit();
@@ -27,12 +27,9 @@
 
             // Validação básica: verifica se os campos não estão vazios após trim
             if (empty($novo_nome_proprio) || empty($novo_nome_utilizador) || empty($novo_tipo_utilizador) || empty($novo_id_carteira) || empty($nova_palavra_passe)) {
-                // Redireciona de volta com mensagem de erro se algum campo estiver vazio
                 header('Location: consultar_utilizadores.php?status=error&message=Os campos não podem estar vazios.');
                 exit();
             }
-
-            // --- Atualizar dados do utilizador na base de dados ---
 
             // 3. SQL para atualizar o ID da Viagem
             $sql_bilhete = "UPDATE utilizador SET nome_proprio = ?, nome_utilizador = ?, tipo_utilizador = ?, id_carteira = ?, palavra_passe = ? WHERE id = ?";

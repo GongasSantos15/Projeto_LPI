@@ -1,13 +1,12 @@
 <?php
+    // Iniciar Sessão
+    session_start();
 
     // Include base de dados
     include 'C:\xampp\htdocs\lpi\Projeto_LPI\basedados\basedados.h';
     
     // Include às constantes de utilizadores 
     include 'constUtilizadores.php';
-
-    // Iniciar Sessão
-    session_start();
 
     $mensagem_erro = '';
 
@@ -17,10 +16,10 @@
     // Se o método for POST
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-        // Verificar se os campos não estão vazios (redundante com 'required' no HTML, mas seguro)
+        // Verificar se os campos não estão vazios
         if (isset($_POST["nome_utilizador"]) && isset($_POST["palavra_passe"])) {
 
-            // Dados do formulário (obtidos de forma segura)
+            // Dados do formulário 
             $nome_utilizador = $_POST["nome_utilizador"];
             $palavra_passe_encriptada = md5($_POST['palavra_passe']);
 

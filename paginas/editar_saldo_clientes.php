@@ -1,6 +1,9 @@
 <?php
+
+    // Inicia a Sessão
     session_start();
     
+    // Include BD
     include("../basedados/basedados.h");
 
     // Verificar se o utilizador está autenticado

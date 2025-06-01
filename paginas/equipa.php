@@ -1,7 +1,8 @@
 <?php 
+    // Inicia a Sessão
     session_start();
 
-    // Include conexão à BD
+    // Include conexão à BD e os dados da navbar
     include("../basedados/basedados.h"); 
     include("dados_navbar.php");
 
@@ -29,7 +30,7 @@
     }
     
     if ($conn) {
-        // Para clientes logados (tipo_utilizador == 3)
+        // Para CLIENTES (tipo_utilizador == 3)
         if ($tem_login && $_SESSION['tipo_utilizador'] == 3) {
             $sql_count = "SELECT COUNT(*) as total 
                          FROM alerta a
@@ -48,7 +49,7 @@
                 $stmt_count->close();
             }
         } else if (!$tem_login) {
-            // Para visitantes não logados - verifica também o estado do alerta
+            // Para Visitantes
             $sql_count = "SELECT COUNT(*) as total 
                          FROM alerta a
                          JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
@@ -76,24 +77,21 @@
     <!-- Favicon -->
     <link href="favicon.ico" rel="icon">
 
-    <!-- Google Web Fonts -->
+    <!-- Fontes -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Icon Font Stylesheet -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
 
-    <!-- Libraries Stylesheet -->
+    <!-- Bibliotecas -->
     <link href="lib/animate/animate.min.css" rel="stylesheet">
     <link href="owl.carousel.min.css" rel="stylesheet">
     <link href="tempusdominus-bootstrap-4.min.css" rel="stylesheet" />
 
-    <!-- Customized Bootstrap Stylesheet -->
     <link href="bootstrap.min.css" rel="stylesheet">
 
-    <!-- Template Stylesheet -->
     <link href="style.css" rel="stylesheet">
 
         <style>
@@ -147,15 +145,14 @@
 </head>
 
 <body>
-    <!-- Spinner Start -->
+    <!-- RODA DE CARREGAMENTO -->
     <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
             <span class="sr-only">Loading...</span>
         </div>
     </div>
-    <!-- Spinner End -->
 
-    <!-- Navbar & Hero Start -->
+    <!-- BARRA DE NAVAGAÇÃO -->
     <div class="container-fluid position-relative p-0">
         <nav class="navbar navbar-expand-lg navbar-light px-5 px-lg-5 py-3 py-lg-3">
             <a href="<?php echo htmlspecialchars($pagina_inicial) ?>" class="navbar-brand p-0">
@@ -286,7 +283,7 @@
         </div>
     </div>
 
-    <!-- Footer Start -->
+    <!--INICIO RODAPÉ -->
     <div class="container-fluid bg-dark d-flex justify-content-center text-light footer pt-5 wow fadeIn" data-wow-delay="0.1s">
         <div class="container py-5">
             <div class="row">
@@ -308,9 +305,9 @@
             </div>
         </div>
     </div>
-    <!-- Footer End -->
+    <!-- FIM RODAPÉ -->
 
-    <!-- JavaScript Libraries -->
+    <!-- Scripts JS -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="wow.min.js"></script>
@@ -321,7 +318,6 @@
     <script src="moment-timezone.min.js"></script>
     <script src="tempusdominus-bootstrap-4.min.js"></script>
 
-    <!-- Template Javascript -->
     <script src="main.js"></script>
 </body>
 

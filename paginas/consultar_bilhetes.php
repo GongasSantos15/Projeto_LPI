@@ -466,7 +466,7 @@
                     </div>
 
                     <?php if($_SESSION['tipo_utilizador'] == 3): ?>
-                        <!-- Dropdown dos Bilhetes (Só aparece ao Cliente) -->
+                        
                         <div class="nav-item dropdown">
                             <a href="#" class="nav-link dropdown-toggle" id="ticketsDropdownLink" role="button" aria-expanded="false">
                                 <i class="fa fa-ticket-alt me-2"></i> <?php echo $numero_bilhetes; ?>

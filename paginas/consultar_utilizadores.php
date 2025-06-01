@@ -1,4 +1,5 @@
 <?php
+    // Inicia a Sessão
     session_start();
 
     // Include conexão à BD
@@ -39,7 +40,8 @@
     $filtro_tipo = isset($_GET['filtro_tipo']) ? $_GET['filtro_tipo'] : '';
     $ordenacao = isset($_GET['ordenacao']) ? $_GET['ordenacao'] : 'id_asc';
 
-    $utilizadores = []; // Inicializa a variável utilizadores
+    // Inicializa a variável utilizadores
+    $utilizadores = [];
 
     // Só executa a consulta se houver conexão
     if ($conn) {
@@ -90,27 +92,27 @@
 
         if ($stmt) {
             // Prepara os parâmetros para bind
-            $params = [];
-            $types = '';
+            $parametros = [];
+            $tipos = '';
             
             // Adiciona parâmetros de pesquisa se houver
             if (!empty($pesquisa)) {
                 $termo_pesquisa = "$pesquisa%";
-                $params[] = $termo_pesquisa;
-                $params[] = $termo_pesquisa;
-                $params[] = $pesquisa;
-                $types .= 'sss';
+                $parametros[] = $termo_pesquisa;
+                $parametros[] = $termo_pesquisa;
+                $parametros[] = $pesquisa;
+                $tipos .= 'sss';
             }
             
             // Adiciona parâmetro de filtro por tipo
             if (!empty($filtro_tipo)) {
-                $params[] = $filtro_tipo;
-                $types .= 'i';
+                $parametros[] = $filtro_tipo;
+                $tipos .= 'i';
             }
             
             // Faz bind dos parâmetros se houver
-            if (!empty($params)) {
-                $stmt->bind_param($types, ...$params);
+            if (!empty($parametros)) {
+                $stmt->bind_param($tipos, ...$parametros);
             }
             
             if($stmt->execute()) {
@@ -584,7 +586,7 @@
     <script src="tempusdominus-bootstrap-4.min.js"></script>
     <script src="main.js"></script>
 
-    <!-- Footer Start -->
+    <!-- Começo Rodapé -->
     <div class="container-fluid bg-dark d-flex justify-content-center text-light footer pt-5 wow fadeIn" data-wow-delay="0.1s">
         <div class="container py-5">
             <div class="row">
@@ -606,7 +608,7 @@
             </div>
         </div>
     </div>
-    <!-- Footer End -->
+    <!-- Fim Rodapé -->
 
     <script>
         $(document).ready(function() {

@@ -1,8 +1,11 @@
 <?php
+    // Inicia a Sessão
     session_start();
 
+    // Include BD e dados navbar
     include("../basedados/basedados.h");
     include("dados_navbar.php");
+
 
     if (!isset($_SESSION['id_utilizador'])) {
         header("Location: entrar.php");
@@ -23,27 +26,20 @@
     }
 
     // Determina a página inicial correta baseada no tipo de utilizador
-    $pagina_inicial = 'index.php'; // Página padrão se não tiver login
+    $pagina_inicial = 'index.php';
     if ($tem_login && isset($_SESSION['tipo_utilizador'])) {
         switch ($_SESSION['tipo_utilizador']) {
-            case 1: // Admin
-                $pagina_inicial = 'pagina_inicial_admin.php';
-                break;
-            case 2: // Funcionário
-                $pagina_inicial = 'pagina_inicial_func.php';
-                break;
-            case 3: // Cliente
-                $pagina_inicial = 'pagina_inicial_cliente.php';
-                break;
-            default:
-                $pagina_inicial = 'index.php';
+            case 1: $pagina_inicial = 'pagina_inicial_admin.php'; break;
+            case 2: $pagina_inicial = 'pagina_inicial_func.php'; break;
+            case 3: $pagina_inicial = 'pagina_inicial_cliente.php'; break;
         }
-    }
+    }  
 
+    // Inicializa o array de clientes
     $clientes = [];
 
     if ($conn) {
-        // Para clientes logados (tipo_utilizador == 3)
+        // Para CLIENTES (tipo_utilizador == 3)
         if ($tem_login && $_SESSION['tipo_utilizador'] == 3) {
             $sql_count = "SELECT COUNT(*) as total 
                          FROM alerta a
@@ -62,7 +58,7 @@
                 $stmt_count->close();
             }
         } else if (!$tem_login) {
-            // Para visitantes não logados - verifica também o estado do alerta
+            // Para Visitantes
             $sql_count = "SELECT COUNT(*) as total 
                          FROM alerta a
                          JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
@@ -111,6 +107,7 @@
     }
 ?>
 
+<!------------------------------------------------------------------------------ COMEÇO DO HTML ------------------------------------------------------------------------------->
 <!DOCTYPE html>
 <html lang="pt">
 
@@ -168,6 +165,7 @@
 </head>
 
 <body>
+    <!-- RODA PARA O CARREGAMENTO DA PAGINA -->
     <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
             <span class="sr-only">Loading...</span>
@@ -176,6 +174,7 @@
     
     <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
 
+        <!-- BARRA DE NAVEGAÇÃO -->
         <nav class="navbar navbar-expand-lg navbar-light px-5 px-lg-5 py-3 py-lg-3">
             <a href="<?php echo htmlspecialchars($pagina_inicial) ?>" class="navbar-brand p-0">
                 <h1 class="text-primary m-0"><i class="fa fa-map-marker-alt me-3"></i>FelixBus</h1>
@@ -190,8 +189,8 @@
                     <a href="destinos.php" class="nav-item nav-link">Destinos</a>
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                    
-                    <!-- Link de Alertas - só aparece se houver alertas -->
-                    <?php if ($mostrar_alertas): ?>
+                    <!-- Aba de Alertas - só aparece se houver alertas ou se for admin -->
+                    <?php if ($mostrar_alertas || $tipo_utilizador == 1): ?>
                         <a href="consultar_alertas.php" class="nav-item nav-link position-relative">
                             Alertas
                             <?php if ($numero_alertas_cliente > 0): ?>
@@ -200,6 +199,7 @@
                         </a>
                     <?php endif; ?>
 
+                    <!-- A aba dos Utilizadores só aparece ao administrador e a dos Bilhetes aparece ao administrador e ao funcionario -->
                     <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
                         <?php if (in_array($_SESSION['tipo_utilizador'], [1, 2])): ?>
                             <?php if ($_SESSION['tipo_utilizador'] == 1): ?>
@@ -211,7 +211,7 @@
                 </div>
 
                 <?php if ($tem_login): ?>
-                    <!-- Dropdown da Carteira -->
+                    <!-- Dropdown da Carteira (Contém o valor da carteira e as opções de Adicionar, Remover e Consulta Clientes (admin e funcionario)) -->
                     <div class="nav-item dropdown">
                     <a href="#" class="nav-link dropdown-toggle" id="walletDropdownLink" role="button" aria-expanded="false">
                             <i class="fa fa-wallet me-2"></i> 
@@ -230,7 +230,7 @@
                         </ul>
                     </div>
 
-                    <!-- Dropdown do Utilizador -->
+                    <!-- Dropdown do Utilizador (Contém o nome do utilizador e as opções de Logout e Consultar Dados) -->
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fa fa-user-circle fa-2x me-2"></i>
@@ -247,11 +247,13 @@
             </div>
         </nav>
 
+        <!-- Container Principal -->
         <div class="rounded shadow" style="max-width: 1200px; width: 100%; margin-top: 150px;">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3 class="text-white m-0">Gestão da Carteira dos Clientes</h3>
             </div>
 
+            <!-- Div Mensagens -->
             <?php if (!empty($mensagem_erro)): ?>
                 <div class="alert alert-danger"><?php echo htmlspecialchars($mensagem_erro); ?></div>
             <?php endif; ?>
@@ -268,6 +270,7 @@
                 </script>
             <?php endif; ?>
 
+            <!-- Zona onde é apresentado o saldo de todos os clientes -->
             <?php if (!empty($clientes)): ?>
                 <div class="row g-3">
                     <?php foreach ($clientes as $cliente): ?>
@@ -372,7 +375,7 @@
     <script src="tempusdominus-bootstrap-4.min.js"></script>
     <script src="main.js"></script>
 
-    <!-- Footer Start -->
+    <!-- Começo Rodapé -->
     <div class="container-fluid bg-dark d-flex justify-content-center text-light footer pt-5 wow fadeIn" data-wow-delay="0.1s">
         <div class="container py-5">
             <div class="row">
@@ -394,8 +397,9 @@
             </div>
         </div>
     </div>
-    <!-- Footer End -->
+    <!-- Fim Rodapé -->
     
+    <!-- Scripts JS -->
     <script>
         $(document).ready(function() {
             // Botão de edição - para cada cliente

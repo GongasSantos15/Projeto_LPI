@@ -3,7 +3,8 @@
     // Inicia a sessão
     session_start();
 
-    include 'C:\xampp\htdocs\lpi\Projeto_LPI\basedados\basedados.h';
+    // Include BD, constantes de utilizadores e dados da navbar
+    include '..\basedados\basedados.h';
     include 'constUtilizadores.php';
     include 'dados_navbar.php';
 
@@ -28,7 +29,7 @@
     $numero_alertas_cliente = 0;
 
     // Determina a página inicial correta baseada no tipo de utilizador
-    $pagina_inicial = 'index.php'; // Página padrão se não tiver login
+    $pagina_inicial = 'index.php';
     if ($tem_login && isset($_SESSION['tipo_utilizador'])) {
         switch ($_SESSION['tipo_utilizador']) {
             case 1: // Admin
@@ -46,7 +47,7 @@
     }
 
     if ($conn) {
-        // Para clientes logados (tipo_utilizador == 3)
+        // Para CLIENTE (tipo_utilizador == 3)
         if ($tem_login && $_SESSION['tipo_utilizador'] == 3) {
             $sql_count = "SELECT COUNT(*) as total 
                          FROM alerta a
@@ -65,7 +66,7 @@
                 $stmt_count->close();
             }
         } else if (!$tem_login) {
-            // Para visitantes não logados - verifica também o estado do alerta
+            // Para Visitante
             $sql_count = "SELECT COUNT(*) as total 
                          FROM alerta a
                          JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
@@ -366,7 +367,7 @@
 
         <script src="main.js"></script>
 
-        <!-- Footer Start -->
+        <!-- Começo Rodapé -->
         <div class="container-fluid bg-dark d-flex justify-content-center text-light footer pt-5 wow fadeIn" data-wow-delay="0.1s">
             <div class="container py-5">
                 <div class="row">
@@ -388,7 +389,7 @@
                 </div>
             </div>
         </div>
-        <!-- Footer End -->
+        <!-- Fim Rodapé -->
     </body>
 
 </html>

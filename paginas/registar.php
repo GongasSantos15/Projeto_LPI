@@ -83,12 +83,10 @@
     <!-- Favicon -->
     <link href="favicon.ico" rel="icon">
 
-    <!-- Google Web Fonts -->
+    <!-- Fontes -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
-
-    <!-- Estilos de Fonte -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
 
@@ -97,10 +95,8 @@
     <link href="owl.carousel.min.css" rel="stylesheet">
     <link href="tempusdominus-bootstrap-4.min.css" rel="stylesheet" />
 
-    <!-- Bootstrap -->
     <link href="bootstrap.min.css" rel="stylesheet">
 
-    <!-- Template -->
     <link href="style.css" rel="stylesheet">
 </head>
 
@@ -111,50 +107,49 @@
             <span class="sr-only">Loading...</span>
         </div>
     </div>
-    <!-- Spinner End -->
 
-<!-- Secção de Registo -->
-<div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
-    <div class="p-5 rounded shadow" style="max-width: 700px; width: 100%;">
-        <h3 class="text-center text-white mb-4">Registar</h3>
+    <!-- Secção de Registo -->
+    <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
+        <div class="p-5 rounded shadow" style="max-width: 700px; width: 100%;">
+            <h3 class="text-center text-white mb-4">Registar</h3>
 
-        <form action="registar.php" method="POST">
-            <div class="mb-3">
-                <label for="nome_proprio" class="form-label">Nome Próprio:</label>
-                <input name="nome_proprio" id="nome_proprio" type="text" class="form-control text-dark" required />
-            </div>
-            <div class="mb-3">
-                <label for="nome_utilizador" class="form-label">Nome de Utilizador:</label>
-                <input name="nome_utilizador" id="nome_utilizador" type="text" class="form-control text-dark" required />
-            </div>
-            <div class="mb-3">
-                <label for="palavra_passe" class="form-label">Palavra-passe:</label>
-                <div class="input-group">
-                    <input name="palavra_passe" id="palavra_passe" type="password" class="form-control text-dark" required />
-                    <button class="btn btn-outline-light border-start-0" type="button" id="mostraPalavraPasse">
-                        <i class="fas fa-eye"></i>
-                    </button>
+            <form action="registar.php" method="POST">
+                <div class="mb-3">
+                    <label for="nome_proprio" class="form-label">Nome Próprio:</label>
+                    <input name="nome_proprio" id="nome_proprio" type="text" class="form-control text-dark" required />
                 </div>
-            </div>
-            <div class="mb-3">
-                <label for="confirmar_palavra_passe" class="form-label">Palavra-passe:</label>
-                <div class="input-group">
-                    <input name="confirmar_palavra_passe" id="confirmar_palavra_passe" type="password" class="form-control text-dark" required />
-                    <button class="btn btn-outline-light border-start-0" type="button" id="mostraConfirmarPalavraPasse">
-                        <i class="fas fa-eye"></i>
-                    </button>
+                <div class="mb-3">
+                    <label for="nome_utilizador" class="form-label">Nome de Utilizador:</label>
+                    <input name="nome_utilizador" id="nome_utilizador" type="text" class="form-control text-dark" required />
                 </div>
+                <div class="mb-3">
+                    <label for="palavra_passe" class="form-label">Palavra-passe:</label>
+                    <div class="input-group">
+                        <input name="palavra_passe" id="palavra_passe" type="password" class="form-control text-dark" required />
+                        <button class="btn btn-outline-light border-start-0" type="button" id="mostraPalavraPasse">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="confirmar_palavra_passe" class="form-label">Palavra-passe:</label>
+                    <div class="input-group">
+                        <input name="confirmar_palavra_passe" id="confirmar_palavra_passe" type="password" class="form-control text-dark" required />
+                        <button class="btn btn-outline-light border-start-0" type="button" id="mostraConfirmarPalavraPasse">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="d-flex mt-5 justify-content-center">
+                    <input type="submit" value="Registar" class="btn btn-primary rounded-pill py-2 px-5">
+                </div>
+            </form>
+            <div class="text-center mt-5">
+                <span>Já tem conta? <a href="entrar.php" class="text-info"> Inicie sessão aqui</a></span>
             </div>
-            <div class="d-flex mt-5 justify-content-center">
-                <input type="submit" value="Registar" class="btn btn-primary rounded-pill py-2 px-5">
-            </div>
-        </form>
-        <div class="text-center mt-5">
-            <span>Já tem conta? <a href="entrar.php" class="text-info"> Inicie sessão aqui</a></span>
         </div>
     </div>
-</div>
-<!-- Fim da Secção de Registo -->~
+    <!-- Fim da Secção de Registo -->
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -193,7 +188,7 @@
         });
     </script>
 
-    <!-- Bibliotecas JavaScript -->
+    <!-- Bibliotecas JS -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="wow.min.js"></script>
@@ -204,7 +199,6 @@
     <script src="moment-timezone.min.js"></script>
     <script src="tempusdominus-bootstrap-4.min.js"></script>
 
-    <!-- Template Javascript -->
     <script src="main.js"></script>
 </body>
 

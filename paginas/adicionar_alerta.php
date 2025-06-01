@@ -1,8 +1,13 @@
 <?php
+    // Includes da BD e dos dados da navbar
     include "../basedados/basedados.h";
     include "dados_navbar.php";
 
+    // Incia a sessão
     session_start();
+
+    // Variável do estado ao adicionar o alerta
+    $estado = 1;
 
     // Verificar se é admin
     if (!isset($_SESSION['tipo_utilizador']) || $_SESSION['tipo_utilizador'] != 1) {
@@ -14,7 +19,6 @@
     // Verifica se o utilizador tem o login feito   
     $tem_login = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']); 
     $nome_utilizador = $_SESSION['nome_utilizador'];
-    $estado = 1;
 
     // Determina a página inicial correta baseada no tipo de utilizador
     $pagina_inicial = 'index.php';
@@ -26,7 +30,7 @@
         }
     }
 
-    // Obter lista de utilizadores para o dropdown
+    // 1. Obter lista de utilizadores para o dropdown
     $utilizadores = [];
     $sql_utilizadores = "SELECT id, nome_utilizador FROM utilizador WHERE tipo_utilizador != 1 AND id != ?";
     $stmt_utilizadores = $conn->prepare($sql_utilizadores);
@@ -38,6 +42,7 @@
     }
     $stmt_utilizadores->close();
 
+    // 2. Inserir os dados na tabela alerta (Processar POST)
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $descricao = filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $id_utilizador_alvo = filter_input(INPUT_POST, 'id_utilizador', FILTER_VALIDATE_INT);
@@ -46,7 +51,6 @@
         if (empty($descricao) || $id_utilizador_alvo === false) {
             $_SESSION['mensagem_erro'] = 'Por favor, preencha todos os campos corretamente.';
         } else {
-            // Inserir na tabela alerta
             $sql_alerta = "INSERT INTO alerta (descricao, estado) VALUES (?, ?)";
             $stmt = $conn->prepare($sql_alerta);
             if ($stmt) {
@@ -62,15 +66,15 @@
             // Obter o ID do alerta inserido
             $id_alerta = $conn->insert_id;
 
-            // 3. Inserir na tabela utilizador_alerta
+            // 3. Inserir o alerta na tabela utilizador_alerta
             if ($id_utilizador_alvo == 4) {
-                // Alerta geral para utilizadores do tipo 4
+                // Alerta geral para utilizadores do tipo 4 (Visitante)
                 $sql = "SELECT id FROM utilizador WHERE tipo_utilizador = 4";
                 $result = $conn->query($sql);
 
                 if ($result && $result->num_rows > 0) {
-                    $sql_insert_alerta = "INSERT INTO utilizador_alerta (id_alerta, id_utilizador, data_hora) VALUES (?, ?, NOW())";
-                    $stmt = $conn->prepare($sql_insert_alerta);
+                    $sql_inserir_alerta = "INSERT INTO utilizador_alerta (id_alerta, id_utilizador, data_hora) VALUES (?, ?, NOW())";
+                    $stmt = $conn->prepare($sql_inserri_alerta);
 
                     if ($stmt) {
                         while ($row = $result->fetch_assoc()) {
@@ -88,7 +92,7 @@
                     $_SESSION["mensagem_erro"] = "Não foram encontrados utilizadores com tipo_utilizador = 4.";
                 }
             } else {
-                // Alerta individual
+                // Alerta individual (Para os Restantes Utilizadores)
                 $sql_utilizador_alerta = "INSERT INTO utilizador_alerta (id_alerta, id_utilizador, data_hora) VALUES (?, ?, NOW())";
                 $stmt = $conn->prepare($sql_utilizador_alerta);
                 if ($stmt) {
@@ -109,6 +113,7 @@
     }
 ?>
 
+<!------------------------------------------------------------------------------ COMEÇO DO HTML ------------------------------------------------------------------------------->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -142,10 +147,10 @@
         }
     </style>
 
-    <script src="main.js" defer></script>
 </head>
 
 <body>
+    <!-- RODA PARA O CARREGAMENTO DA PAGINA -->
     <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
             <span class="sr-only">Loading...</span>
@@ -153,6 +158,7 @@
     </div>
     <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
 
+        <!-- BARRA DE NAVEGAÇÃO -->
         <nav class="navbar navbar-expand-lg navbar-light px-5 px-lg-5 py-3 py-lg-3">
                 <a href="<?php echo htmlspecialchars($pagina_inicial) ?>" class="navbar-brand p-0">
                     <h1 class="text-primary m-0"><i class="fa fa-map-marker-alt me-3"></i>FelixBus</h1>
@@ -165,6 +171,7 @@
                         <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                         <a href="consultar_alertas.php" class="nav-item nav-link active">Alertas</a>
 
+                        <!-- A aba dos Utilizadores só aparece ao administrador e a dos Bilhetes aparece ao administrador e ao funcionario -->
                         <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
                             <?php if (in_array($_SESSION['tipo_utilizador'], [1, 2])): ?>
                                 <?php if ($_SESSION['tipo_utilizador'] == 1): ?>
@@ -176,7 +183,7 @@
                     </div>
 
                     <?php if ($tem_login): ?>
-                        <!-- Dropdown da Carteira -->
+                        <!-- Dropdown da Carteira (Contém o valor da carteira e as opções de Adicionar, Remover e Consulta Clientes) -->
                         <div class="nav-item dropdown">
                         <a href="#" class="nav-link dropdown-toggle" id="walletDropdownLink" role="button" aria-expanded="false">
                                 <i class="fa fa-wallet me-2"></i> 
@@ -194,7 +201,7 @@
                         </div>
 
                         <?php if($_SESSION['tipo_utilizador'] == 3): ?>
-                            <!-- Dropdown dos Bilhetes -->
+                            <!-- Dropdown dos Bilhetes (Só aparece ao Cliente) -->
                             <div class="nav-item dropdown">
                                 <a href="#" class="nav-link dropdown-toggle" id="ticketsDropdownLink" role="button" aria-expanded="false">
                                     <i class="fa fa-ticket-alt me-2"></i> <?php echo $numero_bilhetes; ?>
@@ -205,7 +212,7 @@
                             </div>
                         <?php endif; ?>
 
-                        <!-- Dropdown do Utilizador -->
+                        <!-- Dropdown do Utilizador (Contém o nome do utilizador e as opções de Logout e Consultar Dados) -->
                         <div class="nav-item dropdown">
                             <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fa fa-user-circle fa-2x me-2"></i>
@@ -221,14 +228,18 @@
                     <?php endif; ?>
                 </div>
             </nav>
-        <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
+            
+            <!-- Container Principal -->
             <div class="p-5 rounded shadow" style="max-width: 900px; width: 100%;">
                 <div class="d-flex justify-content-center align-items-center mb-4">
                     <h3 class="text-white m-0">Adicionar Alerta</h3>
                 </div>
                 
                 <div class="bg-gradient position-relative w-75 mx-auto mt-5 animated slideInDown">
+
+                    <!-- Formulário com método POST que envia os dados para o adicionar_alerta (esta página) -->
                     <form method="POST" action="adicionar_alerta.php" class="d-flex flex-wrap p-4 rounded text-light justify-content-center" style="gap: 2rem 0.5rem;">
+                        <!-- Formulário contém um select do tipo de utilizador para o qual é para enviar o alerta e uma descrição do mesmo -->
                         <div class="w-100">
                             <label class="form-label">Utilizador Destino:</label>
                             <select name="id_utilizador" class="form-control bg-dark text-light border-primary" required>
@@ -255,7 +266,7 @@
         </div>
     </div>
 
-    <!-- Footer Start -->
+    <!-- Começo Rodapé -->
     <div class="container-fluid bg-dark d-flex justify-content-center text-light footer pt-5 wow fadeIn" data-wow-delay="0.1s">
         <div class="container py-5">
             <div class="row">
@@ -277,8 +288,9 @@
             </div>
         </div>
     </div>
-    <!-- Footer End -->
+    <!-- Fim Rodapé -->
 
+    <!-- Scripts JS -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="wow.min.js"></script>

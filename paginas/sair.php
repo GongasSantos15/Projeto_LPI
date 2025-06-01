@@ -3,7 +3,7 @@
     session_start();
 
     // Remover todas as variáveis de sessão
-    $_SESSION = array();
+    session_unset();
 
     // Destruir a sessão
     session_destroy();

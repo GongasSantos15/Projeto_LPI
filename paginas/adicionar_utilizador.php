@@ -45,6 +45,35 @@
         if (empty($id) || empty($nome_proprio) || empty($nome_utilizador) || empty($palavra_passe) || empty($tipo_utilizador) || empty($id_carteira)) {
             $_SESSION['mensagem_erro'] = 'Por favor, preencha todos os campos.';
         } else {
+            // Verificar se a carteira existe
+            $sql_check_carteira = "SELECT id_carteira FROM carteira WHERE id_carteira = ?";
+            $stmt_check_carteira = $conn->prepare($sql_check_carteira);
+            
+            if ($stmt_check_carteira) {
+                $stmt_check_carteira->bind_param("i", $id_carteira);
+                $stmt_check_carteira->execute();
+                $result_carteira = $stmt_check_carteira->get_result();
+                
+                // Se a carteira não existir, criar uma nova
+                if ($result_carteira->num_rows == 0) {
+                    $sql_insert_carteira = "INSERT INTO carteira (id_carteira, saldo) VALUES (?, 0)";
+                    $stmt_insert_carteira = $conn->prepare($sql_insert_carteira);
+                    
+                    if ($stmt_insert_carteira) {
+                        $stmt_insert_carteira->bind_param("i", $id_carteira);
+                        if (!$stmt_insert_carteira->execute()) {
+                            $_SESSION['mensagem_erro'] = 'Erro ao criar nova carteira: ' . $stmt_insert_carteira->error;
+                            $stmt_insert_carteira->close();
+                            $stmt_check_carteira->close();
+                            header("Location: adicionar_utilizador.php");
+                            exit();
+                        }
+                        $stmt_insert_carteira->close();
+                    }
+                }
+            }
+            $stmt_check_carteira->close();
+
             // Encriptar a palavra-passe DEPOIS da validação
             $palavra_passe_encriptada = md5($palavra_passe);
             
@@ -247,7 +276,8 @@
                             <select name="tipo_utilizador" id="tipo_utilizador" class="form-control bg-dark text-light border-primary" required>
                                 <option value="">Selecione o tipo</option>
                                 <option value="1">Administrador</option>
-                                <option value="2">Utilizador Normal</option>
+                                <option value="2">Funcionário</option>
+                                <option value="3">Cliente</option>
                             </select>
                         </div>
 

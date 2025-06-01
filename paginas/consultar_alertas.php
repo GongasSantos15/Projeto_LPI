@@ -1,11 +1,13 @@
 <?php
+
+    // Inicia a Sessão
     session_start();
 
-    // Include conexão à BD
+    // Include conexão à BD e dados da navbar
     include("../basedados/basedados.h"); 
     include("dados_navbar.php");
 
-    // Variável para armazenar mensagens de erro PHP (conexão, query, etc.)
+    // Variável para armazenar mensagens de erro e de sucesso
     $mensagem_erro = '';
     $mensagem_sucesso = '';
 
@@ -15,22 +17,14 @@
     $numero_alertas_cliente = 0;
     
     // Determina a página inicial correta baseada no tipo de utilizador
-    $pagina_inicial = 'index.php'; // Página padrão se não tiver login
+    $pagina_inicial = 'index.php';
     if ($tem_login && isset($_SESSION['tipo_utilizador'])) {
         switch ($_SESSION['tipo_utilizador']) {
-            case 1: // Admin
-                $pagina_inicial = 'pagina_inicial_admin.php';
-                break;
-            case 2: // Funcionário
-                $pagina_inicial = 'pagina_inicial_func.php';
-                break;
-            case 3: // Cliente
-                $pagina_inicial = 'pagina_inicial_cliente.php';
-                break;
-            default:
-                $pagina_inicial = 'index.php';
+            case 1: $pagina_inicial = 'pagina_inicial_admin.php'; break;
+            case 2: $pagina_inicial = 'pagina_inicial_func.php'; break;
+            case 3: $pagina_inicial = 'pagina_inicial_cliente.php'; break;
         }
-    }   
+    }
 
     // Verifica se há uma mensagem de erro na sessão
     if (isset($_SESSION['mensagem_erro'])) {
@@ -48,13 +42,14 @@
     $pesquisa = isset($_GET['pesquisa']) ? trim($_GET['pesquisa']) : '';
     $ordenacao = isset($_GET['ordenacao']) ? $_GET['ordenacao'] : 'id_asc';
 
-    $alertas = []; // Inicializa a variável alertas
-    $numero_alertas_cliente = 0; // Contador de alertas para cliente
+    // Incialização do array de alertas e do contador de alertas
+    $alertas = [];
+    $numero_alertas_cliente = 0;
 
     if ($conn) {
         // Contagem de alertas baseada no tipo de utilizador
         if ($tem_login && $_SESSION['tipo_utilizador'] == 1) {
-            // Para ADMIN - conta todos os alertas
+            // Para ADMIN - Conta todos os alertas
             $sql_count = "SELECT COUNT(*) as total 
                          FROM alerta a
                          JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta";
@@ -65,7 +60,7 @@
                 $mostrar_alertas = $numero_alertas_cliente > 0;
             }
         } else if ($tem_login && in_array($_SESSION['tipo_utilizador'], [2, 3])) {
-            // Para FUNCIONÁRIOS e CLIENTES - apenas seus alertas
+            // Para FUNCIONÁRIOS e CLIENTES - Apenas os alertas emitidos
             $sql_count = "SELECT COUNT(*) as total 
                          FROM alerta a
                          JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
@@ -83,7 +78,7 @@
                 $stmt_count->close();
             }
         } else if (!$tem_login) {
-            // Para visitantes não logados - verifica também o estado do alerta
+            // Para visitantes - Alertas Gerais
             $sql_count = "SELECT COUNT(*) as total 
                          FROM alerta a
                          JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
@@ -96,9 +91,8 @@
             }
         }
 
-        // Constrói a consulta SQL baseada no tipo de utilizador
+        // ADMIN - Pode visualizar todos os alertas
         if ($tem_login && $_SESSION['tipo_utilizador'] == 1) {
-            // Consulta para ADMIN (pode ver todos os alertas)
             $sql = "SELECT a.id_alerta, a.descricao, a.estado, ua.data_hora, u.nome_utilizador as nome_utilizador, u.id as id_utilizador 
                     FROM alerta a
                     JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
@@ -108,7 +102,7 @@
                 $sql .= " AND (a.descricao LIKE ? OR u.nome_utilizador LIKE ? OR a.id_alerta = ?)";
             }
         } else if ($tem_login && in_array($_SESSION['tipo_utilizador'], [2, 3])) {
-            // Consulta para FUNCIONÁRIOS (tipo 2) e CLIENTES (tipo 3) - apenas seus alertas
+            // Consulta para FUNCIONÁRIOS (tipo 2) e CLIENTES (tipo 3) - Apenas os seus alertas
             $sql = "SELECT a.id_alerta, a.descricao, a.estado, ua.data_hora, u.nome_utilizador as nome_utilizador, u.id as id_utilizador 
                     FROM alerta a
                     JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
@@ -119,7 +113,7 @@
                 $sql .= " AND (a.descricao LIKE ? OR a.id_alerta = ?)";
             }
         } else if (!$tem_login) {
-            // Para visitantes não logados (apenas alertas do utilizador padrão ID=4)
+            // Para visitantes - Alertas Gerais
             $sql = "SELECT a.id_alerta, a.descricao, a.estado, ua.data_hora, u.nome_utilizador as nome_utilizador, u.id as id_utilizador 
                     FROM alerta a
                     JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
@@ -154,13 +148,13 @@
         if ($stmt) {
             // Faz bind dos parâmetros
             if ($tem_login && $_SESSION['tipo_utilizador'] == 1) {
-                // Para ADMIN (pode pesquisar em todos os alertas)
+                // Para ADMIN - Pode pesquisar em todos
                 if (!empty($pesquisa)) {
                     $termo_pesquisa = "%$pesquisa%";
                     $stmt->bind_param("ssi", $termo_pesquisa, $termo_pesquisa, $pesquisa);
                 }
             } else if ($tem_login && in_array($_SESSION['tipo_utilizador'], [2, 3])) {
-                // Para FUNCIONÁRIOS e CLIENTES (apenas seus alertas)
+                // Para FUNCIONÁRIOS e CLIENTES - Só podem pesquisar no seu
                 if (!empty($pesquisa)) {
                     $termo_pesquisa = "%$pesquisa%";
                     $stmt->bind_param("isi", $_SESSION['id_utilizador'], $termo_pesquisa, $pesquisa);
@@ -168,7 +162,7 @@
                     $stmt->bind_param("i", $_SESSION['id_utilizador']);
                 }
             } else if (!$tem_login) {
-                // Para visitantes não logados
+                // Para visitantes
                 if (!empty($pesquisa)) {
                     $termo_pesquisa = "%$pesquisa%";
                     $stmt->bind_param("si", $termo_pesquisa, $pesquisa);
@@ -194,6 +188,7 @@
     }
 ?>
 
+<!------------------------------------------------------------------------------ COMEÇO DO HTML ------------------------------------------------------------------------------->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -368,6 +363,7 @@
 </head>
 
 <body>
+    <!-- RODA PARA O CARREGAMENTO DA PAGINA -->
     <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
             <span class="sr-only">Loading...</span>
@@ -375,6 +371,7 @@
     </div>
     <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
         
+        <!-- BARRA DE NAVEGAÇÃO -->
         <nav class="navbar navbar-expand-lg navbar-light px-5 px-lg-5 py-3 py-lg-3">
             <a href="<?php echo htmlspecialchars($pagina_inicial) ?>" class="navbar-brand p-0">
                 <h1 class="text-primary m-0"><i class="fa fa-map-marker-alt me-3"></i>FelixBus</h1>
@@ -389,11 +386,12 @@
                     <a href="destinos.php" class="nav-item nav-link">Destinos</a>
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                     
-                    <!-- Link de Alertas - só aparece se houver alertas -->
+                    <!-- Link de Alertas -->
                     <a href="consultar_alertas.php" class="nav-item nav-link position-relative active">
                         Alertas
                     </a>
 
+                    <!-- A aba dos Utilizadores só aparece ao administrador e a dos Bilhetes aparece ao administrador e ao funcionario -->
                     <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
                             <?php if (in_array($_SESSION['tipo_utilizador'], [1, 2])): ?>
                                 <?php if ($_SESSION['tipo_utilizador'] == 1): ?>
@@ -405,7 +403,7 @@
                 </div>
 
                 <?php if ($tem_login): ?>
-                    <!-- Dropdown da Carteira -->
+                     <!-- Dropdown da Carteira (Contém o valor da carteira e as opções de Adicionar, Remover e Consulta Clientes (admin e funcionario)) -->
                     <div class="nav-item dropdown">
                     <a href="#" class="nav-link dropdown-toggle" id="walletDropdownLink" role="button" aria-expanded="false">
                             <i class="fa fa-wallet me-2"></i> 
@@ -422,7 +420,7 @@
                         </ul>
                     </div>
 
-                    <!-- Dropdown dos Bilhetes -->
+                    <!-- Dropdown dos Bilhetes (Só aparece ao Cliente) -->
                     <?php if ($_SESSION['tipo_utilizador'] == 3): ?>
                         <div class="nav-item dropdown">
                             <a href="#" class="nav-link dropdown-toggle" id="ticketsDropdownLink" role="button" aria-expanded="false">
@@ -434,7 +432,7 @@
                         </div>
                     <?php endif; ?>
 
-                    <!-- Dropdown do Utilizador -->
+                    <!-- Dropdown do Utilizador (Contém o nome do utilizador e as opções de Logout e Consultar Dados) -->
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fa fa-user-circle fa-2x me-2"></i>
@@ -451,6 +449,7 @@
             </div>
         </nav>
 
+        <!-- Container Principal -->
         <div class="rounded shadow" style="max-width: 1200px; width: 100%; margin-top: 150px;">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <?php if ($tem_login && $_SESSION['tipo_utilizador'] == 3): ?>
@@ -460,12 +459,14 @@
                 <?php endif; ?>
             </div>
             
+            <!-- Div Adicionar Alerta -->
             <?php if (isset($_SESSION['tipo_utilizador']) && $_SESSION['tipo_utilizador'] == 1): ?>
                 <div class="text-center my-5">
                     <h5 class="text-white">Pretende adicionar um novo alerta? <a href="adicionar_alerta.php" class="text-info"> Clique aqui</a></h5>
                 </div>
             <?php endif; ?>
 
+            <!-- Div Mensagens -->
             <?php if (!empty($mensagem_erro)): ?>
                 <div class="alert alert-danger"><?php echo htmlspecialchars($mensagem_erro); ?></div>
             <?php endif; ?>
@@ -596,6 +597,7 @@
                                         <div id="formulario-edicao-<?php echo $alerta['id_alerta']; ?>" class="formulario-edicao" style="display: none;">
                                             <hr class="text-white my-4">
                                             <form action="editar_alerta.php" method="POST">
+                                                <!-- Formulário com opção para modificar os campos do alerta -->
                                                 <input type="hidden" name="id_alerta" value="<?php echo htmlspecialchars($alerta['id_alerta']); ?>">
                                                 <input type="hidden" name="id_utilizador" value="<?php echo htmlspecialchars($alerta['id_utilizador']); ?>">
                                                 <div class="row">
@@ -646,18 +648,7 @@
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="wow.min.js"></script>
-    <script src="easing.min.js"></script>
-    <script src="waypoints.min.js"></script>
-    <script src="owl.carousel.min.js"></script>
-    <script src="moment.min.js"></script>
-    <script src="moment-timezone.min.js"></script>
-    <script src="tempusdominus-bootstrap-4.min.js"></script>
-    <script src="main.js"></script>
-
-    <!-- Footer Start -->
+    <!-- Começo Rodapé -->
     <div class="container-fluid bg-dark d-flex justify-content-center text-light footer pt-5 wow fadeIn" data-wow-delay="0.1s">
         <div class="container py-5">
             <div class="row">
@@ -679,7 +670,20 @@
             </div>
         </div>
     </div>
-    <!-- Footer End -->
+    <!-- Fim Rodapé -->
+
+    <!-- Scripts JS -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="wow.min.js"></script>
+    <script src="easing.min.js"></script>
+    <script src="waypoints.min.js"></script>
+    <script src="owl.carousel.min.js"></script>
+    <script src="moment.min.js"></script>
+    <script src="moment-timezone.min.js"></script>
+    <script src="tempusdominus-bootstrap-4.min.js"></script>
+    <script src="main.js"></script>
+
 
     <?php if (isset($_SESSION['tipo_utilizador']) && $_SESSION['tipo_utilizador'] == 1): ?>
         <script>

@@ -1,14 +1,18 @@
 <?php
+    // Inicia a Sessão
     session_start();
 
+    // Include BD e dados da navbar
     include("../basedados/basedados.h");
     include("dados_navbar.php");
 
+    // Se não tem sessão, redireciona
     if (!isset($_SESSION['id_utilizador'])) {
         header("Location: entrar.php");
         exit();
     }   
 
+    // Variáveis de mensagens
     $mensagem_erro = '';
     $mensagem_sucesso = '';
 
@@ -25,28 +29,20 @@
 
     $e_admin = isset($_SESSION['tipo_utilizador']) && $_SESSION['tipo_utilizador'] == 1;
     $e_funcionario = isset($_SESSION['tipo_utilizador']) && $_SESSION['tipo_utilizador'] == 2;
-    $eh_cliente = isset($_SESSION['tipo_utilizador']) && $_SESSION['tipo_utilizador'] == 3;
+    $e_cliente = isset($_SESSION['tipo_utilizador']) && $_SESSION['tipo_utilizador'] == 3;
 
     // Determina a página inicial correta baseada no tipo de utilizador
-    $pagina_inicial = 'index.php'; // Página padrão se não tiver login
+    $pagina_inicial = 'index.php';
     if ($tem_login && isset($_SESSION['tipo_utilizador'])) {
         switch ($_SESSION['tipo_utilizador']) {
-            case 1: // Admin
-                $pagina_inicial = 'pagina_inicial_admin.php';
-                break;
-            case 2: // Funcionário
-                $pagina_inicial = 'pagina_inicial_func.php';
-                break;
-            case 3: // Cliente
-                $pagina_inicial = 'pagina_inicial_cliente.php';
-                break;
-            default:
-                $pagina_inicial = 'index.php';
+            case 1: $pagina_inicial = 'pagina_inicial_admin.php'; break;
+            case 2: $pagina_inicial = 'pagina_inicial_func.php'; break;
+            case 3: $pagina_inicial = 'pagina_inicial_cliente.php'; break;
         }
     }
 
     if ($conn) {
-        // Para clientes logados (tipo_utilizador == 3)
+        // Para CLIENTE (tipo_utilizador == 3)
         if ($tem_login && $_SESSION['tipo_utilizador'] == 3) {
             $sql_count = "SELECT COUNT(*) as total 
                          FROM alerta a
@@ -65,7 +61,7 @@
                 $stmt_count->close();
             }
         } else if (!$tem_login) {
-            // Para visitantes não logados - verifica também o estado do alerta
+            // Para VISITANTE
             $sql_count = "SELECT COUNT(*) as total 
                          FROM alerta a
                          JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
@@ -110,9 +106,9 @@
                     JOIN
                         utilizador u ON b.id_utilizador = u.id
                     WHERE
-                        u.tipo_utilizador = 3"; // Apenas clientes
+                        u.tipo_utilizador = 3";
         } else {
-            // Cliente vê apenas seus bilhetes
+            // Cliente vê apenas os seus bilhetes
             $id_utilizador = $_SESSION['id_utilizador'];
             $sql = "SELECT
                         b.id AS id_bilhete,
@@ -148,10 +144,11 @@
         }
         
         // Adiciona condição para bilhetes ativos (apenas para cliente)
-        if ($eh_cliente) {
+        if ($e_cliente) {
             $sql .= " AND b.estado = 1";
         }
 
+        // Switch de ordenação
         switch ($ordenacao) {
             case 'id_asc':
                 $sql .= " ORDER BY b.id ASC";
@@ -179,40 +176,40 @@
 
         if ($stmt) {
             // Prepara os parâmetros para bind
-            $params = [];
-            $types = '';
+            $parametros = [];
+            $tipos = '';
             
-            if ($eh_cliente) {
-                $params[] = $id_utilizador;
-                $types .= 'i';
+            if ($e_cliente) {
+                $parametros[] = $id_utilizador;
+                $tipos .= 'i';
             }
             
             // Adiciona parâmetros de pesquisa se houver
             if (!empty($pesquisa)) {
                 $termo_pesquisa = "%$pesquisa%";
                 if ($e_admin || $e_funcionario) {
-                    $params[] = $termo_pesquisa;
-                    $params[] = $termo_pesquisa;
-                    $params[] = $termo_pesquisa;
-                    $params[] = $termo_pesquisa;
-                    $types .= 'ssss';
+                    $parametros[] = $termo_pesquisa;
+                    $parametros[] = $termo_pesquisa;
+                    $parametros[] = $termo_pesquisa;
+                    $parametros[] = $termo_pesquisa;
+                    $tipos .= 'ssss';
                 } else {
-                    $params[] = $termo_pesquisa;
-                    $params[] = $termo_pesquisa;
-                    $params[] = $termo_pesquisa;
-                    $types .= 'sss';
+                    $parametros[] = $termo_pesquisa;
+                    $parametros[] = $termo_pesquisa;
+                    $parametros[] = $termo_pesquisa;
+                    $tipos .= 'sss';
                 }
             }
             
             // Adiciona parâmetro de filtro por cliente
             if (($e_admin || $e_funcionario) && !empty($filtro_cliente)) {
-                $params[] = $filtro_cliente;
-                $types .= 'i';
+                $parametros[] = $filtro_cliente;
+                $tipos .= 'i';
             }
             
             // Faz bind dos parâmetros se houver
-            if (!empty($params)) {
-                $stmt->bind_param($types, ...$params);
+            if (!empty($parametros)) {
+                $stmt->bind_param($tipos, ...$parametros);
             }
             
             if($stmt->execute()) {
@@ -231,9 +228,9 @@
         $clientes = [];
         if ($conn && ($e_admin || $e_funcionario)) {
             $sql_clientes = "SELECT id, nome_utilizador FROM utilizador WHERE tipo_utilizador = 3 ORDER BY nome_proprio ASC";
-            $result = $conn->query($sql_clientes);
-            if ($result) {
-                $clientes = $result->fetch_all(MYSQLI_ASSOC);
+            $resultado = $conn->query($sql_clientes);
+            if ($resultado) {
+                $clientes = $resultado->fetch_all(MYSQLI_ASSOC);
             }
         }
         
@@ -243,6 +240,7 @@
     }
 ?>
 
+<!------------------------------------------------------------------------------ COMEÇO DO HTML ------------------------------------------------------------------------------->
 <!DOCTYPE html>
 <html lang="pt">
 
@@ -402,6 +400,7 @@
 </head>
 
 <body>
+    <!-- RODA PARA O CARREGAMENTO DA PAGINA -->
     <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
             <span class="sr-only">Loading...</span>
@@ -410,6 +409,7 @@
     
     <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
 
+        <!-- BARRA DE NAVEGAÇÃO -->
         <nav class="navbar navbar-expand-lg navbar-light px-5 px-lg-5 py-3 py-lg-3">
             <a href="<?php echo htmlspecialchars($pagina_inicial) ?>" class="navbar-brand p-0">
                 <h1 class="text-primary m-0"><i class="fa fa-map-marker-alt me-3"></i>FelixBus</h1>
@@ -424,7 +424,7 @@
                     <a href="destinos.php" class="nav-item nav-link">Destinos</a>
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                     
-                    <!-- Link de Alertas - só aparece se houver alertas -->
+                    <!-- Aba de Alertas - só aparece se houver alertas ou se for admin -->
                     <?php if ($mostrar_alertas || $_SESSION['tipo_utilizador'] == 1): ?>
                         <a href="consultar_alertas.php" class="nav-item nav-link position-relative">
                             Alertas
@@ -434,6 +434,7 @@
                         </a>
                     <?php endif; ?>
 
+                    <!-- A aba dos Utilizadores só aparece ao administrador e a dos Bilhetes aparece ao administrador e ao funcionario -->
                     <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
                         <?php if (in_array($_SESSION['tipo_utilizador'], [1, 2])): ?>
                             <?php if ($_SESSION['tipo_utilizador'] == 1): ?>
@@ -445,7 +446,7 @@
                 </div>
 
                 <?php if ($tem_login): ?>
-                    <!-- Dropdown da Carteira -->
+                    <!-- Dropdown da Carteira (Contém o valor da carteira e as opções de Adicionar, Remover e Consulta Clientes (admin e funcionario)) -->
                     <div class="nav-item dropdown">
                        <a href="#" class="nav-link dropdown-toggle" id="walletDropdownLink" role="button" aria-expanded="false">
                             <i class="fa fa-wallet me-2"></i> 
@@ -465,7 +466,7 @@
                     </div>
 
                     <?php if($_SESSION['tipo_utilizador'] == 3): ?>
-                        <!-- Dropdown dos Bilhetes -->
+                        <!-- Dropdown dos Bilhetes (Só aparece ao Cliente) -->
                         <div class="nav-item dropdown">
                             <a href="#" class="nav-link dropdown-toggle" id="ticketsDropdownLink" role="button" aria-expanded="false">
                                 <i class="fa fa-ticket-alt me-2"></i> <?php echo $numero_bilhetes; ?>
@@ -476,7 +477,7 @@
                         </div>
                     <?php endif; ?>
 
-                    <!-- Dropdown do Utilizador -->
+                    <!-- Dropdown do Utilizador (Contém o nome do utilizador e as opções de Logout e Consultar Dados) -->
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fa fa-user-circle fa-2x me-2"></i>
@@ -493,6 +494,7 @@
             </div>
         </nav>
 
+        <!-- Container Principal -->
         <div class="rounded shadow" style="max-width: 1200px; width: 100%; margin-top: 150px;">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3 class="text-white m-0">
@@ -654,6 +656,7 @@
                                         <div id="formulario-edicao-<?php echo $bilhete['id_bilhete']; ?>" class="formulario-edicao" style="display: none;">
                                             <hr class="text-white my-4">
                                             <form action="editar_bilhete.php" method="GET">
+                                                <!-- Formulário com opção para modificar os campos dos bilhetes -->
                                                 <input type="hidden" name="id_bilhete" value="<?php echo htmlspecialchars($bilhete['id_bilhete']); ?>">
                                                 
                                                 <div class="row">
@@ -710,6 +713,8 @@
                     <div class="mb-4">
                         <i class="fas fa-ticket-alt text-light" style="font-size: 4rem; opacity: 0.5;"></i>
                     </div>
+
+                    <!-- Se não apresentar bilhetes -->
                     <?php if ($e_admin || $e_funcionario): ?>
                         <?php if (!empty($pesquisa) || !empty($filtro_cliente)): ?>
                             <p class="text-center text-white fs-5 mb-3">Nenhum bilhete encontrado com os filtros aplicados</p>
@@ -725,18 +730,7 @@
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="wow.min.js"></script>
-    <script src="easing.min.js"></script>
-    <script src="waypoints.min.js"></script>
-    <script src="owl.carousel.min.js"></script>
-    <script src="moment.min.js"></script>
-    <script src="moment-timezone.min.js"></script>
-    <script src="tempusdominus-bootstrap-4.min.js"></script>
-    <script src="main.js"></script>
-
-    <!-- Footer Start -->
+    <!-- Começo Rodapé -->
     <div class="container-fluid bg-dark d-flex justify-content-center text-light footer pt-5 wow fadeIn" data-wow-delay="0.1s">
         <div class="container py-5">
             <div class="row">
@@ -758,7 +752,19 @@
             </div>
         </div>
     </div>
-    <!-- Footer End -->
+     <!-- Fim Rodapé -->
+
+     <!-- Scripts JS -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="wow.min.js"></script>
+    <script src="easing.min.js"></script>
+    <script src="waypoints.min.js"></script>
+    <script src="owl.carousel.min.js"></script>
+    <script src="moment.min.js"></script>
+    <script src="moment-timezone.min.js"></script>
+    <script src="tempusdominus-bootstrap-4.min.js"></script>
+    <script src="main.js"></script>
     
     <script>
         function carregarDistritosBilhete(bilheteId, origemAtual, destinoAtual) {

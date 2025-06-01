@@ -1,17 +1,23 @@
 <?php
+    // Inicia a Sessão
     session_start();
+
+    // Include BD
     include("../basedados/basedados.h");
 
+    // Se não existir sessão redirecionar para a página de login
     if (!isset($_SESSION['id_utilizador'])) {
         header("Location: entrar.php");
         exit();
     }
 
+
+    // Processa os dados do bilhete (Processa POST)
     if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id_bilhete'])) {
         $id_bilhete = $_POST['id_bilhete'];
         $id_utilizador = $_POST['id_utilizador'];
 
-        // Verifica se o bilhete pertence ao usuário
+        // Verifica se o bilhete pertence ao utilizador
         $sql_anular = "SELECT id FROM bilhete WHERE id = ? AND estado = 1";
         $stmt_anular = $conn->prepare($sql_anular);
         $stmt_anular->bind_param("i", $id_bilhete);

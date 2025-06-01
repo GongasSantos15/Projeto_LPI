@@ -183,7 +183,7 @@
                     </div>
 
                     <?php if ($tem_login): ?>
-                        <!-- Dropdown da Carteira (Contém o valor da carteira e as opções de Adicionar, Remover e Consulta Clientes) -->
+                        <!-- Dropdown da Carteira (Contém o valor da carteira e as opções de Adicionar, Remover e Consulta Clientes (admin e funcionario)) -->
                         <div class="nav-item dropdown">
                         <a href="#" class="nav-link dropdown-toggle" id="walletDropdownLink" role="button" aria-expanded="false">
                                 <i class="fa fa-wallet me-2"></i> 
@@ -200,8 +200,8 @@
                             </ul>
                         </div>
 
+                        <!-- Dropdown dos Bilhetes (Só aparece ao Cliente) -->
                         <?php if($_SESSION['tipo_utilizador'] == 3): ?>
-                            <!-- Dropdown dos Bilhetes (Só aparece ao Cliente) -->
                             <div class="nav-item dropdown">
                                 <a href="#" class="nav-link dropdown-toggle" id="ticketsDropdownLink" role="button" aria-expanded="false">
                                     <i class="fa fa-ticket-alt me-2"></i> <?php echo $numero_bilhetes; ?>

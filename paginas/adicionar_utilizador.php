@@ -1,7 +1,9 @@
 <?php
+    // Includes da BD e dos dados da navbar
     include "../basedados/basedados.h";
     include "dados_navbar.php";
 
+    // Inicia a sessão
     session_start();
 
     // Verificar se é admin
@@ -15,24 +17,17 @@
     $tem_login = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']); 
     $nome_utilizador = $_SESSION['nome_utilizador'];
 
-    // Determina a página inicial correta baseada no tipo de utilizador
-    $pagina_inicial = 'index.php'; // Página padrão se não tiver login
+   // Determina a página inicial correta baseada no tipo de utilizador
+    $pagina_inicial = 'index.php';
     if ($tem_login && isset($_SESSION['tipo_utilizador'])) {
         switch ($_SESSION['tipo_utilizador']) {
-            case 1: // Admin
-                $pagina_inicial = 'pagina_inicial_admin.php';
-                break;
-            case 2: // Funcionário
-                $pagina_inicial = 'pagina_inicial_func.php';
-                break;
-            case 3: // Cliente
-                $pagina_inicial = 'pagina_inicial_cliente.php';
-                break;
-            default:
-                $pagina_inicial = 'index.php';
+            case 1: $pagina_inicial = 'pagina_inicial_admin.php'; break;
+            case 2: $pagina_inicial = 'pagina_inicial_func.php'; break;
+            case 3: $pagina_inicial = 'pagina_inicial_cliente.php'; break;
         }
     }
 
+    // Obter os dados do formulário (Processa POST)
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
         $nome_proprio = filter_input(INPUT_POST, 'nome_proprio', FILTER_SANITIZE_STRING);
@@ -45,17 +40,17 @@
         if (empty($id) || empty($nome_proprio) || empty($nome_utilizador) || empty($palavra_passe) || empty($tipo_utilizador) || empty($id_carteira)) {
             $_SESSION['mensagem_erro'] = 'Por favor, preencha todos os campos.';
         } else {
-            // Verificar se a carteira existe
-            $sql_check_carteira = "SELECT id_carteira FROM carteira WHERE id_carteira = ?";
-            $stmt_check_carteira = $conn->prepare($sql_check_carteira);
+            // 1. Verificar se a carteira existe
+            $sql_verifica_carteira = "SELECT id_carteira FROM carteira WHERE id_carteira = ?";
+            $stmt_verifica_carteira = $conn->prepare($sql_verifica_carteira);
             
-            if ($stmt_check_carteira) {
-                $stmt_check_carteira->bind_param("i", $id_carteira);
-                $stmt_check_carteira->execute();
-                $result_carteira = $stmt_check_carteira->get_result();
+            if ($stmt_verifica_carteira) {
+                $stmt_verifica_carteira->bind_param("i", $id_carteira);
+                $stmt_verifica_carteira->execute();
+                $resultado_carteira = $stmt_verifica_carteira->get_result();
                 
-                // Se a carteira não existir, criar uma nova
-                if ($result_carteira->num_rows == 0) {
+                // 2. Se a carteira não existir, criar uma nova
+                if ($resultado_carteira->num_rows == 0) {
                     $sql_insert_carteira = "INSERT INTO carteira (id_carteira, saldo) VALUES (?, 0)";
                     $stmt_insert_carteira = $conn->prepare($sql_insert_carteira);
                     
@@ -64,7 +59,7 @@
                         if (!$stmt_insert_carteira->execute()) {
                             $_SESSION['mensagem_erro'] = 'Erro ao criar nova carteira: ' . $stmt_insert_carteira->error;
                             $stmt_insert_carteira->close();
-                            $stmt_check_carteira->close();
+                            $stmt_verifica_carteira->close();
                             header("Location: adicionar_utilizador.php");
                             exit();
                         }
@@ -72,42 +67,42 @@
                     }
                 }
             }
-            $stmt_check_carteira->close();
+            $stmt_verifica_carteira->close();
 
-            // Encriptar a palavra-passe DEPOIS da validação
+            // 3. Encriptar a palavra-passe DEPOIS da validação
             $palavra_passe_encriptada = md5($palavra_passe);
             
-            // Verificar se o ID ou nome de utilizador já existem
-            $sql_check = "SELECT id FROM utilizador WHERE id = ? OR nome_utilizador = ?";
-            $stmt_check = $conn->prepare($sql_check);
+            // 4. Verificar se o ID ou nome de utilizador já existem
+            $sql_verifica_utilizador = "SELECT id FROM utilizador WHERE id = ? OR nome_utilizador = ?";
+            $stmt_verifica_utilizador = $conn->prepare($sql_verifica_utilizador);
             
-            if ($stmt_check) {
-                $stmt_check->bind_param("is", $id, $nome_utilizador);
-                $stmt_check->execute();
-                $result = $stmt_check->get_result();
+            if ($stmt_verifica_utilizador) {
+                $stmt_verifica_utilizador->bind_param("is", $id, $nome_utilizador);
+                $stmt_verifica_utilizador->execute();
+                $resultado = $stmt_verifica_utilizador->get_result();
                 
-                if ($result->num_rows > 0) {
+                if ($resultado->num_rows > 0) {
                     $_SESSION['mensagem_erro'] = 'ID ou nome de utilizador já existem!';
                 } else {
-                    // Inserir o utilizador na base de dados
-                    $sql = "INSERT INTO utilizador (id, nome_proprio, nome_utilizador, palavra_passe, tipo_utilizador, id_carteira) VALUES (?, ?, ?, ?, ?, ?)";
-                    $stmt = $conn->prepare($sql);
+                    // 5. Inserir o utilizador na base de dados
+                    $sql_inserir_utilizador = "INSERT INTO utilizador (id, nome_proprio, nome_utilizador, palavra_passe, tipo_utilizador, id_carteira) VALUES (?, ?, ?, ?, ?, ?)";
+                    $stmt_inserir_utilizador = $conn->prepare($sql_inserir_utilizador);
 
-                    if ($stmt) {
-                        $stmt->bind_param("isssii", $id, $nome_proprio, $nome_utilizador, $palavra_passe_encriptada, $tipo_utilizador, $id_carteira);
-                        if ($stmt->execute()) {
+                    if ($stmt_inserir_utilizador) {
+                        $stmt_inserir_utilizador->bind_param("isssii", $id, $nome_proprio, $nome_utilizador, $palavra_passe_encriptada, $tipo_utilizador, $id_carteira);
+                        if ($stmt_inserir_utilizador->execute()) {
                             $_SESSION['mensagem_sucesso'] = 'Utilizador adicionado com sucesso!';
                             header("Location: consultar_utilizadores.php");
-                            exit(); // Importante: sempre usar exit() após header redirect
+                            exit();
                         } else {
-                            $_SESSION['mensagem_erro'] = 'Erro ao adicionar o utilizador: ' . $stmt->error; // Corrigido: $stmt->error em vez de $stmt->$connect_error
+                            $_SESSION['mensagem_erro'] = 'Erro ao adicionar o utilizador: ' . $stmt_inserir_utilizador->error;
                         }
-                        $stmt->close();
+                        $stmt_inserir_utilizador->close();
                     } else {
-                        $_SESSION['mensagem_erro'] = 'Erro ao preparar a consulta: ' . $conn->$connect_error; // Corrigido: $conn->error em vez de $conn->$connect_error
+                        $_SESSION['mensagem_erro'] = 'Erro ao preparar a consulta: ' . $conn->$connect_error;
                     }
                 }
-                $stmt_check->close();
+                $stmt_verifica_utilizador->close();
             } else {
                 $_SESSION['mensagem_erro'] = 'Erro ao verificar utilizador: ' . $conn->$connect_error;
             }
@@ -115,6 +110,7 @@
     }
 ?>
 
+<!------------------------------------------------------------------------------ COMEÇO DO HTML ------------------------------------------------------------------------------->
 <!DOCTYPE html>
 <html lang="pt">
 
@@ -147,17 +143,17 @@
             display: block;
         }
     </style>
-
-    <script src="main.js" defer></script>
 </head>
 
 <body>
+    <!-- RODA PARA O CARREGAMENTO DA PAGINA -->
     <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
             <span class="sr-only">Loading...</span>
         </div>
     </div>
     <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
+        <!-- BARRA DE NAVEGAÇÃO -->
         <nav class="navbar navbar-expand-lg navbar-light px-5 px-lg-5 py-3 py-lg-3">
             <a href="<?php echo htmlspecialchars($pagina_inicial) ?>" class="navbar-brand p-0">
                 <h1 class="text-primary m-0"><i class="fa fa-map-marker-alt me-3"></i>FelixBus</h1>
@@ -173,6 +169,7 @@
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                     <a href="consultar_alertas.php" class="nav-item nav-link">Alertas</a>
 
+                     <!-- A aba dos Utilizadores só aparece ao administrador e a dos Bilhetes aparece ao administrador e ao funcionario -->
                     <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
                         <?php if (in_array($_SESSION['tipo_utilizador'], [1, 2])): ?>
                             <?php if ($_SESSION['tipo_utilizador'] == 1): ?>
@@ -184,7 +181,7 @@
                 </div>
 
                 <?php if ($tem_login): ?>
-                    <!-- Dropdown da Carteira -->
+                     <!-- Dropdown da Carteira (Contém o valor da carteira e as opções de Adicionar, Remover e Consulta Clientes (admin e funcionario)) -->
                     <div class="nav-item dropdown">
                     <a href="#" class="nav-link dropdown-toggle" id="walletDropdownLink" role="button" aria-expanded="false">
                             <i class="fa fa-wallet me-2"></i> 
@@ -202,7 +199,7 @@
                     </div>
 
                     <?php if($_SESSION['tipo_utilizador'] == 3): ?>
-                        <!-- Dropdown dos Bilhetes -->
+                        <!-- Dropdown dos Bilhetes (Só aparece ao Cliente) -->
                         <div class="nav-item dropdown">
                             <a href="#" class="nav-link dropdown-toggle" id="ticketsDropdownLink" role="button" aria-expanded="false">
                                 <i class="fa fa-ticket-alt me-2"></i> <?php echo $numero_bilhetes; ?>
@@ -213,7 +210,7 @@
                         </div>
                     <?php endif; ?>
 
-                    <!-- Dropdown do Utilizador -->
+                    <!-- Dropdown do Utilizador (Contém o nome do utilizador e as opções de Logout e Consultar Dados) -->
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fa fa-user-circle fa-2x me-2"></i>
@@ -229,14 +226,14 @@
                 <?php endif; ?>
             </div>
         </nav>
-
-        <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
+            
+             <!-- Container Principal -->
             <div class="p-5 rounded shadow" style="max-width: 900px; width: 100%;">
                 <div class="d-flex justify-content-center align-items-center mb-4">
                     <h3 class="text-white m-0">Adicionar Utilizadores</h3>
                 </div>
 
-                <!-- Mostrar mensagens de erro ou sucesso -->
+                <!-- Div Mensagens -->
                 <?php if (isset($_SESSION['mensagem_erro'])): ?>
                     <div class="alert alert-danger text-center">
                         <?php echo $_SESSION['mensagem_erro']; unset($_SESSION['mensagem_erro']); ?>
@@ -250,7 +247,9 @@
                 <?php endif; ?>
 
                 <div class="bg-gradient position-relative w-100 mx-auto mt-5 animated slideInDown">
+                    <!-- Formulário com método POST que envia os dados para o adicionar_utilizador -->
                     <form method="POST" action="adicionar_utilizador.php" class="d-flex flex-wrap p-4 rounded text-light justify-content-center" style="gap: 2rem 0.5rem;">
+                        <!-- Formulário com opção para inserir os diversos campos do utilizador -->
                         <div class="me-4">
                             <label class="form-label">ID do Utilizador:</label>
                             <input type="number" name="id" id="id" class="form-control bg-dark text-light border-primary" placeholder="Insira o ID do utilizador" required />
@@ -295,7 +294,7 @@
         </div>
     </div>
 
-    <!-- Footer Start -->
+    <!-- Começo Rodapé -->
     <div class="container-fluid bg-dark d-flex justify-content-center text-light footer pt-5 wow fadeIn" data-wow-delay="0.1s">
         <div class="container py-5">
             <div class="row">
@@ -317,8 +316,9 @@
             </div>
         </div>
     </div>
-    <!-- Footer End -->
+    <!-- Fim Rodapé -->
 
+    <!-- Scripts JS -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="wow.min.js"></script>

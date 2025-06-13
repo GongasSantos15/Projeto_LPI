@@ -1,6 +1,6 @@
 <?php
     include 'C:\xampp\htdocs\lpi\Projeto_LPI\basedados\basedados.h';
-    include 'constUtilizadores.php';
+    include 'const_utilizadores.php';
 
     session_start();
 

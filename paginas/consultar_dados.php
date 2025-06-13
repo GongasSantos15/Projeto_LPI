@@ -360,8 +360,8 @@
                                                     </label>
                                                     <input name="palavra_passe" id="palavra_passe" type="text" 
                                                            class="text-dark form-control" 
-                                                           value="" 
-                                                           required />
+                                                           value=""
+                                                    />
                                                 </div>
                                             </div>
                                         </div>

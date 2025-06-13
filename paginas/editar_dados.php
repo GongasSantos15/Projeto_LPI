@@ -18,7 +18,7 @@
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Verifica se os campos 'id_utilizador', 'nome' e 'nome-completo' foram enviados no POST
-        if (isset($_POST['id_utilizador'], $_POST['nome'], $_POST['nome-proprio']) && $_POST['id_utilizador'] == $id_utilizador && $_POST['palavra_passe']) {
+        if (isset($_POST['id_utilizador'], $_POST['nome'], $_POST['nome-proprio']) && $_POST['id_utilizador'] == $id_utilizador) {
 
             // Obtém os novos dados do utilizador do POST
             $novo_nome = trim($_POST['nome']);
@@ -26,7 +26,7 @@
             $nova_palavra_passe = trim(md5($_POST['palavra_passe']));
 
             // Validação básica: verifica se os campos não estão vazios após trim
-            if (empty($novo_nome) || empty($novo_nome_proprio) || empty($nova_palavra_passe)) {
+            if (empty($novo_nome) || empty($novo_nome_proprio)) {
                 // Redireciona de volta com mensagem de erro se algum campo estiver vazio
                 header('Location: consultar_dados.php?status=error&message=Os campos não podem estar vazios.');
                 exit();

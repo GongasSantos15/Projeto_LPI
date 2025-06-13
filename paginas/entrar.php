@@ -6,7 +6,7 @@
     include 'C:\xampp\htdocs\lpi\Projeto_LPI\basedados\basedados.h';
     
     // Include às constantes de utilizadores 
-    include 'constUtilizadores.php';
+    include 'const_utilizadores.php';
 
     $mensagem_erro = '';
 

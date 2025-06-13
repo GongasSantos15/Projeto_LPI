@@ -16,8 +16,8 @@
         exit();
     }
 
-    // Verifica se o utilizador tem o login feito   
-    $tem_login = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']); 
+    // Verifica se o utilizador tem o login feito
+    $tem_login = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']);
     $nome_utilizador = $_SESSION['nome_utilizador'];
 
     // Determina a página inicial correta baseada no tipo de utilizador

@@ -3,44 +3,58 @@
     // Inicia a sessão
     session_start();
 
-    // Include BD
+    // Includes
     include("..\basedados\basedados.h");
     include("dados_navbar.php");
+    include("const_utilizadores.php");
 
     $tem_login = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']);
     $mostrar_alertas = false;
-    $numero_alertas_cliente = 0;
+    $numero_alertas = 0;
 
     if ($conn) {
-        // Para CLIENTE (tipo_utilizador == 3)
-        if ($tem_login) {
-            $sql_count = "SELECT COUNT(*) as total 
+        // Para CLIENTES (tipo_utilizador == 3)
+        if ($tem_login && $_SESSION['tipo_utilizador'] == CLIENTE) {
+            $sql_contagem = "SELECT COUNT(*) as total 
                          FROM alerta a
                          JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
                          WHERE ua.id_utilizador = ? AND a.estado = 1";
             
-            $stmt_count = $conn->prepare($sql_count);
-            if ($stmt_count) {
-                $stmt_count->bind_param("i", $_SESSION['id_utilizador']);
-                if ($stmt_count->execute()) {
-                    $resultado_count = $stmt_count->get_result();
-                    $row_count = $resultado_count->fetch_assoc();
-                    $numero_alertas_cliente = $row_count['total'];
-                    $mostrar_alertas = $numero_alertas_cliente > 0;
+            // Prepara a consulta para evitar SQL Injection, utilizando prepared statements para maior segurança
+            // Executa a consulta SQL que verifica o número de alertas para o cliente
+            // E mostra os alertas se a consulta SQL retornar maior que 0
+            $stmt_contagem = $conn->prepare($sql_contagem);
+            if ($stmt_contagem) {
+                $stmt_contagem->bind_param("i", $_SESSION['id_utilizador']);
+                if ($stmt_contagem->execute()) {
+                    $resultado_contagem = $stmt_contagem->get_result();
+                    $linha_contagem = $resultado_contagem->fetch_assoc();
+                    $numero_alertas = $linha_contagem['total'];
+                    $mostrar_alertas = $numero_alertas > 0;
                 }
-                $stmt_count->close();
+                $stmt_contagem->close();
             }
         } else if (!$tem_login) {
-            // Para Visitantes
-            $sql_count = "SELECT COUNT(*) as total 
+            // Para Visitantes (tipo_utilizador == 4)
+            $sql_contagem = "SELECT COUNT(*) as total 
                          FROM alerta a
                          JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
-                         WHERE ua.id_utilizador = 4 AND a.estado = 1";
-            $result = $conn->query($sql_count);
-            if ($result) {
-                $row = $result->fetch_assoc();
-                $numero_alertas_cliente = $row['total'];
-                $mostrar_alertas = $numero_alertas_cliente > 0;
+                         WHERE ua.id_utilizador = ? AND a.estado = 1";
+
+            // Prepara a consulta para evitar SQL Injection, utilizando prepared statements para maior segurança
+            // Executa a consulta SQL que verifica o número de alertas para o visitante
+            // E mostra os alertas se a consulta SQL retornar maior que 0
+            $stmt_contagem = $conn->prepare($sql_contagem);
+
+            if ($stmt_contagem) {
+                $id_visitante = VISITANTE;
+                $stmt_contagem->bind_param("i", $id_visitante);
+                if ($stmt_contagem->execute()) {
+                    $resultado_contagem = $stmt_contagem->get_result();
+                    $linha_contagem = $resultado_contagem->fetch_assoc();
+                    $numero_alertas = $linha_contagem['total'];
+                    $mostrar_alertas = $numero_alertas > 0;
+                }
             }
         }
     }
@@ -56,6 +70,7 @@
     <meta content="" name="keywords">
     <meta content="" name="description">
 
+    <!-- Imagens, Fontes e CSS -->
     <link href="favicon.ico" rel="icon">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -114,12 +129,16 @@
 </head>
 
 <body>
+    <!-- Começo Roda de Carregamento -->
     <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
             <span class="sr-only">Loading...</span>
         </div>
     </div>
+    <!-- Fim Roda de Carregamento -->
+
     <div class="container-fluid position-relative p-0">
+        <!-- Barra de Navegação -->
         <nav class="navbar navbar-expand-lg navbar-light px-5 px-lg-5 py-3 py-lg-3">
             <a href="pagina_inicial_func.php" class="navbar-brand p-0">
                 <h1 class="text-primary m-0"><i class="fa fa-map-marker-alt me-3"></i>FelixBus</h1>
@@ -148,23 +167,25 @@
                 </div>
 
                 <?php if ($temLogin): ?>
-                    <!-- Dropdown da Carteira -->
+                    <!-- Submenu da Carteira -->
                     <div class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle" id="walletDropdownLink" role="button" aria-expanded="false">
+                        <a href="#" class="nav-link dropdown-toggle" id="submenu-carteira" role="button" aria-expanded="false">
                             <i class="fa fa-wallet me-2"></i> <?php echo $valor_carteira; ?> €
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="walletDropdownLink">
-                            <li><a class="dropdown-item" href="consultar_saldo_clientes.php"><i class="fas fa-user"></i>Consultar Clientes</a></li>
+                        <ul class="dropdown-menu" aria-labelledby="submenu-carteira">
+                            <li><a class="dropdown-item" href="adicionar_saldo.php"><i class="fas fa-plus-circle"></i>Adicionar</a></li>
+                            <li><a class="dropdown-item" href="remover_saldo.php"><i class="fas fa-minus-circle"></i>Remover</a></li>
+                            <li><a class="dropdown-item" href="consultar_saldo_clientes.php"><i class="fas fa-user"></i>Consulta Clientes</a></li>
                         </ul>
                     </div>
 
-                    <!-- Dropdown do Utilizador -->
+                    <!-- Submenu do Utilizador -->
                     <div class="nav-item dropdown">
-                        <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="submenu-utilizador" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fa fa-user-circle fa-2x me-2"></i>
                             <span><?php echo htmlspecialchars($nome_utilizador); ?></span>
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                        <ul class="dropdown-menu" aria-labelledby="submenu-utilizador">
                             <li><a class="dropdown-item" href="consultar_dados.php"><i class="fas fa-user-cog me-2"></i> Consultar Dados</a></li>
                             <li><a class="dropdown-item" href="sair.php"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
                         </ul>
@@ -238,6 +259,7 @@
     </div>
     <!-- Fim Rodapé -->
 
+    <!-- Bibliotecas JS -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="wow.min.js"></script>

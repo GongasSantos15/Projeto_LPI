@@ -36,9 +36,9 @@
     $stmt_utilizadores = $conn->prepare($sql_utilizadores);
     $stmt_utilizadores->bind_param("i", $_SESSION['id_utilizador']);
     $stmt_utilizadores->execute();
-    $result = $stmt_utilizadores->get_result();
-    while($row = $result->fetch_assoc()) {
-        $utilizadores[$row['id']] = $row['nome_utilizador'];
+    $resultado = $stmt_utilizadores->get_result();
+    while($linha = $resultado->fetch_assoc()) {
+        $utilizadores[$linha['id']] = $linha['nome_utilizador'];
     }
     $stmt_utilizadores->close();
 
@@ -70,15 +70,15 @@
             if ($id_utilizador_alvo == 4) {
                 // Alerta geral para utilizadores do tipo 4 (Visitante)
                 $sql = "SELECT id FROM utilizador WHERE tipo_utilizador = 4";
-                $result = $conn->query($sql);
+                $resultado = $conn->query($sql);
 
-                if ($result && $result->num_rows > 0) {
+                if ($resultado && $resultado->num_rows > 0) {
                     $sql_inserir_alerta = "INSERT INTO utilizador_alerta (id_alerta, id_utilizador, data_hora) VALUES (?, ?, NOW())";
-                    $stmt = $conn->prepare($sql_inserri_alerta);
+                    $stmt = $conn->prepare($sql_inserir_alerta);
 
                     if ($stmt) {
-                        while ($row = $result->fetch_assoc()) {
-                            $id_destinatario = $row['id'];
+                        while ($linha = $resultado->fetch_assoc()) {
+                            $id_destinatario = $linha['id'];
                             $stmt->bind_param("ii", $id_alerta, $id_destinatario);
                             $stmt->execute();
                         }
@@ -150,15 +150,17 @@
 </head>
 
 <body>
-    <!-- RODA PARA O CARREGAMENTO DA PAGINA -->
+    <!-- Começo Roda de Carregamento -->
     <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
             <span class="sr-only">Loading...</span>
         </div>
     </div>
+    <!-- Fim Roda de Carregamento -->
+
     <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
 
-        <!-- BARRA DE NAVEGAÇÃO -->
+        <!-- Barra de Navegação -->
         <nav class="navbar navbar-expand-lg navbar-light px-5 px-lg-5 py-3 py-lg-3">
                 <a href="<?php echo htmlspecialchars($pagina_inicial) ?>" class="navbar-brand p-0">
                     <h1 class="text-primary m-0"><i class="fa fa-map-marker-alt me-3"></i>FelixBus</h1>
@@ -171,16 +173,15 @@
                         <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                         <a href="consultar_alertas.php" class="nav-item nav-link active">Alertas</a>
 
-                        <!-- A aba dos Utilizadores só aparece ao administrador e a dos Bilhetes aparece ao administrador e ao funcionario -->
-                        <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
-                            <?php if (in_array($_SESSION['tipo_utilizador'], [1, 2])): ?>
-                                <?php if ($_SESSION['tipo_utilizador'] == 1): ?>
-                                    <a href="consultar_utilizadores.php" class="nav-item nav-link">Utilizadores</a>
-                                <?php endif; ?>
-                                <a href="consultar_bilhetes.php" class="nav-item nav-link">Bilhetes</a>
+                    <!-- Link de Alertas - só aparece se houver alertas -->
+                    <?php if ($mostrar_alertas || $_SESSION['tipo_utilizador'] == 1): ?>
+                        <a href="consultar_alertas.php" class="nav-item nav-link position-relative">
+                            Alertas
+                            <?php if ($numero_alertas > 0): ?>
+                                <span class="alert-badge"><?php echo $numero_alertas; ?></span>
                             <?php endif; ?>
-                        <?php endif; ?>
-                    </div>
+                        </a>
+                    <?php endif; ?>
 
                     <?php if ($tem_login): ?>
                         <!-- Submenu da Carteira (Contém o valor da carteira e as opções de Adicionar, Remover e Consulta Clientes (admin e funcionario)) -->
@@ -227,7 +228,7 @@
                         <a href="entrar.php" class="btn btn-primary rounded-pill py-2 px-4">Entrar</a>
                     <?php endif; ?>
                 </div>
-            </nav>
+        </nav>
             
             <!-- Container Principal -->
             <div class="p-5 rounded shadow" style="max-width: 900px; width: 100%;">
@@ -290,7 +291,7 @@
     </div>
     <!-- Fim Rodapé -->
 
-    <!-- Scripts JS -->
+    <!-- Bibliotecas JS -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="wow.min.js"></script>

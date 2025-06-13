@@ -2,9 +2,10 @@
     // Inicia a Sessão
     session_start();
 
-    // Include BD e dados da navbar
+    // Includes
     include("../basedados/basedados.h");
     include("dados_navbar.php");
+    include("const_utilizadores.php");
 
     // Se não tem sessão, redireciona
     if (!isset($_SESSION['id_utilizador'])) {
@@ -23,7 +24,6 @@
 
     // Verifica se o utilizador tem o login feito   
     $tem_login = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']); 
-
     $mostrar_alertas = false;
     $numero_alertas_cliente = 0;
 
@@ -42,35 +42,48 @@
     }
 
     if ($conn) {
-        // Para CLIENTE (tipo_utilizador == 3)
-        if ($tem_login && $_SESSION['tipo_utilizador'] == 3) {
-            $sql_count = "SELECT COUNT(*) as total 
+        // Para CLIENTES (tipo_utilizador == 3)
+        if ($tem_login && $_SESSION['tipo_utilizador'] == CLIENTE) {
+            $sql_contagem = "SELECT COUNT(*) as total 
                          FROM alerta a
                          JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
                          WHERE ua.id_utilizador = ? AND a.estado = 1";
             
-            $stmt_count = $conn->prepare($sql_count);
-            if ($stmt_count) {
-                $stmt_count->bind_param("i", $_SESSION['id_utilizador']);
-                if ($stmt_count->execute()) {
-                    $resultado_count = $stmt_count->get_result();
-                    $row_count = $resultado_count->fetch_assoc();
-                    $numero_alertas_cliente = $row_count['total'];
-                    $mostrar_alertas = $numero_alertas_cliente > 0;
+            // Prepara a consulta para evitar SQL Injection, utilizando prepared statements para maior segurança
+            // Executa a consulta SQL que verifica o número de alertas para o cliente
+            // E mostra os alertas se a consulta SQL retornar maior que 0
+            $stmt_contagem = $conn->prepare($sql_contagem);
+            if ($stmt_contagem) {
+                $stmt_contagem->bind_param("i", $_SESSION['id_utilizador']);
+                if ($stmt_contagem->execute()) {
+                    $resultado_contagem = $stmt_contagem->get_result();
+                    $linha_contagem = $resultado_contagem->fetch_assoc();
+                    $numero_alertas = $linha_contagem['total'];
+                    $mostrar_alertas = $numero_alertas > 0;
                 }
-                $stmt_count->close();
+                $stmt_contagem->close();
             }
         } else if (!$tem_login) {
-            // Para VISITANTE
-            $sql_count = "SELECT COUNT(*) as total 
+            // Para Visitantes (tipo_utilizador == 4)
+            $sql_contagem = "SELECT COUNT(*) as total 
                          FROM alerta a
                          JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
-                         WHERE ua.id_utilizador = 4 AND a.estado = 1";
-            $result = $conn->query($sql_count);
-            if ($result) {
-                $row = $result->fetch_assoc();
-                $numero_alertas_cliente = $row['total'];
-                $mostrar_alertas = $numero_alertas_cliente > 0;
+                         WHERE ua.id_utilizador = ? AND a.estado = 1";
+
+            // Prepara a consulta para evitar SQL Injection, utilizando prepared statements para maior segurança
+            // Executa a consulta SQL que verifica o número de alertas para o visitante
+            // E mostra os alertas se a consulta SQL retornar maior que 0
+            $stmt_contagem = $conn->prepare($sql_contagem);
+
+            if ($stmt_contagem) {
+                $id_visitante = VISITANTE;
+                $stmt_contagem->bind_param("i", $id_visitante);
+                if ($stmt_contagem->execute()) {
+                    $resultado_contagem = $stmt_contagem->get_result();
+                    $linha_contagem = $resultado_contagem->fetch_assoc();
+                    $numero_alertas = $linha_contagem['total'];
+                    $mostrar_alertas = $numero_alertas > 0;
+                }
             }
         }
     }
@@ -169,7 +182,7 @@
                 $sql .= " ORDER BY v.data_hora DESC";
                 break;
             default:
-                $sql .= " ORDER BY b.id ASC"; // Alterado para ASC como padrão
+                $sql .= " ORDER BY b.id ASC";
         }
 
         $stmt = $conn->prepare($sql);
@@ -251,6 +264,7 @@
     <meta content="" name="keywords">
     <meta content="" name="description">
 
+    <!-- Imagens, Fontes e CSS -->
     <link href="favicon.ico" rel="icon">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -400,16 +414,17 @@
 </head>
 
 <body>
-    <!-- RODA PARA O CARREGAMENTO DA PAGINA -->
+    <!-- Começo Roda de Carregamento -->
     <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
             <span class="sr-only">Loading...</span>
         </div>
     </div>
+    <!-- Fim Roda de Carregamento -->
     
     <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
 
-        <!-- BARRA DE NAVEGAÇÃO -->
+        <!-- Barra de Navegação -->
         <nav class="navbar navbar-expand-lg navbar-light px-5 px-lg-5 py-3 py-lg-3">
             <a href="<?php echo htmlspecialchars($pagina_inicial) ?>" class="navbar-brand p-0">
                 <h1 class="text-primary m-0"><i class="fa fa-map-marker-alt me-3"></i>FelixBus</h1>
@@ -424,8 +439,8 @@
                     <a href="destinos.php" class="nav-item nav-link">Destinos</a>
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                     
-                    <!-- Aba de Alertas - só aparece se houver alertas ou se for admin -->
-                    <?php if ($mostrar_alertas || $_SESSION['tipo_utilizador'] == 1): ?>
+                    <!-- Link de Alertas - só aparece se houver alertas -->
+                    <?php if ($mostrar_alertas): ?>
                         <a href="consultar_alertas.php" class="nav-item nav-link position-relative">
                             Alertas
                             <?php if ($numero_alertas_cliente > 0): ?>
@@ -434,30 +449,31 @@
                         </a>
                     <?php endif; ?>
 
-                    <!-- A aba dos Utilizadores só aparece ao administrador e a dos Bilhetes aparece ao administrador e ao funcionario -->
+                    <!-- Só aparece estas abas se o utilizador tiver login, for admin (utilizadores) ou admin e funcionario (bilhetes) -->
                     <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
                         <?php if (in_array($_SESSION['tipo_utilizador'], [1, 2])): ?>
                             <?php if ($_SESSION['tipo_utilizador'] == 1): ?>
                                 <a href="consultar_utilizadores.php" class="nav-item nav-link">Utilizadores</a>
                             <?php endif; ?>
-                            <a href="consultar_bilhetes.php" class="nav-item nav-link active">Bilhetes</a>
+                            <a href="consultar_bilhetes.php" class="nav-item nav-link">Bilhetes</a>
                         <?php endif; ?>
                     <?php endif; ?>
                 </div>
 
                 <?php if ($tem_login): ?>
-                    <!-- Dropdown da Carteira (Contém o valor da carteira e as opções de Adicionar, Remover e Consulta Clientes (admin e funcionario)) -->
+                    <!-- Submenu da Carteira -->
                     <div class="nav-item dropdown">
-                       <a href="#" class="nav-link dropdown-toggle" id="walletDropdownLink" role="button" aria-expanded="false">
+                        <a href="#" class="nav-link dropdown-toggle" id="submenu-carteira" role="button" aria-expanded="false">
                             <i class="fa fa-wallet me-2"></i> 
                             <?php echo isset($_SESSION['valor_carteira']) ? $_SESSION['valor_carteira'] : '0,00'; ?> €
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="walletDropdownLink">
+                        <ul class="dropdown-menu" aria-labelledby="submenu-carteira">
                             <?php if ($_SESSION['tipo_utilizador'] != 2): ?>
                                 <li><a class="dropdown-item" href="adicionar_saldo.php"><i class="fas fa-plus-circle"></i>Adicionar</a></li>
                                 <li><a class="dropdown-item" href="remover_saldo.php"><i class="fas fa-minus-circle"></i>Remover</a></li>
                             <?php endif; ?>
-                            
+
+                            <!-- Opção de Consulta de Clientes só aparece ao admin e ao funcionario -->
                             <?php if(in_array($_SESSION['tipo_utilizador'], [1,2])): ?>
                                 <li><a class="dropdown-item" href="consultar_saldo_clientes.php"><i class="fas fa-user"></i>Consulta Clientes</a></li>
                             <?php endif; ?>
@@ -465,25 +481,25 @@
                         </ul>
                     </div>
 
-                    <?php if($_SESSION['tipo_utilizador'] == 3): ?>
-                        
+                    <!-- Submenu dos Bilhetes -->
+                    <?php if ($_SESSION['tipo_utilizador'] == 3): ?>
                         <div class="nav-item dropdown">
-                            <a href="#" class="nav-link dropdown-toggle" id="ticketsDropdownLink" role="button" aria-expanded="false">
+                            <a href="#" class="nav-link dropdown-toggle" id="submenu-bilhetes" role="button" aria-expanded="false">
                                 <i class="fa fa-ticket-alt me-2"></i> <?php echo $numero_bilhetes; ?>
                             </a>
-                            <ul class="dropdown-menu" aria-labelledby="ticketsDropdownLink">
+                            <ul class="dropdown-menu" aria-labelledby="submenu-bilhetes">
                                 <li><a class="dropdown-item" href="consultar_bilhetes.php"><i class="fas fa-eye"></i>Consultar Bilhetes</a></li>
                             </ul>
                         </div>
                     <?php endif; ?>
 
-                    <!-- Dropdown do Utilizador (Contém o nome do utilizador e as opções de Logout e Consultar Dados) -->
+                    <!-- Submenu do Utilizador -->
                     <div class="nav-item dropdown">
-                        <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="submenu-utilizador" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fa fa-user-circle fa-2x me-2"></i>
                             <span><?php echo htmlspecialchars($nome_utilizador); ?></span>
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                        <ul class="dropdown-menu" aria-labelledby="submenu-utilizador">
                             <li><a class="dropdown-item" href="consultar_dados.php"><i class="fas fa-user-cog me-2"></i> Consultar Dados</a></li>
                             <li><a class="dropdown-item" href="sair.php"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
                         </ul>
@@ -752,9 +768,9 @@
             </div>
         </div>
     </div>
-     <!-- Fim Rodapé -->
+    <!-- Fim Rodapé -->
 
-     <!-- Scripts JS -->
+    <!-- Bibliotecas JS -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="wow.min.js"></script>
@@ -766,6 +782,7 @@
     <script src="tempusdominus-bootstrap-4.min.js"></script>
     <script src="main.js"></script>
     
+    <!-- Código JS -->
     <script>
         function carregarDistritosBilhete(bilheteId, origemAtual, destinoAtual) {
             fetch('rotas.php')

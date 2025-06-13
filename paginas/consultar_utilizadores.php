@@ -114,7 +114,7 @@
             if (!empty($parametros)) {
                 $stmt->bind_param($tipos, ...$parametros);
             }
-            
+            // Inicia a consulta
             if($stmt->execute()) {
                 $resultado = $stmt->get_result();
                 $utilizadores = $resultado->fetch_all(MYSQLI_ASSOC);
@@ -148,6 +148,7 @@
     }
 ?>
 
+<!------------------------------------------------------------------------------ COMEÇO DO HTML ------------------------------------------------------------------------------->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -301,7 +302,7 @@
                 </div>
 
                 <?php if ($tem_login): ?>
-                    <!-- Dropdown da Carteira -->
+                    <!-- Submenu da Carteira -->
                     <div class="nav-item dropdown">
                        <a href="#" class="nav-link dropdown-toggle" id="walletDropdownLink" role="button" aria-expanded="false">
                             <i class="fa fa-wallet me-2"></i> 
@@ -318,7 +319,7 @@
                         </ul>
                     </div>
 
-                    <!-- Dropdown do Utilizador -->
+                    <!-- Submenu do Utilizador -->
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fa fa-user-circle fa-2x me-2"></i>

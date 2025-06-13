@@ -166,7 +166,7 @@
     <!-- Fim Roda de Carregamento -->
 
     <div class="container-fluid position-relative p-0">
-         <!-- Barra de Navegação -->
+        <!-- Barra de Navegação -->
         <nav class="navbar navbar-expand-lg navbar-light px-5 px-lg-5 py-3 py-lg-3">
             <!-- Voltar para a página inicial de acordo com o tipo de utilizador -->
             <a href="<?php echo htmlspecialchars($pagina_inicial) ?>" class="navbar-brand p-0">

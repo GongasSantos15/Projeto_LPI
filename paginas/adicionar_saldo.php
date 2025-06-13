@@ -26,7 +26,7 @@
     // Verifica se o utilizador tem o login feito   
     $tem_login = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']); 
     $mostrar_alertas = false;
-    $numero_alertas_cliente = 0;
+    $numero_alertas = 0;
 
     // Determina a página inicial correta baseada no tipo de utilizador
     $pagina_inicial = 'index.php';

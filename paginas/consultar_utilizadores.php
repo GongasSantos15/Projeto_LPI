@@ -43,6 +43,8 @@
     // Inicializa a variável utilizadores
     $utilizadores = [];
 
+    $numero_alertas = 0;
+    $mostrar_alertas = false;
     
     if ($conn) {
 

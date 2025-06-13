@@ -4,7 +4,7 @@
 
     // Include BD e constantes de utilizadores (tipo)
     include("../basedados/basedados.h");
-    include("constUtilizadores.php");
+    include("const_utilizadores.php");
 
 
     if (!isset($_SESSION['id_utilizador']) || $_SESSION['tipo_utilizador'] != ADMINISTRADOR) {

@@ -41,7 +41,7 @@
                 if ($stmt) {
                     $stmt->bind_param("sssi", $novo_nome, $novo_nome_proprio, $nova_palavra_passe, $id_utilizador);
 
-                    // Executa a query
+                    // Executa a consulta SQL
                     if ($stmt->execute()) {
 
                         $_SESSION['nome'] = $novo_nome;

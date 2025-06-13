@@ -19,7 +19,6 @@
     $tipo_utilizador = $_SESSION['tipo_utilizador'];
     $nome_utilizador = $_SESSION['nome_utilizador'];
 
-
     // Variáveis de mensagens que vão ser apresentadas ao utilizador
     $mensagem_erro = '';
     $mensagem_sucesso = '';

@@ -26,7 +26,7 @@
     // Verifica se o utilizador tem o login feito   
     $tem_login = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']); 
     $mostrar_alertas = false;
-    $numero_alertas_cliente = 0;
+    $numero_alertas = 0;
 
     // Determina a página inicial correta baseada no tipo de utilizador
     $pagina_inicial = 'index.php';
@@ -248,6 +248,7 @@
 
         <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
 
+        <!-- Barra de Navegação -->
         <nav class="navbar navbar-expand-lg navbar-light px-5 px-lg-5 py-3 py-lg-3">
             <!-- Voltar para a página inicial de acordo com o tipo de utilizador -->
             <a href="<?php echo htmlspecialchars($pagina_inicial) ?>" class="navbar-brand p-0">
@@ -273,14 +274,14 @@
                         </a>
                     <?php endif; ?>
 
-                    <!-- Só aparece estas abas se o utilizador tiver login, for admin (utilizadores) ou admin e funcionario (bilhetes) -->
-                    <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
-                        <?php if (in_array($_SESSION['tipo_utilizador'], [1, 2])): ?>
-                            <?php if ($_SESSION['tipo_utilizador'] == 1): ?>
-                                <a href="consultar_utilizadores.php" class="nav-item nav-link">Utilizadores</a>
+                   <!-- Link de Alertas - só aparece se houver alertas -->
+                    <?php if ($mostrar_alertas): ?>
+                        <a href="consultar_alertas.php" class="nav-item nav-link position-relative">
+                            Alertas
+                            <?php if ($numero_alertas_cliente > 0): ?>
+                                <span class="alert-badge"><?php echo $numero_alertas_cliente; ?></span>
                             <?php endif; ?>
-                            <a href="consultar_bilhetes.php" class="nav-item nav-link">Bilhetes</a>
-                        <?php endif; ?>
+                        </a>
                     <?php endif; ?>
                 </div>
 

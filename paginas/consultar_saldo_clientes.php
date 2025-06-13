@@ -6,7 +6,7 @@
     include("../basedados/basedados.h");
     include("dados_navbar.php");
 
-
+    // Se o utilizador não estiver autenticado, redireciona para a página de login
     if (!isset($_SESSION['id_utilizador'])) {
         header("Location: entrar.php");
         exit();
@@ -35,7 +35,7 @@
         }
     }  
 
-    // Inicializa o array de clientes
+    // Inicializa o array de clientes para armazenar os dados
     $clientes = [];
 
     if ($conn) {
@@ -71,6 +71,7 @@
             }
         }
 
+        // Consulta para buscar os dados dos clientes (tipo_utilizador = 3)
         $sql = "SELECT
                     u.id AS id_utilizador,
                     u.nome_proprio,
@@ -211,7 +212,7 @@
                 </div>
 
                 <?php if ($tem_login): ?>
-                    <!-- Dropdown da Carteira (Contém o valor da carteira e as opções de Adicionar, Remover e Consulta Clientes (admin e funcionario)) -->
+                    <!-- Submenu da Carteira (Contém o valor da carteira e as opções de Adicionar, Remover e Consulta Clientes (admin e funcionario)) -->
                     <div class="nav-item dropdown">
                     <a href="#" class="nav-link dropdown-toggle" id="walletDropdownLink" role="button" aria-expanded="false">
                             <i class="fa fa-wallet me-2"></i> 
@@ -230,7 +231,7 @@
                         </ul>
                     </div>
 
-                    <!-- Dropdown do Utilizador (Contém o nome do utilizador e as opções de Logout e Consultar Dados) -->
+                    <!-- Submenu do Utilizador (Contém o nome do utilizador e as opções de Logout e Consultar Dados) -->
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fa fa-user-circle fa-2x me-2"></i>

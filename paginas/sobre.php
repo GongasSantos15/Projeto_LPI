@@ -165,9 +165,11 @@
     <!-- Fim Roda de Carregamento -->
 
     <div class="container-fluid position-relative p-0">
+        
+        <!-- Barra de Navegação -->
         <nav class="navbar navbar-expand-lg navbar-light px-5 px-lg-5 py-3 py-lg-3">
 
-            <!-- Voltar para a página inicial de acordo com o tipo de utilizador -->    
+            <!-- Voltar para a página inicial de acordo com o tipo de utilizador -->
             <a href="<?php echo htmlspecialchars($pagina_inicial) ?>" class="navbar-brand p-0">
                 <h1 class="text-primary m-0"><i class="fa fa-map-marker-alt me-3"></i>FelixBus</h1>
             </a>
@@ -175,7 +177,6 @@
                 <span class="fa fa-bars"></span>
             </button>
 
-            <!-- Barra de Navegação -->
             <div class="collapse navbar-collapse" id="navbarCollapse">
                 <div class="navbar-nav ms-auto py-0">
 
@@ -298,7 +299,7 @@
     </div>
 
     <!-- Início Rodapé -->
-   <div class="container-fluid bg-dark d-flex justify-content-center text-light footer pt-5 wow fadeIn" data-wow-delay="0.1s">
+    <div class="container-fluid bg-dark d-flex justify-content-center text-light footer pt-5 wow fadeIn" data-wow-delay="0.1s">
         <div class="container py-5">
             <div class="row">
                 <div class="col-lg-4">

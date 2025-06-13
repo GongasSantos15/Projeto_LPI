@@ -5,8 +5,20 @@
     $valor_carteira = 0;
     $numero_bilhetes = 0;
     $id_utilizador = null;
+    $tem_login = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']);
 
     if ($temLogin) {
+
+        // Determina a página inicial correta baseada no tipo de utilizador
+        $pagina_inicial = 'index.php';
+        if ($tem_login && isset($_SESSION['tipo_utilizador'])) {
+            switch ($_SESSION['tipo_utilizador']) {
+                case 1: $pagina_inicial = 'pagina_inicial_admin.php'; break;
+                case 2: $pagina_inicial = 'pagina_inicial_func.php'; break;
+                case 3: $pagina_inicial = 'pagina_inicial_cliente.php'; break;
+            }
+        }
+
         $id_utilizador = $_SESSION['id_utilizador'];
 
         if ($conn) {

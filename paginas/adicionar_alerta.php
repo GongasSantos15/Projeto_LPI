@@ -74,7 +74,7 @@
 
                 if ($resultado && $resultado->num_rows > 0) {
                     $sql_inserir_alerta = "INSERT INTO utilizador_alerta (id_alerta, id_utilizador, data_hora) VALUES (?, ?, NOW())";
-                    $stmt = $conn->prepare($sql_inserir_alerta);
+                    $stmt = $conn->prepare($sql_inserri_alerta);
 
                     if ($stmt) {
                         while ($linha = $resultado->fetch_assoc()) {
@@ -124,6 +124,7 @@
     <meta content="" name="keywords">
     <meta content="" name="description">
 
+    <!-- Imagens, Fontes e CSS -->
     <link href="favicon.ico" rel="icon">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -170,18 +171,22 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarCollapse">
                     <div class="navbar-nav ms-auto py-0">
+                        <a href="sobre.php" class="nav-item nav-link">Sobre</a>
+                        <a href="equipa.php" class="nav-item nav-link">Equipa</a>
+                        <a href="destinos.php" class="nav-item nav-link">Destinos</a>
                         <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                         <a href="consultar_alertas.php" class="nav-item nav-link active">Alertas</a>
 
-                    <!-- Link de Alertas - só aparece se houver alertas -->
-                    <?php if ($mostrar_alertas || $_SESSION['tipo_utilizador'] == 1): ?>
-                        <a href="consultar_alertas.php" class="nav-item nav-link position-relative">
-                            Alertas
-                            <?php if ($numero_alertas > 0): ?>
-                                <span class="alert-badge"><?php echo $numero_alertas; ?></span>
+                        <!-- A aba dos Utilizadores só aparece ao administrador e a dos Bilhetes aparece ao administrador e ao funcionario -->
+                        <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
+                            <?php if (in_array($_SESSION['tipo_utilizador'], [1, 2])): ?>
+                                <?php if ($_SESSION['tipo_utilizador'] == 1): ?>
+                                    <a href="consultar_utilizadores.php" class="nav-item nav-link">Utilizadores</a>
+                                <?php endif; ?>
+                                <a href="consultar_bilhetes.php" class="nav-item nav-link">Bilhetes</a>
                             <?php endif; ?>
-                        </a>
-                    <?php endif; ?>
+                        <?php endif; ?>
+                    </div>
 
                     <?php if ($tem_login): ?>
                         <!-- Submenu da Carteira (Contém o valor da carteira e as opções de Adicionar, Remover e Consulta Clientes (admin e funcionario)) -->
@@ -228,7 +233,7 @@
                         <a href="entrar.php" class="btn btn-primary rounded-pill py-2 px-4">Entrar</a>
                     <?php endif; ?>
                 </div>
-        </nav>
+            </nav>
             
             <!-- Container Principal -->
             <div class="p-5 rounded shadow" style="max-width: 900px; width: 100%;">

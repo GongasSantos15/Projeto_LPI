@@ -1,7 +1,7 @@
 <?php
     session_start();
 
-    // Include conexão à BD
+    // Includes
     include("../basedados/basedados.h"); 
     include("dados_navbar.php");
 
@@ -109,6 +109,7 @@
     <meta content="" name="keywords">
     <meta content="" name="description">
 
+    <!-- Imagens, Fontes e CSS -->
     <link href="favicon.ico" rel="icon">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -128,13 +129,17 @@
 </head>
 
 <body>
+    <!-- Começo Roda de Carregamento -->
     <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
             <span class="sr-only">Loading...</span>
         </div>
     </div>
+    <!-- Fim Roda de Carregamento -->
+
     <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
 
+        <!-- Barra de Navegação -->
         <nav class="navbar navbar-expand-lg navbar-light px-5 px-lg-5 py-3 py-lg-3">
             <a href="<?php echo htmlspecialchars($pagina_inicial) ?>" class="navbar-brand p-0">
                 <h1 class="text-primary m-0"><i class="fa fa-map-marker-alt me-3"></i>FelixBus</h1>
@@ -150,6 +155,7 @@
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                     <a href="consultar_alertas.php" class="nav-item nav-link">Alertas</a>
 
+                    <!-- Verifica se o utilizador tem sessão iniciada e se é um administrador ou funcionário para apresentar as abas corretamente -->
                     <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
                         <?php if (in_array($_SESSION['tipo_utilizador'], [1, 2])): ?>
                             <?php if ($_SESSION['tipo_utilizador'] == 1): ?>
@@ -161,13 +167,13 @@
                 </div>
 
                 <?php if ($tem_login): ?>
-                    <!-- Dropdown da Carteira -->
+                    <!-- Submenu da Carteira -->
                     <div class="nav-item dropdown">
-                       <a href="#" class="nav-link dropdown-toggle" id="walletDropdownLink" role="button" aria-expanded="false">
+                       <a href="#" class="nav-link dropdown-toggle" id="submenu-carteira" role="button" aria-expanded="false">
                             <i class="fa fa-wallet me-2"></i> 
                             <?php echo isset($_SESSION['valor_carteira']) ? $_SESSION['valor_carteira'] : '0,00'; ?> €
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="walletDropdownLink">
+                        <ul class="dropdown-menu" aria-labelledby="submenu-carteira">
                             <li><a class="dropdown-item" href="adicionar_saldo.php"><i class="fas fa-plus-circle"></i>Adicionar</a></li>
                             <li><a class="dropdown-item" href="remover_saldo.php"><i class="fas fa-minus-circle"></i>Remover</a></li>
 
@@ -179,24 +185,24 @@
                     </div>
 
                     <?php if($_SESSION['tipo_utilizador'] == 3): ?>
-                        <!-- Dropdown dos Bilhetes -->
+                        <!-- Submenu dos Bilhetes -->
                         <div class="nav-item dropdown">
-                            <a href="#" class="nav-link dropdown-toggle" id="ticketsDropdownLink" role="button" aria-expanded="false">
+                            <a href="#" class="nav-link dropdown-toggle" id="submenu-bilhetes" role="button" aria-expanded="false">
                                 <i class="fa fa-ticket-alt me-2"></i> <?php echo $numero_bilhetes; ?>
                             </a>
-                            <ul class="dropdown-menu" aria-labelledby="ticketsDropdownLink">
+                            <ul class="dropdown-menu" aria-labelledby="submenu-bilhetes">
                                 <li><a class="dropdown-item" href="consultar_bilhetes.php"><i class="fas fa-eye"></i>Consultar Bilhetes</a></li>
                             </ul>
                         </div>
                     <?php endif; ?>
 
-                    <!-- Dropdown do Utilizador -->
+                    <!-- Submenu do Utilizador -->
                     <div class="nav-item dropdown">
-                        <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="submenu-utilizador" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fa fa-user-circle fa-2x me-2"></i>
                             <span><?php echo htmlspecialchars($nome_utilizador); ?></span>
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                        <ul class="dropdown-menu" aria-labelledby="submenu-utilizador">
                             <li><a class="dropdown-item" href="consultar_dados.php"><i class="fas fa-user-cog me-2"></i> Consultar Dados</a></li>
                             <li><a class="dropdown-item" href="sair.php"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
                         </ul>
@@ -288,6 +294,8 @@
             <?php endif; ?>
         </div>
     </div>
+
+    <!-- Bibliotecas JS -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="wow.min.js"></script>

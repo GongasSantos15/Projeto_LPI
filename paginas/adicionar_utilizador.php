@@ -181,7 +181,7 @@
                 </div>
 
                 <?php if ($tem_login): ?>
-                     <!-- Dropdown da Carteira (Contém o valor da carteira e as opções de Adicionar, Remover e Consulta Clientes (admin e funcionario)) -->
+                     <!-- Submenu da Carteira (Contém o valor da carteira e as opções de Adicionar, Remover e Consulta Clientes (admin e funcionario)) -->
                     <div class="nav-item dropdown">
                     <a href="#" class="nav-link dropdown-toggle" id="walletDropdownLink" role="button" aria-expanded="false">
                             <i class="fa fa-wallet me-2"></i> 
@@ -199,7 +199,7 @@
                     </div>
 
                     <?php if($_SESSION['tipo_utilizador'] == 3): ?>
-                        <!-- Dropdown dos Bilhetes (Só aparece ao Cliente) -->
+                        <!-- Submenu dos Bilhetes (Só aparece ao Cliente) -->
                         <div class="nav-item dropdown">
                             <a href="#" class="nav-link dropdown-toggle" id="ticketsDropdownLink" role="button" aria-expanded="false">
                                 <i class="fa fa-ticket-alt me-2"></i> <?php echo $numero_bilhetes; ?>
@@ -210,7 +210,7 @@
                         </div>
                     <?php endif; ?>
 
-                    <!-- Dropdown do Utilizador (Contém o nome do utilizador e as opções de Logout e Consultar Dados) -->
+                    <!-- Submenu do Utilizador (Contém o nome do utilizador e as opções de Logout e Consultar Dados) -->
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fa fa-user-circle fa-2x me-2"></i>

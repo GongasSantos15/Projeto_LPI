@@ -51,19 +51,19 @@
                 
                 // 2. Se a carteira não existir, criar uma nova
                 if ($resultado_carteira->num_rows == 0) {
-                    $sql_insert_carteira = "INSERT INTO carteira (id_carteira, saldo) VALUES (?, 0)";
-                    $stmt_insert_carteira = $conn->prepare($sql_insert_carteira);
+                    $sql_inserir_carteira = "INSERT INTO carteira (id_carteira, saldo) VALUES (?, 0)";
+                    $stmt_inserir_carteira = $conn->prepare($sql_inserir_carteira);
                     
-                    if ($stmt_insert_carteira) {
-                        $stmt_insert_carteira->bind_param("i", $id_carteira);
-                        if (!$stmt_insert_carteira->execute()) {
-                            $_SESSION['mensagem_erro'] = 'Erro ao criar nova carteira: ' . $stmt_insert_carteira->error;
-                            $stmt_insert_carteira->close();
+                    if ($stmt_inserir_carteira) {
+                        $stmt_inserir_carteira->bind_param("i", $id_carteira);
+                        if (!$stmt_inserir_carteira->execute()) {
+                            $_SESSION['mensagem_erro'] = 'Erro ao criar nova carteira: ' . $stmt_inserir_carteira->error;
+                            $stmt_inserir_carteira->close();
                             $stmt_verifica_carteira->close();
                             header("Location: adicionar_utilizador.php");
                             exit();
                         }
-                        $stmt_insert_carteira->close();
+                        $stmt_inserir_carteira->close();
                     }
                 }
             }
@@ -183,11 +183,11 @@
                 <?php if ($tem_login): ?>
                      <!-- Submenu da Carteira (Contém o valor da carteira e as opções de Adicionar, Remover e Consulta Clientes (admin e funcionario)) -->
                     <div class="nav-item dropdown">
-                    <a href="#" class="nav-link dropdown-toggle" id="walletDropdownLink" role="button" aria-expanded="false">
+                    <a href="#" class="nav-link dropdown-toggle" id="submenu-carteira" role="button" aria-expanded="false">
                             <i class="fa fa-wallet me-2"></i> 
                             <?php echo isset($_SESSION['valor_carteira']) ? $_SESSION['valor_carteira'] : '0,00'; ?> €
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="walletDropdownLink">
+                        <ul class="dropdown-menu" aria-labelledby="submenu-carteira">
                             <li><a class="dropdown-item" href="adicionar_saldo.php"><i class="fas fa-plus-circle"></i>Adicionar</a></li>
                             <li><a class="dropdown-item" href="remover_saldo.php"><i class="fas fa-minus-circle"></i>Remover</a></li>
                             
@@ -201,10 +201,10 @@
                     <?php if($_SESSION['tipo_utilizador'] == 3): ?>
                         <!-- Submenu dos Bilhetes (Só aparece ao Cliente) -->
                         <div class="nav-item dropdown">
-                            <a href="#" class="nav-link dropdown-toggle" id="ticketsDropdownLink" role="button" aria-expanded="false">
+                            <a href="#" class="nav-link dropdown-toggle" id="submenu-bilhetes" role="button" aria-expanded="false">
                                 <i class="fa fa-ticket-alt me-2"></i> <?php echo $numero_bilhetes; ?>
                             </a>
-                            <ul class="dropdown-menu" aria-labelledby="ticketsDropdownLink">
+                            <ul class="dropdown-menu" aria-labelledby="submenu-bilhetes">
                                 <li><a class="dropdown-item" href="consultar_bilhetes.php"><i class="fas fa-eye"></i>Consultar Bilhetes</a></li>
                             </ul>
                         </div>
@@ -212,11 +212,11 @@
 
                     <!-- Submenu do Utilizador (Contém o nome do utilizador e as opções de Logout e Consultar Dados) -->
                     <div class="nav-item dropdown">
-                        <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="submenu-utilizador" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fa fa-user-circle fa-2x me-2"></i>
                             <span><?php echo htmlspecialchars($nome_utilizador); ?></span>
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                        <ul class="dropdown-menu" aria-labelledby="submenu-utilizador">
                             <li><a class="dropdown-item" href="consultar_dados.php"><i class="fas fa-user-cog me-2"></i> Consultar Dados</a></li>
                             <li><a class="dropdown-item" href="sair.php"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
                         </ul>

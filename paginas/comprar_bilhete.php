@@ -5,15 +5,15 @@
 
     // Include BD e constantes dos utilizadores (tipo)
     include("../basedados/basedados.h");
-    include("constUtilizadores.php");
+    include("const_utilizadores.php");
 
     // Variáveis para usar
     $tipo_utilizador = $_SESSION['tipo_utilizador'];
     $preco_viagem = 0;
     $estado = 1;
-    $id_utilizador_pagante = $_SESSION['id_utilizador']; // Quem paga (por padrão, quem está logado)
-    $id_utilizador_bilhete = $_SESSION['id_utilizador']; // Quem recebe o bilhete (por padrão, quem está logado)
-    $usaCarteiraFelixbus = false; // Por padrão, não usa a carteira da empresa
+    $id_utilizador_pagante = $_SESSION['id_utilizador']; // Quem paga (por padrão, quem está com a sessão iniciada)
+    $id_utilizador_bilhete = $_SESSION['id_utilizador']; // Quem recebe o bilhete (por padrão, quem está com a sessão iniciada)
+    $usa_carteira_felixbus = false; // Por padrão, não usa a carteira da empresa
 
     // Verifica se o utilizador tem sessão iniciada
     if (!isset($_SESSION['id_utilizador'])) {
@@ -25,7 +25,7 @@
     if ($tipo_utilizador == ADMINISTRADOR || $tipo_utilizador == FUNCIONARIO) {
         if (isset($_GET['id_utilizador']) && !empty($_GET['id_utilizador'])) {
             $id_utilizador_bilhete = $_GET['id_utilizador'];
-            $usaCarteiraFelixbus = true;
+            $usa_carteira_felixbus = true;
         } else {
             $_SESSION['mensagem_erro'] = "É necessário selecionar um utilizador para comprar o bilhete.";
             header('Location: viagens.php');
@@ -52,8 +52,8 @@
                 $stmt_preco->close();
             }
 
-            // 2. Determinar a carteira correta (1 - carteira empresa)
-            if ($usaCarteiraFelixbus) {
+            // 2. Determinar a carteira correta
+            if ($usa_carteira_felixbus) {
                 $id_carteira = 1;
             } else {
                 $sql = "SELECT id_carteira FROM utilizador WHERE id = ?";
@@ -85,9 +85,9 @@
                 $stmt_carteira->close();
             }
 
-            // 4. Verificar saldo suficiente
+            // 4. Verificar se tem saldo suficiente
             if ($saldo_atual < $preco_viagem) {
-                if ($usaCarteiraFelixbus) {
+                if ($usa_carteira_felixbus) {
                     $_SESSION['mensagem_erro'] = "Saldo insuficiente na carteira da empresa.";
                 } else {
                     $_SESSION['mensagem_erro'] = "Saldo insuficiente. Saldo atual: €" . 
@@ -99,7 +99,7 @@
             }
 
             // 5. Subtrair o saldo da carteira pagante (apenas se não for a carteira da empresa)
-            if (!$usaCarteiraFelixbus) {
+            if (!$usa_carteira_felixbus) {
                 $novo_saldo = $saldo_atual - $preco_viagem;
                 $sql_atualizar_saldo = "UPDATE carteira SET saldo = ? WHERE id_carteira = ?";
                 $stmt_atualizar_saldo = $conn->prepare($sql_atualizar_saldo);

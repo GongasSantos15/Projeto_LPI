@@ -34,28 +34,39 @@
 
             // Verifica se a conexão com a base de dados é válida
             if ($conn) {
-                // SQL para atualizar o nome e nome_proprio do utilizador
-                $sql = "UPDATE utilizador SET nome_utilizador = ?, nome_proprio = ?, palavra_passe = ? WHERE id = ?";
-                $stmt = $conn->prepare($sql);
-
-                if ($stmt) {
+                // Verifica se a password foi fornecida
+                $password_fornecida = !empty(trim($_POST['palavra_passe']));
+                
+                // Apenas modifica a password se ela foi fornecida
+                if ($password_fornecida) {
+                    $nova_palavra_passe = md5(trim($_POST['palavra_passe']));
+                    $sql = "UPDATE utilizador SET nome_utilizador = ?, nome_proprio = ?, palavra_passe = ? WHERE id = ?";
+                    $stmt = $conn->prepare($sql);
                     $stmt->bind_param("sssi", $novo_nome, $novo_nome_proprio, $nova_palavra_passe, $id_utilizador);
-
-                    // Executa a consulta SQL
-                    if ($stmt->execute()) {
-
-                        $_SESSION['nome'] = $novo_nome;
-                        $_SESSION['nome_proprio'] = $novo_nome_proprio;
-                        $_SESSION['palavra_passe'] = $nova_palavra_passe;
-                        $_SESSION['mensagem_sucesso'] = "Dados atualizados com sucesso.";
-
-                        header('Location: consultar_dados.php');
-                        exit();
-                    }
-
-                    $stmt->close();
+                } else {
+                    $sql = "UPDATE utilizador SET nome_utilizador = ?, nome_proprio = ? WHERE id = ?";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("ssi", $novo_nome, $novo_nome_proprio, $id_utilizador);
                 }
 
+                if ($stmt && $stmt->execute()) {
+                    $_SESSION['nome'] = $novo_nome;
+                    $_SESSION['nome_proprio'] = $novo_nome_proprio;
+                    
+                    // Atualiza a password na sessão apenas se foi alterada
+                    if ($password_fornecida) {
+                        $_SESSION['palavra_passe'] = $nova_palavra_passe;
+                    }
+                    
+                    $_SESSION['mensagem_sucesso'] = "Dados atualizados com sucesso.";
+                    header('Location: consultar_dados.php');
+                    exit();
+                } else {
+                    header('Location: consultar_dados.php?status=error&message=Erro ao atualizar dados.');
+                    exit();
+                }
+                
+                if ($stmt) $stmt->close();
                 $conn->close();
             }
         }

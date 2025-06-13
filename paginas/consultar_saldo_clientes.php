@@ -5,6 +5,7 @@
     // Includes
     include("../basedados/basedados.h");
     include("dados_navbar.php");
+    include("const_utilizadores.php");
 
     // Se o utilizador não estiver autenticado, redireciona para a página de login
     if (!isset($_SESSION['id_utilizador'])) {

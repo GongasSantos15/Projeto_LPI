@@ -13,22 +13,14 @@
     $numero_alertas = 0;
     
     // Determina a página inicial correta baseada no tipo de utilizador
-    $pagina_inicial = 'index.php'; // Página padrão se não tiver login
+    $pagina_inicial = 'index.php';
     if ($tem_login && isset($_SESSION['tipo_utilizador'])) {
         switch ($_SESSION['tipo_utilizador']) {
-            case 1: // Admin
-                $pagina_inicial = 'pagina_inicial_admin.php';
-                break;
-            case 2: // Funcionário
-                $pagina_inicial = 'pagina_inicial_func.php';
-                break;
-            case 3: // Cliente
-                $pagina_inicial = 'pagina_inicial_cliente.php';
-                break;
-            default:
-                $pagina_inicial = 'index.php';
+            case 1: $pagina_inicial = 'pagina_inicial_admin.php'; break;
+            case 2: $pagina_inicial = 'pagina_inicial_func.php'; break;
+            case 3: $pagina_inicial = 'pagina_inicial_cliente.php'; break;
         }
-    }
+    } 
     
     if ($conn) {
         // Para CLIENTES (tipo_utilizador == 3)
@@ -166,7 +158,7 @@
     <!-- Fim Roda de Carregamento -->
 
     <div class="container-fluid position-relative p-0">
-         <!-- Barra de Navegação -->
+        <!-- Barra de Navegação -->
         <nav class="navbar navbar-expand-lg navbar-light px-5 px-lg-5 py-3 py-lg-3">
             <!-- Voltar para a página inicial de acordo com o tipo de utilizador -->
             <a href="<?php echo htmlspecialchars($pagina_inicial) ?>" class="navbar-brand p-0">
@@ -193,7 +185,7 @@
                         </a>
                     <?php endif; ?>
 
-                    <!-- Só aparece estas abas se o utilizador tiver login, for admin (utilizadores) ou funcionario (bilhetes) -->
+                    <!-- Só aparece estas abas se o utilizador tiver login, for admin (utilizadores) ou admin e funcionario (bilhetes) -->
                     <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>
                         <?php if (in_array($_SESSION['tipo_utilizador'], [1, 2])): ?>
                             <?php if ($_SESSION['tipo_utilizador'] == 1): ?>

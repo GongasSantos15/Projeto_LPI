@@ -186,7 +186,7 @@
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                     
                    <!-- Link de Alertas - só aparece se houver alertas -->
-                    <?php if ($mostrar_alertas || $_SESSION['tipo_utilizador'] == 1): ?>
+                    <?php if ($mostrar_alertas || isset($_SESSION['tipo_utilizador']) && $_SESSION['tipo_utilizador'] == 1): ?>
                         <a href="consultar_alertas.php" class="nav-item nav-link position-relative">
                             Alertas
                             <?php if ($numero_alertas > 0): ?>

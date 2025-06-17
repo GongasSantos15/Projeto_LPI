@@ -3,6 +3,12 @@
     // Inicia a sessão
     session_start();
 
+    // Verifica se o utilizador é um administrador
+    if (!isset($_SESSION['id_utilizador']) || $_SESSION['tipo_utilizador'] != 1) {
+        header("Location: entrar.php");
+        exit();
+    } 
+
     // Include BD
     include("..\basedados\basedados.h");
     include("dados_navbar.php");

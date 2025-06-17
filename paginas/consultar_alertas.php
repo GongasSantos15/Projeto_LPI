@@ -404,16 +404,7 @@
                     <a href="equipa.php" class="nav-item nav-link">Equipa</a>
                     <a href="destinos.php" class="nav-item nav-link">Destinos</a>
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
-                    
-                    <!-- Link de Alertas - só aparece se houver alertas -->
-                    <?php if ($mostrar_alertas): ?>
-                        <a href="consultar_alertas.php" class="nav-item nav-link position-relative">
-                            Alertas
-                            <?php if ($numero_alertas_cliente > 0): ?>
-                                <span class="alert-badge"><?php echo $numero_alertas_cliente; ?></span>
-                            <?php endif; ?>
-                        </a>
-                    <?php endif; ?>
+                    <a href="consultar_alertas.php" class="nav-item nav-link position-relative active">Alertas</a>
 
                     <!-- Só aparece estas abas se o utilizador tiver login, for admin (utilizadores) ou admin e funcionario (bilhetes) -->
                     <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) : ?>

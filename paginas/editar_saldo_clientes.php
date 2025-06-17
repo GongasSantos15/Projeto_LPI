@@ -15,7 +15,7 @@
     // Verificar se é um POST com os dados necessários
     if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['id_utilizador']) || !isset($_POST['novo_saldo'])) {
         $_SESSION['mensagem_erro'] = "Dados inválidos para atualização de saldo.";
-        header("Location: gerir_carteiras.php");
+        header("Location: entrar.php");
         exit();
     }
 

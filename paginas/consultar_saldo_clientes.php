@@ -8,7 +8,7 @@
     include("const_utilizadores.php");
 
     // Se o utilizador não estiver autenticado, redireciona para a página de login
-    if (!isset($_SESSION['id_utilizador'])) {
+    if (!isset($_SESSION['id_utilizador'])  || $_SESSION['tipo_utilizador'] == 3) {
         header("Location: entrar.php");
         exit();
     }   

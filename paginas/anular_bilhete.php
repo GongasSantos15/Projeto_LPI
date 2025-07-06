@@ -52,7 +52,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id_bilhete'])) {
                 $stmt_reembolso->bind_param("di", $valor_bilhete, $id_carteira);
 
                 if ($stmt_reembolso->execute()) {
-                    // Commit the transaction if both operations succeed
+                    // Faz o commit das transações de as operaçõs forem bem sucedidas
                     $conn->commit();
                     $_SESSION['mensagem_sucesso'] = "Bilhete anulado com sucesso e reembolso processado!";
                     echo "success";
@@ -67,7 +67,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id_bilhete'])) {
         }
         $stmt_anular->close();
     } catch (Exception $e) {
-        // Rollback the transaction if any operation fails
+        // Volta atrás na transição se algum erro ocorrer
         $conn->rollback();
         $_SESSION['mensagem_erro'] = "Erro ao anular o bilhete: " . $e->getMessage();
         echo "error";

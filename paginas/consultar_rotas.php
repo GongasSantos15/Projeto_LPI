@@ -550,9 +550,7 @@
                                                                     <input type="text" class="form-control" value="<?php echo htmlspecialchars($rota['origem']); ?>" readonly>
                                                                 </div>
                                                                 <div class="edit-mode" style="display: none;">
-                                                                    <select name="origem" id="origem" class="form-select bg-dark text-light border-primary" required>
-                                                                        <option>A carregar...</option>
-                                                                    </select>
+                                                                    <input type="text" name="origem" id="origem" class="form-control bg-dark text-light border-primary" required />
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -565,9 +563,7 @@
                                                                     <input type="text" class="form-control" value="<?php echo htmlspecialchars($rota['destino']); ?>" readonly>
                                                                 </div>
                                                                 <div class="edit-mode" style="display: none;">
-                                                                    <select name="destino"  id="destino" class="form-select bg-dark text-light border-primary" required>
-                                                                        <option>A carregar...</option>
-                                                                    </select>
+                                                                    <input type="text" name="destino"  id="destino" class="form-control bg-dark text-light border-primary" required />
                                                                 </div>
                                                             </div>
                                                         </div>

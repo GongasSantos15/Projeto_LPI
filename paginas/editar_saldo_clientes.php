@@ -21,7 +21,6 @@
 
     $id_utilizador = (int)$_POST['id_utilizador'];
     $novo_saldo = (float)$_POST['novo_saldo'];
-    $motivo = trim($_POST['motivo'] ?? '');
 
     // Validações
     if ($id_utilizador <= 0) {
@@ -117,8 +116,7 @@
             if ($stmt_atualizar->execute()) {
                 $_SESSION['mensagem_sucesso'] = "Saldo de {$nome_cliente} atualizado de " . 
                     number_format($saldo_anterior, 2, ',', '.') . "€ para " . 
-                    number_format($novo_saldo, 2, ',', '.') . "€" . 
-                    (!empty($motivo) ? " (Motivo: {$motivo})" : "");
+                    number_format($novo_saldo, 2, ',', '.') . "€";
             } else {
                 $_SESSION['mensagem_erro'] = "Erro ao atualizar saldo: " . $stmt_atualizar->error;
             }
@@ -141,8 +139,7 @@
             
             if ($stmt_inserir->execute()) {
                 $_SESSION['mensagem_sucesso'] = "Carteira criada para {$nome_cliente} com saldo de " . 
-                    number_format($novo_saldo, 2, ',', '.') . "€" . 
-                    (!empty($motivo) ? " (Motivo: {$motivo})" : "");
+                    number_format($novo_saldo, 2, ',', '.') . "€";
             } else {
                 $_SESSION['mensagem_erro'] = "Erro ao criar carteira: " . $stmt_inserir->error;
             }

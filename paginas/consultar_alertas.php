@@ -42,6 +42,8 @@
     }
 
     // Parâmetros de pesquisa e ordenação
+    // Pesquisa - se o utilizador colocar texto, é guardado em $pesquisa. Se não colocar assume string vazia ""
+    // Ordenação - se o utilizador não definir o tipo de ordenação que quer irá definir o valor id_asc
     $pesquisa = isset($_GET['pesquisa']) ? trim($_GET['pesquisa']) : '';
     $ordenacao = isset($_GET['ordenacao']) ? $_GET['ordenacao'] : 'id_asc';
 

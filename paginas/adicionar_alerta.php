@@ -30,7 +30,7 @@
         }
     }
 
-    // 1. Obter lista de utilizadores para o Submenu
+    // 1. Obter lista de utilizadores para o Submenu - - todos excepto admin e o proprio utilizador
     $utilizadores = [];
     $sql_utilizadores = "SELECT id, nome_utilizador FROM utilizador WHERE tipo_utilizador != 1 AND id != ?";
     $stmt_utilizadores = $conn->prepare($sql_utilizadores);

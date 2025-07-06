@@ -4,11 +4,11 @@
     session_start();
 
     // Includes
-    include 'C:\xampp\htdocs\lpi\Projeto_LPI\basedados\basedados.h';
+    include "../basedados/basedados.h";
     include 'const_utilizadores.php';
     include 'dados_navbar.php';
 
-    // Verifica se o user já iniciou sessão, senão redireciona para a página de login
+    // Verifica se o utilizador já iniciou sessão, se não redireciona para a página de login
     if (!isset($_SESSION['id_utilizador'])) {
         header('Location: entrar.php');
         exit();

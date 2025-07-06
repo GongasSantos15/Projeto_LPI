@@ -16,7 +16,7 @@
     if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id_alerta'])) {
         $id_alerta = $_POST['id_alerta'];
         
-        // Verifica se a rota existe e está ativa
+        // Verifica se o alerta existe e está ativo
         $sql_anular = "SELECT id_alerta FROM alerta WHERE id_alerta = ? AND estado = 1";
         $stmt_anular = $conn->prepare($sql_anular);
         $stmt_anular->bind_param("i", $id_alerta);

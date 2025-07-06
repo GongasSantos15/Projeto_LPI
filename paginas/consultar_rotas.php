@@ -25,7 +25,7 @@
             case 3: $pagina_inicial = 'pagina_inicial_cliente.php'; break;
         }
     }  
-
+    // Mostrar aletrtas na pagina incial
     if ($conn) {
         // Para CLIENTES (tipo_utilizador == 3)
         if ($tem_login && $_SESSION['tipo_utilizador'] == CLIENTE) {

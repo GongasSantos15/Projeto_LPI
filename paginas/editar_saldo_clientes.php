@@ -30,7 +30,8 @@
         exit();
     }
 
-    if ($novo_saldo < 0) {
+    // Garante que o novo saldo não pode ser negativo
+    if ($novo_saldo = 0) {
         $_SESSION['mensagem_erro'] = "O saldo não pode ser negativo.";
         header("Location: consultar_saldo_clientes.php");
         exit();

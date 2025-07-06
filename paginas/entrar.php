@@ -3,7 +3,7 @@
     session_start();
 
     // Include base de dados
-    include 'C:\xampp\htdocs\lpi\Projeto_LPI\basedados\basedados.h';
+    include "../basedados/basedados.h";
     
     // Include às constantes de utilizadores 
     include 'const_utilizadores.php';

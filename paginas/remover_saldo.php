@@ -85,13 +85,13 @@
         }
     }
 
-    // Processa a submissão do formulário para adicionar saldo
+    // Processa a submissão do formulário para remover saldo
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-        // Obtém o valor que o utilizador quer adicionar através do método POST e valida-o como número decimal
+        // Obtém o valor que o utilizador quer reover através do método POST e valida-o como número decimal
         $valor = filter_input(INPUT_POST, 'valor', FILTER_VALIDATE_FLOAT);
 
-        // Verifica se o valor que o utilizador quer adicionar se é um número válido e positivo e exibe uma mensage de erro ao utilizador caso não seja
+        // Verifica se o valor que o utilizador quer remover se é um número válido e positivo e exibe uma mensage de erro ao utilizador caso não seja
         if ($valor === false || $valor <= 0) {
             $mensagem_erro = 'Por favor, insira um valor positivo válido.';
         } else {

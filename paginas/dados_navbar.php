@@ -1,4 +1,7 @@
 <?php
+
+    include("../basedados/basedados.h"); 
+
     // Verifica o estado de login
     $temLogin = isset($_SESSION['id_utilizador']) && !empty($_SESSION['id_utilizador']);
     $nome_utilizador = $temLogin ? ($_SESSION['nome_utilizador'] ?? 'Utilizador') : '';

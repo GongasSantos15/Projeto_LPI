@@ -179,8 +179,6 @@
                             <i class="fa fa-wallet me-2"></i> <?php echo $valor_carteira; ?> €
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="submenu-carteira">
-                            <li><a class="dropdown-item" href="adicionar_saldo.php"><i class="fas fa-plus-circle"></i>Adicionar</a></li>
-                            <li><a class="dropdown-item" href="remover_saldo.php"><i class="fas fa-minus-circle"></i>Remover</a></li>
                             <li><a class="dropdown-item" href="consultar_saldo_clientes.php"><i class="fas fa-user"></i>Consulta Clientes</a></li>
                         </ul>
                     </div>

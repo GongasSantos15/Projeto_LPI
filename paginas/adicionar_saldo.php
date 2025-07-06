@@ -4,7 +4,7 @@
     session_start();
 
     // Includes
-    include 'C:\xampp\htdocs\lpi\Projeto_LPI\basedados\basedados.h';
+    include '../basedados/basedados.h';
     include 'const_utilizadores.php';
     include 'dados_navbar.php';
 

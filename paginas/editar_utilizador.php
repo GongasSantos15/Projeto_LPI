@@ -3,7 +3,7 @@
     session_start();
 
     // Include BD
-    include 'C:\xampp\htdocs\lpi\Projeto_LPI\basedados\basedados.h';
+    include '../basedados/basedados.h';
 
     // Verifica se o utilizador está autenticado
     if (!isset($_SESSION['id_utilizador']) || $_SESSION['tipo_utilizador'] == 3) {

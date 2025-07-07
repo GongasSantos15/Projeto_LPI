@@ -274,12 +274,14 @@
     </style>
 </head>
 <body>
+    <!-- Roda de Carregamento -->
     <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
             <span class="sr-only">Loading...</span>
         </div>
     </div>
     <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
+        <!-- Barra de Navegação -->
         <nav class="navbar navbar-expand-lg navbar-light px-5 px-lg-5 py-3 py-lg-3">
             <a href="<?= $pagina_inicial ?>" class="navbar-brand p-0">
                 <h1 class="text-primary m-0"><i class="fa fa-map-marker-alt me-3"></i>FelixBus</h1>
@@ -294,6 +296,7 @@
                     <a href="destinos.php" class="nav-item nav-link">Destinos</a>
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                     
+                    <!-- Só aparecem estas abas se o utilizador tiver login, for admin (utilizadores) ou admin e funcionario (bilhetes) -->
                     <?php if ($mostrar_alertas) { ?>
                         <a href="consultar_alertas.php" class="nav-item nav-link position-relative">
                             Alertas
@@ -315,6 +318,7 @@
 
                 <?php if ($tem_login) { ?>
                     <div class="nav-item dropdown">
+                        <!-- Submenu da Carteira -->
                         <a href="#" class="nav-link dropdown-toggle active" id="submenu-carteira" role="button" aria-expanded="false">
                             <i class="fa fa-wallet me-2"></i> 
                             <?= isset($_SESSION['valor_carteira']) ? $_SESSION['valor_carteira'] : "0,00" ?> €
@@ -326,6 +330,7 @@
                                 <li><a class="dropdown-item" href="remover_saldo.php"><i class="fas fa-minus-circle"></i>Remover</a></li>
                             <?php } ?>
 
+                            <!-- Opção de Consulta de Clientes (só aparece ao admin e funcionario) -->
                             <?php $tipo_utilizador_sessao = intval($_SESSION['tipo_utilizador']); ?>
                             <?php if($tipo_utilizador_sessao == 1 || $tipo_utilizador_sessao == 2) { ?>
                                 <li><a class="dropdown-item" href="consultar_saldo_clientes.php"><i class="fas fa-user"></i>Consulta Clientes</a></li>
@@ -336,6 +341,7 @@
 
                     <?php if (intval($_SESSION['tipo_utilizador']) == 3) { ?>
                         <div class="nav-item dropdown">
+                            <!-- Submenu de Bilhetes -->
                             <a href="#" class="nav-link dropdown-toggle" id="submenu-bilhetes" role="button" aria-expanded="false">
                                 <i class="fa fa-ticket-alt me-2"></i> <?= $numero_bilhetes ?>
                             </a>
@@ -346,6 +352,7 @@
                     <?php } ?>
 
                     <div class="nav-item dropdown">
+                        <!-- Submenu do Utilizador -->
                         <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fa fa-user-circle fa-2x me-2"></i>
                             <span><?= $nome_utilizador ?></span>
@@ -361,6 +368,7 @@
             </div>
         </nav>
 
+        <!-- Conteúdo Principal -->
         <div class="rounded shadow" style="max-width: 1200px; width: 100%; margin-top: 150px;">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3 class="text-white m-0">Levantar Saldo</h3>
@@ -382,6 +390,7 @@
                 }, 2000);
             </script>
 
+            <!-- Dinheiro que pretende levantar -->
             <div class="bg-gradient mb-3 p-5 position-relative mx-auto mt-3 animated slideInDown">
                 <form action="remover_saldo.php" method="POST">
                     <div class="mb-3">
@@ -396,6 +405,7 @@
         </div>
     </div>
 
+    <!-- Bibliotecas JS -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="wow.min.js"></script>
@@ -407,6 +417,7 @@
     <script src="tempusdominus-bootstrap-4.min.js"></script>
     <script src="main.js"></script>
 
+    <!-- Rodapé -->
     <div class="container-fluid bg-dark d-flex justify-content-center text-light footer pt-5 wow fadeIn" data-wow-delay="0.1s">
         <div class="container py-5">
             <div class="row">

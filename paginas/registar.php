@@ -6,72 +6,102 @@
 
     $mensagem_erro = '';
     $mensagem_sucesso = '';
-    $saldo = 0;
+    $saldo_inicial = 0;
 
     if($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Verifique os nomes dos campos exatamente como estão no formulário HTML
         if(!empty($_POST['nome_utilizador']) && !empty($_POST['nome_proprio']) && !empty($_POST['palavra_passe']) && !empty($_POST['confirmar_palavra_passe'])) {
             
             // Use o mesmo nome que está no formulário (com underscore)
-            if($_POST['palavra_passe'] === $_POST['confirmar_palavra_passe']) {
-                $nome_utilizador = mysqli_real_escape_string($conn, $_POST['nome_utilizador']);
-                $nome_proprio = mysqli_real_escape_string($conn, $_POST['nome_proprio']);
-                $palavra_passe_encriptada = md5($_POST['palavra_passe']);
+            $nome_utilizador_form = $_POST['nome_utilizador'];
+            $nome_proprio_form = $_POST['nome_proprio'];
+            $palavra_passe_form = $_POST['palavra_passe'];
+            $confirmar_palavra_passe_form = $_POST['confirmar_palavra_passe'];
+
+            if($palavra_passe_form === $confirmar_palavra_passe_form) {
+                // Escapar strings para segurança antes de usar em consultas SQL (Mesmo com prepared statements, boa prática para valores complexos)
+                $nome_utilizador_escaped = mysqli_real_escape_string($conn, $nome_utilizador_form);
+                $nome_proprio_escaped = mysqli_real_escape_string($conn, $nome_proprio_form);
+                $palavra_passe_encriptada = md5($palavra_passe_form);
+
                 $tipo_utilizador = CLIENTE_NAO_VALIDO;
 
-                // 1. Verificar qual é o maior id_carteira existente
-                $sql_max_carteira = "SELECT MAX(id_carteira) AS max_id FROM utilizador";
-                $resultado_max_carteira = $conn->query($sql_max_carteira);
-
-                if ($resultado_max_carteira) {
-                    $linha_max_carteira = $resultado_max_carteira->fetch_assoc();
-                    $novo_id_carteira = $linha_max_carteira['max_id'] + 1;
-                } else {
-                    $mensagem_erro = "Erro ao obter o ID da carteira: " . $connect_error->error();
-                }
-
-                // 2. Query para INSERIR os dados na tabela utilizador
-                $sql_inserir = "INSERT INTO utilizador (nome_utilizador, nome_proprio, palavra_passe, tipo_utilizador, id_carteira) VALUES (?, ?, ?, ?, ?)";
-                $stmt_inserir = $conn->prepare($sql_inserir);
+                // 1. Inserir o novo utilizador na tabela `utilizador`
+                $sql_inserir_utilizador = "INSERT INTO utilizador (nome_utilizador, nome_proprio, palavra_passe, tipo_utilizador) VALUES (?, ?, ?, ?)";
+                $stmt_inserir_utilizador = $conn->prepare($sql_inserir_utilizador);
                 
-                if (!$stmt_inserir) {
-                    $mensagem_erro = "Erro ao preparar a consulta.";
+                if (!$stmt_inserir_utilizador) {
+                    $mensagem_erro = "Erro ao preparar a consulta para registar utilizador: " . $conn->error;
                 } else {
-                    $stmt_inserir->bind_param("sssii", $nome_utilizador, $nome_proprio, $palavra_passe_encriptada, $tipo_utilizador, $novo_id_carteira);
+                    $stmt_inserir_utilizador->bind_param("sssi", $nome_utilizador_escaped, $nome_proprio_escaped, $palavra_passe_encriptada, $tipo_utilizador);
 
-                    if ($stmt_inserir->execute()){
-                        $mensagem_sucesso = "Utilizador registado com sucesso";
+                    if ($stmt_inserir_utilizador->execute()){
+                        $novo_id_utilizador = $conn->insert_id;
+                        
+                        // 2. Inserir a nova carteira na tabela `carteira` com o saldo inicial
+                        $sql_inserir_carteira = "INSERT INTO carteira (id_carteira, saldo) VALUES (?, ?)";
+                        $stmt_inserir_carteira = $conn->prepare($sql_inserir_carteira);
+
+                        if (!$stmt_inserir_carteira) {
+                            $mensagem_erro = "Erro ao preparar a consulta para criar a carteira: " . $conn->error;
+                            // Se a carteira não pode ser criada, reverte a criação do utilizador
+                            $conn->query("DELETE FROM utilizador WHERE id = $novo_id_utilizador");
+                        } else {
+                            $stmt_inserir_carteira->bind_param("id", $novo_id_utilizador, $saldo_inicial);
+
+                            if($stmt_inserir_carteira->execute()) {
+                                // 3. Atualizar o utilizador com o `id_carteira` recém-criado
+                                $sql_atualizar_utilizador_carteira = "UPDATE utilizador SET id_carteira = ? WHERE id = ?";
+                                $stmt_atualizar_utilizador_carteira = $conn->prepare($sql_atualizar_utilizador_carteira);
+
+                                if (!$stmt_atualizar_utilizador_carteira) {
+                                    $mensagem_erro = "Erro ao preparar a consulta para atualizar o ID da carteira do utilizador: " . $conn->error;
+                                    // Se a atualização falhar, pode ser necessário reverter tudo
+                                    $conn->query("DELETE FROM carteira WHERE id_carteira = $novo_id_utilizador");
+                                    $conn->query("DELETE FROM utilizador WHERE id = $novo_id_utilizador");
+                                } else {
+                                    $stmt_atualizar_utilizador_carteira->bind_param("ii", $novo_id_utilizador, $novo_id_utilizador);
+
+                                    if ($stmt_atualizar_utilizador_carteira->execute()) {
+                                        $mensagem_sucesso = "Utilizador e carteira registados com sucesso!";
+                                        // Redireciona apenas após o sucesso completo
+                                        header("Location: entrar.php");
+                                        exit();
+                                    } else {
+                                        $mensagem_erro = "Erro ao atualizar o ID da carteira do utilizador: " . $stmt_atualizar_utilizador_carteira->error;
+                                        $conn->query("DELETE FROM carteira WHERE id_carteira = $novo_id_utilizador");
+                                        $conn->query("DELETE FROM utilizador WHERE id = $novo_id_utilizador");
+                                    }
+                                    $stmt_atualizar_utilizador_carteira->close();
+                                }
+                            } else {
+                                $mensagem_erro = "Erro ao criar a carteira do utilizador: " . $stmt_inserir_carteira->error;
+                                // Se a carteira não pode ser criada, reverte a criação do utilizador
+                                $conn->query("DELETE FROM utilizador WHERE id = $novo_id_utilizador");
+                            }
+                            $stmt_inserir_carteira->close();
+                        }
                     } else {
-                        $mensagem_erro = "Erro ao registar utilizador: " . $connect_error->error();
+                        $mensagem_erro = "Erro ao registar utilizador: " . $stmt_inserir_utilizador->error;
                     }
+                    $stmt_inserir_utilizador->close();
                 }
             } else {
-                $mensagem_erro = "As palavras passe não coincidem.";
+                $mensagem_erro = "As palavras-passe não coincidem.";
             }
-
-            // 3. Inserir o novo ID da Carteira na tabela carteira com o saldo = 0;
-            $sql_id_carteira = "INSERT INTO carteira (id_carteira, saldo) VALUES (?, ?)";
-            $stmt_id_carteira = $conn->prepare($sql_id_carteira);
-
-            if (!$stmt_id_carteira) {
-                $mensagem_erro = "Erro ao preparar a consulta para inserir os dados da carteira";
-            } else {
-                $stmt_id_carteira->bind_param("id", $novo_id_carteira, $saldo);
-
-                if($stmt_id_carteira->execute()) {
-                    $mensagem_sucesso = "Carteira do utilizador criada com sucesso!";
-                    header("Location: entrar.php");
-                    exit();
-                } else {
-                    $mensagem_erro = "Erro ao criar a carteira do utilizador: " . $connect_error->error();
-                }
-            }
+        } else {
+             $mensagem_erro = "Por favor, preencha todos os campos.";
         }
+    }
+    
+    // Fechar a conexão
+    if ($conn) {
+        $conn->close();
     }
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt">
 
 <head>
     <meta charset="utf-8">
@@ -80,7 +110,6 @@
     <meta content="" name="keywords">
     <meta content="" name="description">
 
-    <!-- Imagens, Fontes e CSS -->
     <link href="favicon.ico" rel="icon">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -99,26 +128,31 @@
 </head>
 
 <body>
-    <!-- Roda de Carregamento -->
     <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
             <span class="sr-only">Loading...</span>
         </div>
     </div>
 
-    <!-- Secção de Registo -->
     <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
         <div class="p-5 rounded shadow" style="max-width: 700px; width: 100%;">
             <h3 class="text-center text-white mb-4">Registar</h3>
 
+            <?php if (!empty($mensagem_erro)) { ?>
+                <div class="alert alert-danger" role="alert"><?= $mensagem_erro ?></div>
+            <?php } ?>
+            <?php if (!empty($mensagem_sucesso)) { ?>
+                <div class="alert alert-success" role="alert"><?= $mensagem_sucesso ?></div>
+            <?php } ?>
+
             <form action="registar.php" method="POST">
                 <div class="mb-3">
                     <label for="nome_proprio" class="form-label">Nome Próprio:</label>
-                    <input name="nome_proprio" id="nome_proprio" type="text" class="form-control text-dark" required />
+                    <input name="nome_proprio" id="nome_proprio" type="text" class="form-control text-dark" required value="<?= htmlspecialchars($_POST['nome_proprio'] ?? '') ?>" />
                 </div>
                 <div class="mb-3">
                     <label for="nome_utilizador" class="form-label">Nome de Utilizador:</label>
-                    <input name="nome_utilizador" id="nome_utilizador" type="text" class="form-control text-dark" required />
+                    <input name="nome_utilizador" id="nome_utilizador" type="text" class="form-control text-dark" required value="<?= htmlspecialchars($_POST['nome_utilizador'] ?? '') ?>" />
                 </div>
                 <div class="mb-3">
                     <label for="palavra_passe" class="form-label">Palavra-passe:</label>
@@ -130,7 +164,7 @@
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label for="confirmar_palavra_passe" class="form-label">Palavra-passe:</label>
+                    <label for="confirmar_palavra_passe" class="form-label">Confirmar Palavra-passe:</label>
                     <div class="input-group">
                         <input name="confirmar_palavra_passe" id="confirmar_palavra_passe" type="password" class="form-control text-dark" required />
                         <button class="btn btn-outline-light border-start-0" type="button" id="mostraConfirmarPalavraPasse">
@@ -147,9 +181,6 @@
             </div>
         </div>
     </div>
-    <!-- Fim da Secção de Registo -->
-
-    <!-- Bibliotecas JS -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="wow.min.js"></script>
@@ -162,7 +193,6 @@
 
     <script src="main.js"></script>
 
-    <!-- Código JS -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const ativarMostrarPalavraPasse = document.querySelector('#mostraPalavraPasse');

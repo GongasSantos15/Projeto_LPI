@@ -1,12 +1,11 @@
 <?php
     // Inclusão de arquivos de configuração e utilitários
-    include '../basedados/basedados.h'; // Assumindo que basedados.h se torna basedados.php
-    include 'const_utilizadores.php'; // Assumindo que constUtilizadores.jsp se torna constUtilizadores.php
-    include 'dados_navbar.php';     // Assumindo que dados_navbar.jsp se torna dados_navbar.php
+    include '../basedados/basedados.h'; 
+    include 'const_utilizadores.php';
+    include 'dados_navbar.php';
 
     // Inicialização de variáveis
     $mensagem_erro = "";
-    $mensagem_sucesso = "";
     
     // Verifica se o utilizador tem o login feito   
     $mostrar_alertas = false;
@@ -17,7 +16,7 @@
     $filtro_cliente = isset($_GET['filtro_cliente']) ? $_GET['filtro_cliente'] : "";
     $ordenacao = isset($_GET['ordenacao']) ? $_GET['ordenacao'] : "id_asc";
     
-    // Lista de bilhetes e clientes (not directly used in this page's core logic but kept for context)
+    // Lista de bilhetes e clientes
     $bilhetes = [];
     $clientes = [];
     
@@ -28,7 +27,7 @@
 
     // Verificar sessão
     if (!isset($_SESSION['id_utilizador'])) {
-        header("Location: entrar.php"); // Redireciona para entrar.php
+        header("Location: entrar.php");
         exit();
     }
     
@@ -61,9 +60,7 @@
         }
     }
 
-    // This block for alert counting is separate from the main logic but retained.
-    // Assumindo que $conn é uma variável global ou acessível via conexão de banco de dados
-    global $conn; // Declara que $conn é global se estiver fora de uma função
+    global $conn; 
     if ($conn != null) {
         try {
             // Para Clientes (tipo_utilizador == 3)
@@ -89,7 +86,7 @@
                 $sql_contagem = "SELECT COUNT(*) as total 
                                  FROM alerta a 
                                  JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta 
-                                 WHERE ua.idUtilizador = 4 AND a.estado = 1"; // Assumindo idUtilizador 4 para visitantes
+                                 WHERE ua.idUtilizador = 4 AND a.estado = 1";
                 $stmt = $conn->prepare($sql_contagem);
                 $stmt->execute();
                 $resultado = $stmt->get_result();
@@ -101,7 +98,7 @@
                 $stmt->close();
             }
         } catch (mysqli_sql_exception $e) {
-            error_log("Erro ao contar alertas: " . $e->getMessage()); // Usar error_log para logar erros
+            error_log("Erro ao contar alertas: " . $e->getMessage());
         }
     }
 
@@ -110,7 +107,7 @@
         // Obtém e valida o valor
         $valor_str = isset($_POST['valor']) ? $_POST['valor'] : "";
         $valor = 0;
-        $saldo_atual = 0; // Variável para guardar o saldo atual
+        $saldo_atual = 0;
 
         // Verifica se o valor é nulo ou vazio e tenta converter
         if (!empty($valor_str)) {
@@ -130,10 +127,10 @@
         // Só continua se não houver erros iniciais
         if (empty($mensagem_erro)) {
             if ($conn != null) {
-                $pstmt = null; // Declara pstmt aqui para escopo mais amplo
-                $rs = null;    // Declara rs aqui para escopo mais amplo
+                $pstmt = null;
+                $rs = null;
                 try {
-                    // 1st Step - Select the user's wallet ID and current balance
+                    // Selecionz o id da carteira do utilizador e o saldo atual
                     $sql_obter_dados_carteira = "SELECT c.id_carteira, c.saldo FROM utilizador u JOIN carteira c ON u.id_carteira = c.id_carteira WHERE u.id = ?";
                     $pstmt = $conn->prepare($sql_obter_dados_carteira);
                     $pstmt->bind_param("i", $id_utilizador);
@@ -150,21 +147,20 @@
                         } else {
                             // Atualiza o saldo da carteira
                             $sql_atualiza_carteira = "UPDATE carteira SET saldo = saldo - ? WHERE id_carteira = ?";
-                            $pstmt->close(); // Fecha o prepared statement anterior
+                            $pstmt->close();
                             $pstmt = $conn->prepare($sql_atualiza_carteira);
                             $pstmt->bind_param("di", $valor, $id_carteira);
                             $linhas_afetadas = $pstmt->execute();
 
-                            if ($linhas_afetadas) { // execute() retorna true em sucesso, false em falha
-                                $mensagem_sucesso = "Saldo atualizado com sucesso!";
+                            if ($linhas_afetadas) {
                                 
                                 // Obter o novo saldo da carteira
                                 $sql_obtem_novo_saldo = "SELECT saldo FROM carteira WHERE id_carteira = ?";
-                                $pstmt->close(); // Fecha o prepared statement anterior
+                                $pstmt->close();
                                 $pstmt = $conn->prepare($sql_obtem_novo_saldo);
                                 $pstmt->bind_param("i", $id_carteira);
                                 $pstmt->execute();
-                                $rs->close(); // Fecha o result set anterior
+                                $rs->close();
                                 $rs = $pstmt->get_result();
                                 if ($rs->num_rows > 0) {
                                     $novo_saldo_row = $rs->fetch_assoc();
@@ -174,20 +170,17 @@
                                 
                                 // Redireciona baseado no tipo de utilizador
                                 if ($tipo_utilizador == CLIENTE) {
-                                    $_SESSION['mensagem_sucesso'] = $mensagem_sucesso; // Guarda a mensagem de sucesso na sessão
                                     header("Location: pagina_inicial_cliente.php");
                                     exit();
                                 } else if ($tipo_utilizador == FUNCIONARIO) {
-                                    $_SESSION['mensagem_sucesso'] = $mensagem_sucesso; // Guarda a mensagem de sucesso na sessão
                                     header("Location: pagina_inicial_func.php");
                                     exit();
                                 } else {
-                                    $_SESSION['mensagem_sucesso'] = $mensagem_sucesso; // Guarda a mensagem de sucesso na sessão
                                     header("Location: pagina_inicial_admin.php");
                                     exit();
                                 }
                             } else {
-                                $mensagem_erro = "Erro ao atualizar o saldo: " . $conn->error; // Adiciona o erro do MySQL
+                                $mensagem_erro = "Erro ao atualizar o saldo: " . $conn->error;
                             }
                         }
                     } else {
@@ -195,13 +188,10 @@
                     }
                 } catch (mysqli_sql_exception $e) {
                     $mensagem_erro = "Erro ao processar a solicitação: " . $e->getMessage();
-                    error_log("Erro SQL: " . $e->getMessage()); // Loga o erro
+                    error_log("Erro SQL: " . $e->getMessage());
                 } finally {
                     if ($rs != null) $rs->close();
                     if ($pstmt != null) $pstmt->close();
-                    // Não feche a conexão aqui se ela for usada em outros lugares.
-                    // Se for uma conexão para toda a aplicação, feche-a no final do script principal ou em um desligamento.
-                    // if ($conn != null) $conn->close(); 
                 }
             } else {
                 $mensagem_erro = "Erro: Falha na conexão com a base de dados.";
@@ -211,7 +201,7 @@
         // Se houver um erro mostrar ao utilizador
         if (!empty($mensagem_erro)) {
             $_SESSION['mensagem_erro'] = $mensagem_erro;
-            header("Location: remover_saldo.php"); // Redireciona de volta para a página
+            header("Location: remover_saldo.php");
             exit();
         }
     }
@@ -380,24 +370,17 @@
                 // Mostrar mensagem de erro 
                 if (isset($_SESSION['mensagem_erro'])) {
                     $mensagem_erro = $_SESSION['mensagem_erro'];
-                    unset($_SESSION['mensagem_erro']); // Limpa a mensagem depois de exibir
+                    unset($_SESSION['mensagem_erro']);
             ?>
                 <div class="alert alert-danger"><?= $mensagem_erro ?></div>
             <?php } ?>
 
-            <?php 
-                // Mostrar mensagem de sucesso
-                if (isset($_SESSION['mensagem_sucesso'])) {
-                    $mensagem_sucesso = $_SESSION['mensagem_sucesso'];
-                    unset($_SESSION['mensagem_sucesso']); // Limpa a mensagem depois de exibir
-            ?>
-                <div class="alert alert-success"><?= $mensagem_sucesso ?></div>
-                <script>
-                    setTimeout(function() {
-                        window.location.href = "<?= $pagina_inicial ?>";
-                    }, 2000);
-                </script>
-            <?php } ?>
+            <div class="alert alert-success">
+            <script>
+                setTimeout(function() {
+                    window.location.href = "<?= $pagina_inicial ?>";
+                }, 2000);
+            </script>
 
             <div class="bg-gradient mb-3 p-5 position-relative mx-auto mt-3 animated slideInDown">
                 <form action="remover_saldo.php" method="POST">

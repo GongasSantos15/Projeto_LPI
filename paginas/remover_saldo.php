@@ -1,46 +1,24 @@
 <?php
+    session_start();
+
     // Inclusão de arquivos de configuração e utilitários
-    include '../basedados/basedados.h'; 
+    include '../basedados/basedados.h';
     include 'const_utilizadores.php';
     include 'dados_navbar.php';
-
-    // Inicialização de variáveis
-    $mensagem_erro = "";
-    
-    // Verifica se o utilizador tem o login feito   
-    $mostrar_alertas = false;
-    $numero_alertas_cliente = 0;
-    $tipo_utilizador = 0;
-    
-    $pesquisa = isset($_GET['pesquisa']) ? trim($_GET['pesquisa']) : "";
-    $filtro_cliente = isset($_GET['filtro_cliente']) ? $_GET['filtro_cliente'] : "";
-    $ordenacao = isset($_GET['ordenacao']) ? $_GET['ordenacao'] : "id_asc";
-    
-    // Lista de bilhetes e clientes
-    $bilhetes = [];
-    $clientes = [];
-    
-    // Inicia a sessão se ainda não estiver iniciada
-    if (session_status() == PHP_SESSION_NONE) {
-        session_start();
-    }
 
     // Verificar sessão
     if (!isset($_SESSION['id_utilizador'])) {
         header("Location: entrar.php");
         exit();
-    }
+    }    
     
-    // Obter o nome do utilizador na sessão
+    // Variáveis usadas
     $nome_utilizador = isset($_SESSION['nome_utilizador']) ? $_SESSION['nome_utilizador'] : "";
-    // Get idUtilizador from session
     $id_utilizador = intval($_SESSION['id_utilizador']);
-
-    // Determina página inicial baseada no tipo de utilizador
     $pagina_inicial = "index.php";
     $tipo_utilizador = intval($_SESSION['tipo_utilizador']);
-    
-    // Variável para verificar se o login foi feito, baseada na existência de id_utilizador na sessão
+
+    // Determina página inicial baseada no tipo de utilizador
     $tem_login = isset($_SESSION['id_utilizador']);
 
     if ($tem_login && isset($_SESSION['tipo_utilizador'])) {
@@ -60,7 +38,19 @@
         }
     }
 
-    global $conn; 
+    // Inicialização de variáveis
+    $mensagem_erro = "";
+    $mensagem_sucesso = "";
+    
+    // Verifica se o utilizador tem o login feito   
+    $mostrar_alertas = false;
+    $numero_alertas_cliente = 0;
+    
+    // Inicia a sessão se ainda não estiver iniciada
+    if (session_status() == PHP_SESSION_NONE) {
+        session_start();
+    }
+
     if ($conn != null) {
         try {
             // Para Clientes (tipo_utilizador == 3)
@@ -70,6 +60,9 @@
                                  JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta 
                                  WHERE ua.idUtilizador = ? AND a.estado = 1";
                 
+                // Prepara a consulta para evitar SQL Injection, utilizando prepared statements para maior segurança
+                // Executa a consulta SQL que verifica o número de alertas para o cliente
+                // E mostra os alertas se a consulta SQL retornar maior que 0
                 $stmt_contagem = $conn->prepare($sql_contagem);
                 $stmt_contagem->bind_param("i", $id_utilizador);
                 $stmt_contagem->execute();
@@ -87,6 +80,10 @@
                                  FROM alerta a 
                                  JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta 
                                  WHERE ua.idUtilizador = 4 AND a.estado = 1";
+
+                // Prepara a consulta para evitar SQL Injection, utilizando prepared statements para maior segurança
+                // Executa a consulta SQL que verifica o número de alertas para o visitante
+                // E mostra os alertas se a consulta SQL retornar maior que 0
                 $stmt = $conn->prepare($sql_contagem);
                 $stmt->execute();
                 $resultado = $stmt->get_result();
@@ -102,14 +99,14 @@
         }
     }
 
-    // Processa o formulário POST
+    // // Processa a submissão do formulário para remover saldo
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        // Obtém e valida o valor
+        // Obtém o valor que o utilizador quer reover através do método POST e valida-o como número decimal
         $valor_str = isset($_POST['valor']) ? $_POST['valor'] : "";
         $valor = 0;
-        $saldo_atual = 0;
+        $saldo_atual = 0; // Variável para guardar o saldo atual
 
-        // Verifica se o valor é nulo ou vazio e tenta converter
+        // Verifica se o valor que o utilizador quer remover se é um número válido e positivo e exibe uma mensage de erro ao utilizador caso não seja
         if (!empty($valor_str)) {
             $valor = filter_var($valor_str, FILTER_VALIDATE_FLOAT);
             if ($valor === false) {
@@ -130,7 +127,7 @@
                 $pstmt = null;
                 $rs = null;
                 try {
-                    // Selecionz o id da carteira do utilizador e o saldo atual
+                    // 1º Passo - Selecionar o utilizador com a carteira
                     $sql_obter_dados_carteira = "SELECT c.id_carteira, c.saldo FROM utilizador u JOIN carteira c ON u.id_carteira = c.id_carteira WHERE u.id = ?";
                     $pstmt = $conn->prepare($sql_obter_dados_carteira);
                     $pstmt->bind_param("i", $id_utilizador);
@@ -145,18 +142,19 @@
                         if ($valor > $saldo_atual) {
                             $mensagem_erro = "Saldo insuficiente. Não pode levantar mais do que tem na carteira.";
                         } else {
-                            // Atualiza o saldo da carteira
+                            // 2º Passo - Selecionar o valor da carteira correspondente ao utilizador
                             $sql_atualiza_carteira = "UPDATE carteira SET saldo = saldo - ? WHERE id_carteira = ?";
-                            $pstmt->close();
+                            $pstmt->close(); // Fecha o prepared statement anterior
                             $pstmt = $conn->prepare($sql_atualiza_carteira);
                             $pstmt->bind_param("di", $valor, $id_carteira);
                             $linhas_afetadas = $pstmt->execute();
 
-                            if ($linhas_afetadas) {
+                            if ($linhas_afetadas) { // execute() retorna true em sucesso, false em falha
+                                $mensagem_sucesso = "Saldo atualizado com sucesso!";
                                 
-                                // Obter o novo saldo da carteira
+                                // 3º Passo - Obter o novo saldo da carteira
                                 $sql_obtem_novo_saldo = "SELECT saldo FROM carteira WHERE id_carteira = ?";
-                                $pstmt->close();
+                                $pstmt->close(); // Fecha o prepared statement anterior
                                 $pstmt = $conn->prepare($sql_obtem_novo_saldo);
                                 $pstmt->bind_param("i", $id_carteira);
                                 $pstmt->execute();
@@ -180,7 +178,7 @@
                                     exit();
                                 }
                             } else {
-                                $mensagem_erro = "Erro ao atualizar o saldo: " . $conn->error;
+                                $mensagem_erro = "Erro ao atualizar o saldo: ";
                             }
                         }
                     } else {
@@ -188,7 +186,7 @@
                     }
                 } catch (mysqli_sql_exception $e) {
                     $mensagem_erro = "Erro ao processar a solicitação: " . $e->getMessage();
-                    error_log("Erro SQL: " . $e->getMessage());
+                    error_log("Erro SQL: " . $e->getMessage()); // Loga o erro
                 } finally {
                     if ($rs != null) $rs->close();
                     if ($pstmt != null) $pstmt->close();
@@ -216,6 +214,7 @@
     <meta content="" name="keywords">
     <meta content="" name="description">
 
+    <!-- Imagens, Fontes e CSS -->
     <link href="favicon.ico" rel="icon">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -274,12 +273,14 @@
     </style>
 </head>
 <body>
-    <!-- Roda de Carregamento -->
+    <!-- Começo Roda de Carregamento -->
     <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
             <span class="sr-only">Loading...</span>
         </div>
     </div>
+    <!-- Fim Roda de Carregamento -->
+     
     <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
         <!-- Barra de Navegação -->
         <nav class="navbar navbar-expand-lg navbar-light px-5 px-lg-5 py-3 py-lg-3">
@@ -296,7 +297,7 @@
                     <a href="destinos.php" class="nav-item nav-link">Destinos</a>
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                     
-                    <!-- Só aparecem estas abas se o utilizador tiver login, for admin (utilizadores) ou admin e funcionario (bilhetes) -->
+                    <!-- Link de Alertas - só aparece se houver alertas -->
                     <?php if ($mostrar_alertas) { ?>
                         <a href="consultar_alertas.php" class="nav-item nav-link position-relative">
                             Alertas
@@ -306,6 +307,7 @@
                         </a>
                     <?php } ?>
 
+                    <!-- Só aparecem estas abas se o utilizador tiver login, for admin (utilizadores) ou admin e funcionario (bilhetes) -->
                     <?php if ($tem_login && isset($_SESSION['tipo_utilizador'])) { ?>
                         <?php if ($tipo_utilizador == 1 || $tipo_utilizador == 2) { ?>
                             <?php if ($tipo_utilizador == 1) { ?>
@@ -339,9 +341,9 @@
                         </ul>
                     </div>
 
+                    <!-- Submenu de Bilhetes -->
                     <?php if (intval($_SESSION['tipo_utilizador']) == 3) { ?>
                         <div class="nav-item dropdown">
-                            <!-- Submenu de Bilhetes -->
                             <a href="#" class="nav-link dropdown-toggle" id="submenu-bilhetes" role="button" aria-expanded="false">
                                 <i class="fa fa-ticket-alt me-2"></i> <?= $numero_bilhetes ?>
                             </a>
@@ -351,8 +353,8 @@
                         </div>
                     <?php } ?>
 
+                    <!-- Submenu do Utilizador -->
                     <div class="nav-item dropdown">
-                        <!-- Submenu do Utilizador -->
                         <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fa fa-user-circle fa-2x me-2"></i>
                             <span><?= $nome_utilizador ?></span>
@@ -368,7 +370,6 @@
             </div>
         </nav>
 
-        <!-- Conteúdo Principal -->
         <div class="rounded shadow" style="max-width: 1200px; width: 100%; margin-top: 150px;">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3 class="text-white m-0">Levantar Saldo</h3>
@@ -383,14 +384,20 @@
                 <div class="alert alert-danger"><?= $mensagem_erro ?></div>
             <?php } ?>
 
-            <div class="alert alert-success">
-            <script>
-                setTimeout(function() {
-                    window.location.href = "<?= $pagina_inicial ?>";
-                }, 2000);
-            </script>
+            <?php 
+                // Mostrar mensagem de sucesso
+                if (isset($_SESSION['mensagem_sucesso'])) {
+                    $mensagem_sucesso = $_SESSION['mensagem_sucesso'];
+                    unset($_SESSION['mensagem_sucesso']);
+            ?>
+                <div class="alert alert-success"><?= $mensagem_sucesso ?></div>
+                <script>
+                    setTimeout(function() {
+                        window.location.href = "<?= $pagina_inicial ?>";
+                    }, 2000);
+                </script>
+            <?php } ?>
 
-            <!-- Dinheiro que pretende levantar -->
             <div class="bg-gradient mb-3 p-5 position-relative mx-auto mt-3 animated slideInDown">
                 <form action="remover_saldo.php" method="POST">
                     <div class="mb-3">
@@ -405,7 +412,7 @@
         </div>
     </div>
 
-    <!-- Bibliotecas JS -->
+    <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="wow.min.js"></script>

@@ -62,6 +62,25 @@
                     $mostrar_alertas = $numero_alertas > 0;
                 }
             }
+        } else {
+            $sql_contagem = "SELECT COUNT(*) as total 
+                         FROM alerta a
+                         JOIN utilizador_alerta ua ON a.id_alerta = ua.id_alerta
+                         WHERE ua.id_utilizador = ? AND a.estado = 1";
+
+            $stmt_contagem = $conn->prepare($sql_contagem);
+
+            if ($stmt_contagem) {
+                $stmt_contagem->bind_param("i", $_SESSION['id_utilizador']);
+                if ($stmt_contagem->execute()) {
+                    $resultado_contagem = $stmt_contagem->get_result();
+                    $linha_contagem = $resultado_contagem->fetch_assoc();
+                    $numero_alertas = $linha_contagem['total'];
+                    $mostrar_alertas = $numero_alertas > 0;
+                }
+                $stmt_contagem->close();
+            }
+
         }
     }
 ?>
@@ -163,8 +182,8 @@
                     <?php if ($mostrar_alertas): ?>
                         <a href="consultar_alertas.php" class="nav-item nav-link position-relative">
                             Alertas
-                            <?php if ($numero_alertas_cliente > 0): ?>
-                                <span class="alert-badge"><?php echo $numero_alertas_cliente; ?></span>
+                            <?php if ($numero_alertas > 0): ?>
+                                <span class="alert-badge"><?php echo $numero_alertas; ?></span>
                             <?php endif; ?>
                         </a>
                     <?php endif; ?>

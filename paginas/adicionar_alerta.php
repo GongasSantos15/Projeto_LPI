@@ -258,6 +258,7 @@
 </head>
 
 <body>
+    <!-- Roda de Carregamento -->
     <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
             <span class="sr-only">Loading...</span>
@@ -265,6 +266,7 @@
     </div>
     <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
 
+        <!-- Barra de Navegação -->
         <nav class="navbar navbar-expand-lg navbar-light px-5 px-lg-5 py-3 py-lg-3">
             <a href="<?= $pagina_inicial ?>" class="navbar-brand p-0">
                 <h1 class="text-primary m-0"><i class="fa fa-map-marker-alt me-3"></i>FelixBus</h1>
@@ -277,6 +279,7 @@
                     <a href="consultar_rotas.php" class="nav-item nav-link">Rotas</a>
                     <a href="consultar_alertas.php" class="nav-item nav-link active">Alertas</a>
                     
+                    <!-- Só aparecem estas abas se o utilizador tiver login, for admin (utilizadores) ou admin e funcionario (bilhetes) -->
                     <?php if ($tem_login && $tipo_utilizador !== null) { ?>
                         <?php if ($tipo_utilizador == ADMINISTRADOR || $tipo_utilizador == FUNCIONARIO) { ?>
                             <?php if ($tipo_utilizador == ADMINISTRADOR) { ?>
@@ -289,6 +292,7 @@
 
                 <?php if ($tem_login) { ?>
                     <div class="nav-item dropdown">
+                        <!-- Submenu da Carteira -->
                         <a href="#" class="nav-link dropdown-toggle" id="walletDropdownLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fa fa-wallet me-2"></i> 
                             <?= $_SESSION['valor_carteira'] ?? '0,00'; ?> €
@@ -297,6 +301,7 @@
                             <li><a class="dropdown-item" href="adicionar_saldo.php"><i class="fas fa-plus-circle"></i>Adicionar</a></li>
                             <li><a class="dropdown-item" href="remover_saldo.php"><i class="fas fa-minus-circle"></i>Remover</a></li>
 
+                             <!-- Opção de Consulta de Clientes (só aparece ao admin e funcionario) -->
                             <?php if($tipo_utilizador !== null && ($tipo_utilizador == ADMINISTRADOR || $tipo_utilizador == FUNCIONARIO)) { ?>
                                 <li><a class="dropdown-item" href="consultar_saldo_clientes.php"><i class="fas fa-user"></i>Consulta Clientes</a></li>
                             <?php } ?>
@@ -304,6 +309,8 @@
                     </div>
                     <?php if($tipo_utilizador !== null && $tipo_utilizador == CLIENTE) { ?>
                         <div class="nav-item dropdown">
+
+                            <!-- Submenu de Bilhetes -->
                             <a href="#" class="nav-link dropdown-toggle" id="ticketsDropdownLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fa fa-ticket-alt me-2"></i> <?= $_SESSION['numero_bilhetes'] ?? '0'; ?>
                             </a>
@@ -313,6 +320,7 @@
                         </div>
                     <?php } ?>
                     <div class="nav-item dropdown">
+                        <!-- Submenu do Utilizador -->
                         <a href="#" class="nav-link d-flex align-items-center text-primary me-3 dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fa fa-user-circle fa-2x me-2"></i>
                             <span><?= $nome_utilizador_na_sessao ?></span>
@@ -329,11 +337,13 @@
         </nav>
         
         <div class="container-fluid hero-header text-light min-vh-100 d-flex align-items-center justify-content-center">
+            <!-- Conteúdo Principal -->
             <div class="p-5 rounded shadow" style="max-width: 900px; width: 100%;">
                 <div class="d-flex justify-content-center align-items-center mb-4">
                     <h3 class="text-white m-0">Adicionar Alerta</h3>
                 </div>
                 
+                <!-- Mensagens de erro e sucesso -->
                 <?php if ($mensagem_erro !== null) { ?>
                     <div class="alert alert-danger" role="alert"><?= $mensagem_erro ?></div>
                 <?php } ?>
@@ -342,6 +352,7 @@
                 <?php } ?>
 
                 <div class="bg-gradient position-relative w-75 mx-auto mt-5 animated slideInDown">
+                    <!-- Formulário de Adicionar Alerta -->
                     <form method="POST" action="adicionar_alerta.php" class="d-flex flex-wrap p-4 rounded text-light justify-content-center" style="gap: 2rem 0.5rem;">
                         <div class="w-100">
                             <label class="form-label">Utilizador Destino:</label>
@@ -352,7 +363,7 @@
                                 <?php } ?>
                             </select>
                         </div>
-
+                        
                         <div class="w-100">
                             <label class="form-label">Tipo de Alerta:</label>
                             <select name="tipo_alerta" class="form-control bg-dark text-light border-primary" required>
@@ -377,6 +388,7 @@
         </div>
     </div>
 
+    <!-- Rodapé -->
     <div class="container-fluid bg-dark d-flex justify-content-center text-light footer pt-5 wow fadeIn" data-wow-delay="0.1s">
         <div class="container py-5">
             <div class="row">
@@ -398,6 +410,8 @@
             </div>
         </div>
     </div>
+
+    <!-- Bibliotecas JS -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="wow.min.js"></script>
